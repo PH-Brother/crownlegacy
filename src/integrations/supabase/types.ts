@@ -58,6 +58,7 @@ export type Database = {
       }
       familias: {
         Row: {
+          codigo_convite: string | null
           created_at: string | null
           data_fim_trial: string | null
           data_inicio_plano: string | null
@@ -67,6 +68,7 @@ export type Database = {
           plano: string | null
         }
         Insert: {
+          codigo_convite?: string | null
           created_at?: string | null
           data_fim_trial?: string | null
           data_inicio_plano?: string | null
@@ -76,6 +78,7 @@ export type Database = {
           plano?: string | null
         }
         Update: {
+          codigo_convite?: string | null
           created_at?: string | null
           data_fim_trial?: string | null
           data_inicio_plano?: string | null
@@ -234,6 +237,7 @@ export type Database = {
           nome_completo: string
           pontos_total: number | null
           role: string | null
+          telefone: string | null
           updated_at: string | null
         }
         Insert: {
@@ -247,6 +251,7 @@ export type Database = {
           nome_completo: string
           pontos_total?: number | null
           role?: string | null
+          telefone?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -260,6 +265,7 @@ export type Database = {
           nome_completo?: string
           pontos_total?: number | null
           role?: string | null
+          telefone?: string | null
           updated_at?: string | null
         }
         Relationships: [
