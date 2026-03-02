@@ -38,12 +38,19 @@ export default function NovaTransacao() {
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
 
   const handleSalvar = async () => {
-    if (!valor || !categoria || !user || !profile?.familia_id) {
-      toast({ title: "Preencha valor e categoria", variant: "destructive" });
+    const valorNum = parseFloat(valor.replace(/\./g, "").replace(",", "."));
+
+    if (!valor || isNaN(valorNum) || valorNum <= 0) {
+      toast({ title: "Digite um valor válido", variant: "destructive" });
       return;
     }
-    if (parseFloat(valor) <= 0) {
-      toast({ title: "Valor deve ser maior que zero", variant: "destructive" });
+    if (!categoria) {
+      toast({ title: "Selecione uma categoria", variant: "destructive" });
+      return;
+    }
+    if (!user || !profile?.familia_id) {
+      toast({ title: "Sessão não encontrada", variant: "destructive" });
+      navigate("/auth");
       return;
     }
 
@@ -53,7 +60,7 @@ export default function NovaTransacao() {
         familia_id: profile.familia_id,
         usuario_id: user.id,
         tipo,
-        valor: parseFloat(valor),
+        valor: valorNum,
         categoria,
         descricao: descricao || undefined,
         data_transacao: data,
@@ -64,9 +71,8 @@ export default function NovaTransacao() {
       if (navigator.vibrate) navigator.vibrate(200);
 
       toast({ title: "✅ Salvo! +10 pontos" });
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
-      console.error("Erro ao salvar:", err);
       const msg = err instanceof Error ? err.message : "Erro ao salvar";
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
@@ -156,7 +162,7 @@ export default function NovaTransacao() {
         <Button
           onClick={handleSalvar}
           className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold"
-          disabled={salvando || !valor || !categoria}
+          disabled={salvando}
         >
           {salvando ? <Loader2 className="h-5 w-5 animate-spin" /> : "✅ Salvar Transação"}
         </Button>
