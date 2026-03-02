@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function Auth() {
@@ -23,6 +24,21 @@ export default function Auth() {
   const [showLoginPass, setShowLoginPass] = useState(false);
   const [showCadPass, setShowCadPass] = useState(false);
 
+  const navigateAfterAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("familia_id")
+      .eq("id", session.user.id)
+      .single();
+    if (profile?.familia_id) {
+      navigate("/dashboard", { replace: true });
+    } else {
+      navigate("/onboarding-family", { replace: true });
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginSenha) {
@@ -33,7 +49,7 @@ export default function Auth() {
     try {
       await signIn(loginEmail, loginSenha);
       toast({ title: "✅ Bem-vindo de volta!" });
-      navigate("/");
+      await navigateAfterAuth();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao entrar";
       toast({ title: "Erro", description: msg, variant: "destructive" });
@@ -56,7 +72,7 @@ export default function Auth() {
     try {
       await signUp(cadEmail, cadSenha, nome);
       toast({ title: "✅ Conta criada!", description: "Verifique seu email para confirmar." });
-      navigate("/");
+      await navigateAfterAuth();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
       toast({ title: "Erro", description: msg, variant: "destructive" });
