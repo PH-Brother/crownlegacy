@@ -32,11 +32,12 @@ export function useProfile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, familia_id, nome_completo, avatar_url, role, pontos_total, nivel_gamificacao, telefone, data_nascimento, created_at")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) return null;
 
       const p: Profile = {
         id: data.id,
@@ -46,7 +47,7 @@ export function useProfile() {
         role: data.role,
         pontos_total: data.pontos_total ?? 0,
         nivel_gamificacao: data.nivel_gamificacao ?? 1,
-        telefone: (data as Record<string, unknown>).telefone as string | null,
+        telefone: data.telefone,
         data_nascimento: data.data_nascimento,
         created_at: data.created_at,
       };
@@ -60,11 +61,11 @@ export function useProfile() {
     }
   }, []);
 
-  const atualizarPerfil = useCallback(async (dados: Partial<Profile>) => {
+  const atualizarPerfil = useCallback(async (dados: Partial<Pick<Profile, "nome_completo" | "telefone" | "avatar_url" | "data_nascimento">>) => {
     if (!profile) return;
     const { error } = await supabase
       .from("profiles")
-      .update(dados as Record<string, unknown>)
+      .update(dados)
       .eq("id", profile.id);
     if (error) throw error;
     setProfile((prev) => prev ? { ...prev, ...dados } : null);
@@ -73,14 +74,15 @@ export function useProfile() {
   const buscarFamilia = useCallback(async (familiaId: string) => {
     const { data, error } = await supabase
       .from("familias")
-      .select("*")
+      .select("id, nome, codigo_convite, plano")
       .eq("id", familiaId)
-      .single();
+      .maybeSingle();
     if (error) throw error;
+    if (!data) return null;
     const f: Familia = {
       id: data.id,
       nome: data.nome,
-      codigo_convite: (data as Record<string, unknown>).codigo_convite as string | null,
+      codigo_convite: data.codigo_convite,
       plano: data.plano,
     };
     setFamilia(f);
@@ -89,11 +91,10 @@ export function useProfile() {
 
   const criarFamilia = useCallback(async (nome: string, userId: string) => {
     const codigo = gerarCodigo8();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const familiaQuery = supabase.from("familias") as any;
-    const { data, error } = await familiaQuery
+    const { data, error } = await supabase
+      .from("familias")
       .insert({ nome, codigo_convite: codigo })
-      .select()
+      .select("id, nome, codigo_convite")
       .single();
     if (error) throw error;
 
@@ -107,12 +108,11 @@ export function useProfile() {
   }, []);
 
   const entrarFamilia = useCallback(async (codigo: string, userId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const familiaQuery = supabase.from("familias") as any;
-    const { data, error } = await familiaQuery
-      .select("*")
+    const { data, error } = await supabase
+      .from("familias")
+      .select("id, nome, codigo_convite")
       .eq("codigo_convite", codigo)
-      .single();
+      .maybeSingle();
     if (error || !data) throw new Error("Código de família não encontrado");
 
     const { error: updateError } = await supabase

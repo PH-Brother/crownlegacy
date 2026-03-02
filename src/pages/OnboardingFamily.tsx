@@ -18,14 +18,19 @@ export default function OnboardingFamily() {
   const [loading, setLoading] = useState(false);
 
   const handleCriar = async () => {
-    if (!nomeFamilia.trim() || !user) return;
+    if (!nomeFamilia.trim() || nomeFamilia.trim().length < 2) {
+      toast({ title: "❌ Nome da família deve ter pelo menos 2 caracteres", variant: "destructive" });
+      return;
+    }
+    if (!user) return;
     setLoading(true);
     try {
       await criarFamilia(nomeFamilia.trim(), user.id);
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro";
+      const msg = err instanceof Error ? err.message : "Erro ao criar família";
+      console.error("Erro ao criar família:", err);
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);

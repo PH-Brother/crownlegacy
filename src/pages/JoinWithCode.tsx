@@ -19,11 +19,12 @@ export default function JoinWithCode() {
     if (codigo.length !== 8 || !user) return;
     setLoading(true);
     try {
-      await entrarFamilia(codigo, user.id);
+      await entrarFamilia(codigo.toUpperCase(), user.id);
       toast({ title: "🎉 Você entrou na família!" });
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Código não encontrado";
+      console.error("Erro ao entrar na família:", err);
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
