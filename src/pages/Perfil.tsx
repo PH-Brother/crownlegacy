@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -20,6 +21,7 @@ export default function Perfil() {
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [dataNasc, setDataNasc] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
@@ -31,6 +33,7 @@ export default function Perfil() {
     if (profile) {
       setNome(profile.nome_completo || "");
       setTelefone(profile.telefone || "");
+      setDataNasc(profile.data_nascimento || "");
       if (profile.familia_id) buscarFamilia(profile.familia_id);
     }
   }, [profile, buscarFamilia]);
@@ -38,7 +41,7 @@ export default function Perfil() {
   const handleSalvar = async () => {
     setSalvando(true);
     try {
-      await atualizarPerfil({ nome_completo: nome, telefone });
+      await atualizarPerfil({ nome_completo: nome, telefone, data_nascimento: dataNasc || undefined });
       toast({ title: "✅ Perfil atualizado!" });
     } catch (err) {
       console.error(err);
@@ -75,8 +78,9 @@ export default function Perfil() {
 
   const copiarCodigo = () => {
     if (familia?.codigo_convite) {
-      navigator.clipboard.writeText(familia.codigo_convite);
-      toast({ title: "📋 Código copiado!" });
+      const url = `${window.location.origin}/join-family?code=${familia.codigo_convite}`;
+      navigator.clipboard.writeText(url);
+      toast({ title: "📋 Link copiado!" });
     }
   };
 
@@ -88,7 +92,7 @@ export default function Perfil() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-5">
         <h1 className="text-lg font-bold text-foreground">Meu Perfil</h1>
 
@@ -102,7 +106,11 @@ export default function Perfil() {
                 profile?.nome_completo?.[0]?.toUpperCase() || "?"
               )}
             </div>
-            {avatarUploading && <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+            {avatarUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            )}
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
           </label>
           <p className="text-xs text-muted-foreground">Toque para alterar foto</p>
@@ -113,7 +121,7 @@ export default function Perfil() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Nome completo</Label>
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} className="min-h-[48px]" disabled={salvando} />
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} className="min-h-[48px] input-premium" disabled={salvando} />
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
@@ -125,7 +133,17 @@ export default function Perfil() {
               placeholder="(XX) XXXXX-XXXX"
               value={telefone}
               onChange={(e) => setTelefone(formatTelefone(e.target.value))}
-              className="min-h-[48px]"
+              className="min-h-[48px] input-premium"
+              disabled={salvando}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Data de nascimento</Label>
+            <Input
+              type="date"
+              value={dataNasc}
+              onChange={(e) => setDataNasc(e.target.value)}
+              className="min-h-[48px] input-premium"
               disabled={salvando}
             />
           </div>
@@ -137,8 +155,8 @@ export default function Perfil() {
 
         {/* Código */}
         {familia?.codigo_convite && (
-          <Card className="border-primary/20">
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Meu Código de Família</CardTitle></CardHeader>
+          <Card className="card-glass-gold">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Código da Família</CardTitle></CardHeader>
             <CardContent className="flex items-center gap-2">
               <span className="text-lg font-mono font-bold text-primary tracking-widest flex-1">{familia.codigo_convite}</span>
               <Button variant="outline" size="sm" onClick={copiarCodigo}><Copy className="h-4 w-4" /></Button>
@@ -146,14 +164,33 @@ export default function Perfil() {
           </Card>
         )}
 
-        <Card className="border-border">
+        <Card className="card-glass">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Minha Assinatura</CardTitle></CardHeader>
-          <CardContent><p className="text-sm text-muted-foreground">Plano: {familia?.plano || "Trial"}</p></CardContent>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Plano: {familia?.plano || "Trial"}</p>
+            <Button variant="link" className="text-primary p-0 h-auto text-sm" onClick={() => navigate("/assinatura")}>
+              Gerenciar →
+            </Button>
+          </CardContent>
         </Card>
 
-        <Button variant="outline" onClick={handleLogout} className="w-full min-h-[48px] border-destructive/30 text-destructive">
-          <LogOut className="h-4 w-4 mr-2" /> Sair
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="w-full min-h-[48px] border-destructive/30 text-destructive">
+              <LogOut className="h-4 w-4 mr-2" /> Sair da Conta
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sair da conta?</AlertDialogTitle>
+              <AlertDialogDescription>Você precisará fazer login novamente para acessar o app.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleLogout} className="bg-destructive">Sair</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <BottomNav />
     </div>

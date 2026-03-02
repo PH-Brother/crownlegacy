@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTransacoes, type Transacao } from "@/hooks/useTransacoes";
 import { useGamificacao } from "@/hooks/useGamificacao";
+import { formatarMoeda } from "@/lib/utils";
 import TransacaoCard from "@/components/TransacaoCard";
 import BottomNav from "@/components/BottomNav";
 
@@ -15,7 +17,7 @@ const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Ag
 export default function Transactions() {
   const { user } = useAuth();
   const { profile, buscarPerfil } = useProfile();
-  const { transacoes, buscarTransacoes, excluirTransacao } = useTransacoes();
+  const { transacoes, buscarTransacoes, excluirTransacao, calcularTotais } = useTransacoes();
   const { adicionarPontos } = useGamificacao();
   const { toast } = useToast();
 
@@ -23,6 +25,7 @@ export default function Transactions() {
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
@@ -36,16 +39,14 @@ export default function Transactions() {
     let m = mes + dir, a = ano;
     if (m > 12) { m = 1; a++; }
     if (m < 1) { m = 12; a--; }
-    setMes(m);
-    setAno(a);
+    setMes(m); setAno(a);
   };
 
   const handleDelete = async () => {
     if (!deleteId || !user) return;
     try {
       await excluirTransacao(deleteId);
-      await adicionarPontos(user.id, -10, "excluir_transacao", "Excluiu transação");
-      toast({ title: "🗑️ Transação excluída. -10 pontos" });
+      toast({ title: "🗑️ Transação excluída" });
     } catch (err) {
       console.error(err);
       toast({ title: "Erro ao excluir", variant: "destructive" });
@@ -54,16 +55,19 @@ export default function Transactions() {
     }
   };
 
+  const filtered = filtroTipo === "todos" ? transacoes : transacoes.filter(t => t.tipo === filtroTipo);
+  const totais = calcularTotais(filtered);
+
   // Agrupar por data
   const grupos: Record<string, Transacao[]> = {};
-  transacoes.forEach((t) => {
+  filtered.forEach((t) => {
     const key = t.data_transacao;
     if (!grupos[key]) grupos[key] = [];
     grupos[key].push(t);
   });
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
         <h1 className="text-lg font-bold text-foreground">Transações</h1>
 
@@ -77,8 +81,29 @@ export default function Transactions() {
           </Button>
         </div>
 
+        {/* Filtro */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+            <SelectTrigger className="flex-1 h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="receita">Receitas</SelectItem>
+              <SelectItem value="despesa">Despesas</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Total: {formatarMoeda(filtroTipo === "receita" ? totais.receitas : filtroTipo === "despesa" ? totais.despesas : totais.receitas - totais.despesas)}
+          </span>
+        </div>
+
         {Object.keys(grupos).length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">Nenhuma transação</p>
+          <div className="text-center py-8">
+            <span className="text-4xl block mb-2">📊</span>
+            <p className="text-muted-foreground">Nenhuma transação</p>
+          </div>
         ) : (
           Object.entries(grupos).map(([data, items]) => (
             <div key={data}>
@@ -101,7 +126,7 @@ export default function Transactions() {
                       <AlertDialogContent className="bg-card border-border">
                         <AlertDialogHeader>
                           <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
-                          <AlertDialogDescription>Esta ação não pode ser desfeita. Você perderá 10 pontos.</AlertDialogDescription>
+                          <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>

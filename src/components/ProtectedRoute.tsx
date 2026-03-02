@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 export default function ProtectedRoute() {
   const [status, setStatus] = useState<"loading" | "auth" | "no-family" | "ok">("loading");
@@ -31,7 +30,10 @@ export default function ProtectedRoute() {
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <span className="text-5xl animate-shield-pulse">🛡️</span>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }

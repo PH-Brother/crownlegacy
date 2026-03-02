@@ -1,71 +1,76 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Download, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import BottomNav from "@/components/BottomNav";
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("lk_darkMode") !== "false");
   const [notificacoes, setNotificacoes] = useState(() => localStorage.getItem("lk_notif") !== "false");
-  const [moeda, setMoeda] = useState(() => localStorage.getItem("lk_moeda") || "BRL");
-  const [diaFechamento, setDiaFechamento] = useState(() => localStorage.getItem("lk_diaFechamento") || "1");
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("lk_darkMode", String(darkMode));
     localStorage.setItem("lk_notif", String(notificacoes));
-    localStorage.setItem("lk_moeda", moeda);
-    localStorage.setItem("lk_diaFechamento", diaFechamento);
-  }, [darkMode, notificacoes, moeda, diaFechamento]);
+  }, [notificacoes]);
 
-  const salvar = () => toast({ title: "✅ Configurações salvas!" });
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt && "prompt" in deferredPrompt) {
+      (deferredPrompt as any).prompt();
+    } else {
+      toast({ title: "📱 Para instalar, use 'Adicionar à tela inicial' no menu do navegador." });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-6">
-        <h1 className="text-lg font-bold text-foreground">Configurações</h1>
-
-        <div className="flex items-center justify-between">
-          <Label>Modo escuro</Label>
-          <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground">Configurações</h1>
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label>Notificações</Label>
-          <Switch checked={notificacoes} onCheckedChange={setNotificacoes} />
-        </div>
+        <Card className="card-glass">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Notificações</Label>
+              <Switch checked={notificacoes} onCheckedChange={setNotificacoes} />
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-2">
-          <Label>Moeda</Label>
-          <Select value={moeda} onValueChange={setMoeda}>
-            <SelectTrigger className="min-h-[48px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="BRL">R$ (Real)</SelectItem>
-              <SelectItem value="USD">$ (Dólar)</SelectItem>
-              <SelectItem value="EUR">€ (Euro)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Dia de fechamento do mês</Label>
-          <Input
-            type="number"
-            min={1}
-            max={31}
-            value={diaFechamento}
-            onChange={(e) => setDiaFechamento(e.target.value)}
-            className="min-h-[48px]"
-          />
-        </div>
-
-        <Button onClick={salvar} className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold">
-          Salvar Configurações
+        <Button onClick={handleInstall} variant="outline" className="w-full min-h-[48px] border-primary/30 text-primary">
+          <Download className="h-4 w-4 mr-2" /> Instalar App (PWA)
         </Button>
+
+        <Card className="card-glass">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" /> Sobre
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>Legacy Kingdom v1.0.0</p>
+            <p>Gestão financeira com sabedoria bíblica</p>
+            <p>© 2026 Legacy Kingdom</p>
+          </CardContent>
+        </Card>
       </div>
       <BottomNav />
     </div>

@@ -50,7 +50,7 @@ export default function JoinWithCode() {
           placeholder="EX: ABCD1234"
           value={codigo}
           onChange={(e) => setCodigo(e.target.value.toUpperCase().slice(0, 8))}
-          className="min-h-[48px] text-center text-lg tracking-widest font-mono"
+          className="min-h-[48px] text-center text-lg tracking-widest font-mono input-premium"
           maxLength={8}
           disabled={loading}
         />

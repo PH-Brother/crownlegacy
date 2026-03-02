@@ -1,26 +1,11 @@
-import {
-  ShoppingCart, Home, Car, Heart, GraduationCap, Gamepad2,
-  Shirt, Church, Briefcase, Gift, TrendingUp, MoreHorizontal,
-  Utensils, Wallet
-} from "lucide-react";
 import { formatarMoeda, formatarData } from "@/lib/utils";
 import type { Transacao } from "@/hooks/useTransacoes";
 
-const iconesPorCategoria: Record<string, React.ElementType> = {
-  "Alimentação": Utensils,
-  "Moradia": Home,
-  "Transporte": Car,
-  "Saúde": Heart,
-  "Educação": GraduationCap,
-  "Lazer": Gamepad2,
-  "Roupas": Shirt,
-  "Dízimo/Oferta": Church,
-  "Salário": Briefcase,
-  "Freelance": Wallet,
-  "Investimentos": TrendingUp,
-  "Presente": Gift,
-  "Outros": MoreHorizontal,
-  "Compras": ShoppingCart,
+const EMOJIS_CAT: Record<string, string> = {
+  "Alimentação": "🍽️", "Transporte": "🚗", "Saúde": "❤️", "Educação": "📚",
+  "Lazer": "🎉", "Moradia": "🏠", "Salário": "💰", "Freelance": "💻",
+  "Investimentos": "📈", "Dízimo/Oferta": "🙏", "Roupas": "👕",
+  "Presente": "🎁", "Outros": "📦", "Compras": "🛒",
 };
 
 interface Props {
@@ -29,18 +14,18 @@ interface Props {
 }
 
 export default function TransacaoCard({ transacao, onDelete }: Props) {
-  const Icon = iconesPorCategoria[transacao.categoria] || MoreHorizontal;
   const isReceita = transacao.tipo === "receita";
+  const emoji = EMOJIS_CAT[transacao.categoria] || "📦";
 
   return (
     <div
-      className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+      className="flex items-center gap-3 rounded-lg card-glass p-3"
       onClick={() => onDelete?.(transacao.id)}
     >
-      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-        isReceita ? "bg-success/20" : "bg-destructive/20"
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full text-lg ${
+        isReceita ? "bg-success/15" : "bg-destructive/15"
       }`}>
-        <Icon className={`h-5 w-5 ${isReceita ? "text-success" : "text-destructive"}`} />
+        {emoji}
       </div>
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-medium text-foreground">{transacao.categoria}</p>

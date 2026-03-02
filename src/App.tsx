@@ -18,6 +18,7 @@ import FamilyMembers from "./pages/FamilyMembers";
 import Settings from "./pages/Settings";
 import UploadPage from "./pages/Upload";
 import Checkin from "./pages/Checkin";
+import Assinatura from "./pages/Assinatura";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +27,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner position="bottom-center" richColors />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/configuracoes" element={<Settings />} />
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/checkin" element={<Checkin />} />
+            <Route path="/assinatura" element={<Assinatura />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

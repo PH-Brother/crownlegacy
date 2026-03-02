@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -34,9 +33,9 @@ export default function Index() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
-        <span className="text-4xl">👑</span>
+        <span className="text-5xl animate-shield-pulse">🛡️</span>
         <h1 className="text-2xl font-bold text-primary">Legacy Kingdom</h1>
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     </div>
   );
