@@ -52,13 +52,21 @@ export default function Dashboard() {
     }
   }, [profile?.familia_id, mes, ano, buscarFamilia, buscarTransacoes]);
 
+  // Re-fetch when navigating back to dashboard
+  useEffect(() => {
+    const handleFocus = () => {
+      if (profile?.familia_id) {
+        buscarTransacoes(profile.familia_id, mes, ano);
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [profile?.familia_id, mes, ano, buscarTransacoes]);
+
   useRealtimeListener(profile?.familia_id ?? null);
 
   const totais = calcularTotais(transacoes);
   const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
-
-  // Trial banner
-  const diasTrial = familia?.plano === "trial" ? 7 : 0; // simplified
 
   const handleIA = useCallback(async () => {
     if (!user || !profile) return;
@@ -109,7 +117,6 @@ export default function Dashboard() {
           <img src={logo} alt="Legacy Kingdom" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
         </div>
 
-        {/* Gamificação */}
         <GamificacaoBar pontos={profile?.pontos_total ?? 0} nivel={profile?.nivel_gamificacao ?? 1} />
 
         {/* Navegação mês */}
@@ -132,14 +139,14 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-2">
             <Card className="gold-top-border border-success/20 bg-success/5">
               <CardContent className="p-3 text-center">
-                <TrendingUp className="h-4 w-4 text-success mx-auto mb-1" />
+                <TrendingUp className="h-4 w-4 mx-auto mb-1" style={{ color: "#22c55e" }} />
                 <p className="text-[10px] text-muted-foreground">Entradas</p>
                 <p className="text-sm font-bold" style={{ color: "#22c55e" }}>{formatarMoeda(totais.receitas)}</p>
               </CardContent>
             </Card>
             <Card className="gold-top-border border-destructive/20 bg-destructive/5">
               <CardContent className="p-3 text-center">
-                <TrendingDown className="h-4 w-4 text-destructive mx-auto mb-1" />
+                <TrendingDown className="h-4 w-4 mx-auto mb-1" style={{ color: "#ef4444" }} />
                 <p className="text-[10px] text-muted-foreground">Saídas</p>
                 <p className="text-sm font-bold" style={{ color: "#ef4444" }}>{formatarMoeda(totais.despesas)}</p>
               </CardContent>
@@ -156,7 +163,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Reflexão */}
         <ReflexaoDiaria />
 
         {/* IA */}

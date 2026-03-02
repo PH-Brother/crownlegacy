@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, LogOut, Copy, Save } from "lucide-react";
+import { Loader2, LogOut, Copy, Save, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Perfil() {
   const { user, signOut } = useAuth();
-  const { profile, familia, buscarPerfil, buscarFamilia, atualizarPerfil } = useProfile();
+  const { profile, familia, buscarPerfil, buscarFamilia } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,11 +41,24 @@ export default function Perfil() {
   const handleSalvar = async () => {
     setSalvando(true);
     try {
-      await atualizarPerfil({ nome_completo: nome, telefone, data_nascimento: dataNasc || undefined });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          nome_completo: nome,
+          telefone: telefone,
+          data_nascimento: dataNasc || null,
+        })
+        .eq("id", session.user.id);
+
+      if (error) throw error;
       toast({ title: "✅ Perfil atualizado!" });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast({ title: "Erro ao salvar", variant: "destructive" });
+      const msg = err instanceof Error ? err.message : "Erro ao salvar perfil";
+      toast({ title: msg, variant: "destructive" });
     } finally {
       setSalvando(false);
     }
@@ -61,7 +74,7 @@ export default function Perfil() {
       const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      await atualizarPerfil({ avatar_url: data.publicUrl });
+      await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", user.id);
       toast({ title: "📸 Avatar atualizado!" });
     } catch (err) {
       console.error(err);
@@ -81,6 +94,27 @@ export default function Perfil() {
       const url = `${window.location.origin}/join-family?code=${familia.codigo_convite}`;
       navigator.clipboard.writeText(url);
       toast({ title: "📋 Link copiado!" });
+    }
+  };
+
+  const handleCompartilhar = () => {
+    if (!familia?.codigo_convite) return;
+    const APP_URL = window.location.origin;
+    const mensagemConvite =
+      `🛡️ Junte-se à minha família no Legacy Kingdom!\n\n` +
+      `Use o código: *${familia.codigo_convite}*\n\n` +
+      `Acesse o app: ${APP_URL}\n\n` +
+      `Gerencie suas finanças com sabedoria bíblica! 📖`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: "Legacy Kingdom - Convite Familiar",
+        text: mensagemConvite,
+        url: APP_URL,
+      });
+    } else {
+      navigator.clipboard.writeText(mensagemConvite);
+      toast({ title: "📋 Convite copiado!" });
     }
   };
 
@@ -157,9 +191,18 @@ export default function Perfil() {
         {familia?.codigo_convite && (
           <Card className="card-glass-gold">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Código da Família</CardTitle></CardHeader>
-            <CardContent className="flex items-center gap-2">
-              <span className="text-lg font-mono font-bold text-primary tracking-widest flex-1">{familia.codigo_convite}</span>
-              <Button variant="outline" size="sm" onClick={copiarCodigo}><Copy className="h-4 w-4" /></Button>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-mono font-bold text-primary tracking-widest flex-1">{familia.codigo_convite}</span>
+                <Button variant="outline" size="sm" onClick={copiarCodigo}><Copy className="h-4 w-4" /></Button>
+              </div>
+              <button
+                onClick={handleCompartilhar}
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                style={{ background: "linear-gradient(135deg, #D4AF37, #F4E17A, #B8860B)", color: "#000" }}
+              >
+                <Share2 className="h-4 w-4" /> Compartilhar Convite
+              </button>
             </CardContent>
           </Card>
         )}
