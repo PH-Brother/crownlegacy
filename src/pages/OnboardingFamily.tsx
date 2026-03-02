@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,12 +42,7 @@ export default function OnboardingFamily() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-[400px] space-y-6">
         <div className="text-center">
-          <div
-            style={{ background: 'linear-gradient(135deg, #D4AF37, #F4E17A, #B8860B)', boxShadow: '0 0 40px rgba(212,175,55,0.5), 0 8px 32px rgba(0,0,0,0.4)' }}
-            className="w-20 h-20 mx-auto flex items-center justify-center text-4xl rounded-2xl mb-4"
-          >
-            🛡️
-          </div>
+          <img src={logo} alt="Legacy Kingdom" className="w-20 h-20 mx-auto rounded-2xl mb-4 drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
           <h1 className="mt-2 text-xl font-bold text-primary">Bem-vindo ao Legacy Kingdom</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {user?.user_metadata?.nome_completo ? `Olá, ${user.user_metadata.nome_completo.split(" ")[0]}! ` : ""}
