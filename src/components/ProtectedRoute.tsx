@@ -31,7 +31,12 @@ export default function ProtectedRoute() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <span className="text-5xl animate-shield-pulse">🛡️</span>
+          <div
+            style={{ background: 'linear-gradient(135deg, #D4AF37, #F4E17A, #B8860B)', boxShadow: '0 0 40px rgba(212,175,55,0.5), 0 8px 32px rgba(0,0,0,0.4)' }}
+            className="w-20 h-20 flex items-center justify-center text-4xl rounded-2xl animate-shield-pulse"
+          >
+            🛡️
+          </div>
           <p className="text-sm text-muted-foreground">Carregando...</p>
         </div>
       </div>
