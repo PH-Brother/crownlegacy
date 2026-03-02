@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
-import { useTransacoes } from "@/hooks/useTransacoes";
-import { useGamificacao } from "@/hooks/useGamificacao";
+import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIAS_RECEITA, CATEGORIAS_DESPESA } from "@/lib/utils";
 import BottomNav from "@/components/BottomNav";
 
@@ -21,26 +18,25 @@ const EMOJIS_CAT: Record<string, string> = {
 };
 
 export default function NovaTransacao() {
-  const { user } = useAuth();
-  const { profile } = useProfile();
-  const { criarTransacao } = useTransacoes();
-  const { adicionarPontos } = useGamificacao();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [tipo, setTipo] = useState<"receita" | "despesa">("despesa");
+  const [tipo, setTipo] = useState<"receita" | "despesa" | "">("");
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
   const [descricao, setDescricao] = useState("");
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [salvando, setSalvando] = useState(false);
 
-  const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
+  const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : tipo === "despesa" ? CATEGORIAS_DESPESA : [];
 
   const handleSalvar = async () => {
+    if (!tipo) {
+      toast({ title: "Selecione Receita ou Despesa", variant: "destructive" });
+      return;
+    }
     const valorNum = parseFloat(valor.replace(/\./g, "").replace(",", "."));
-
-    if (!valor || isNaN(valorNum) || valorNum <= 0) {
+    if (!valorNum || valorNum <= 0) {
       toast({ title: "Digite um valor válido", variant: "destructive" });
       return;
     }
@@ -48,29 +44,45 @@ export default function NovaTransacao() {
       toast({ title: "Selecione uma categoria", variant: "destructive" });
       return;
     }
-    if (!user || !profile?.familia_id) {
-      toast({ title: "Sessão não encontrada", variant: "destructive" });
-      navigate("/auth");
-      return;
-    }
 
     setSalvando(true);
     try {
-      await criarTransacao({
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate("/auth"); return; }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("familia_id, pontos_total")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!profile?.familia_id) {
+        toast({ title: "Família não encontrada", variant: "destructive" });
+        return;
+      }
+
+      const { error } = await supabase.from("transacoes").insert({
         familia_id: profile.familia_id,
-        usuario_id: user.id,
+        usuario_id: session.user.id,
         tipo,
         valor: valorNum,
         categoria,
-        descricao: descricao || undefined,
+        descricao: descricao || null,
         data_transacao: data,
+        recorrente: false,
+        tags: [],
+      });
+      if (error) throw error;
+
+      // Use RPC for gamification points
+      await supabase.rpc("add_gamification_points", {
+        p_pontos: 10,
+        p_tipo_evento: "transacao_criada",
+        p_descricao: "Cadastrou transação",
       });
 
-      await adicionarPontos(user.id, 10, "nova_transacao", "Cadastrou transação");
-
       if (navigator.vibrate) navigator.vibrate(200);
-
-      toast({ title: "✅ Salvo! +10 pontos" });
+      toast({ title: "✅ Transação salva! +10 pontos 🎉" });
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao salvar";
@@ -92,20 +104,32 @@ export default function NovaTransacao() {
 
         {/* Toggle tipo */}
         <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant={tipo === "receita" ? "default" : "outline"}
-            className={tipo === "receita" ? "gradient-green text-foreground font-bold" : ""}
+          <button
             onClick={() => { setTipo("receita"); setCategoria(""); }}
+            className="py-3 rounded-xl font-bold text-sm transition-all"
+            style={{
+              background: tipo === "receita"
+                ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                : "rgba(255,255,255,0.05)",
+              color: tipo === "receita" ? "#fff" : "rgba(255,255,255,0.6)",
+              border: tipo === "receita" ? "none" : "1px solid rgba(255,255,255,0.1)",
+            }}
           >
             💰 Receita
-          </Button>
-          <Button
-            variant={tipo === "despesa" ? "default" : "outline"}
-            className={tipo === "despesa" ? "gradient-red text-foreground font-bold" : ""}
+          </button>
+          <button
             onClick={() => { setTipo("despesa"); setCategoria(""); }}
+            className="py-3 rounded-xl font-bold text-sm transition-all"
+            style={{
+              background: tipo === "despesa"
+                ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                : "rgba(255,255,255,0.05)",
+              color: tipo === "despesa" ? "#fff" : "rgba(255,255,255,0.6)",
+              border: tipo === "despesa" ? "none" : "1px solid rgba(255,255,255,0.1)",
+            }}
           >
             💸 Despesa
-          </Button>
+          </button>
         </div>
 
         <div className="space-y-2">
@@ -123,19 +147,21 @@ export default function NovaTransacao() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Categoria</Label>
-          <Select value={categoria} onValueChange={setCategoria} disabled={salvando}>
-            <SelectTrigger className="min-h-[48px] input-premium">
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              {categorias.map((c) => (
-                <SelectItem key={c} value={c}>{EMOJIS_CAT[c] || "📦"} {c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {tipo && (
+          <div className="space-y-2">
+            <Label>Categoria</Label>
+            <Select value={categoria} onValueChange={setCategoria} disabled={salvando}>
+              <SelectTrigger className="min-h-[48px] input-premium">
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {categorias.map((c) => (
+                  <SelectItem key={c} value={c}>{EMOJIS_CAT[c] || "📦"} {c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label>Descrição (opcional)</Label>
@@ -159,13 +185,20 @@ export default function NovaTransacao() {
           />
         </div>
 
-        <Button
+        <button
           onClick={handleSalvar}
-          className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold"
           disabled={salvando}
+          className="w-full py-4 rounded-xl font-bold text-lg mt-6"
+          style={{
+            background: salvando
+              ? "rgba(212,175,55,0.5)"
+              : "linear-gradient(135deg, #D4AF37, #F4E17A, #B8860B)",
+            boxShadow: "0 4px 20px rgba(212,175,55,0.3)",
+            color: "#000",
+          }}
         >
-          {salvando ? <Loader2 className="h-5 w-5 animate-spin" /> : "✅ Salvar Transação"}
-        </Button>
+          {salvando ? "⏳ Salvando..." : "✅ Salvar Transação"}
+        </button>
       </div>
       <BottomNav />
     </div>

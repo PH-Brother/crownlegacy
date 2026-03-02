@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2, Filter } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTransacoes, type Transacao } from "@/hooks/useTransacoes";
-import { useGamificacao } from "@/hooks/useGamificacao";
 import { formatarMoeda } from "@/lib/utils";
 import TransacaoCard from "@/components/TransacaoCard";
 import BottomNav from "@/components/BottomNav";
@@ -18,8 +18,8 @@ export default function Transactions() {
   const { user } = useAuth();
   const { profile, buscarPerfil } = useProfile();
   const { transacoes, buscarTransacoes, excluirTransacao, calcularTotais } = useTransacoes();
-  const { adicionarPontos } = useGamificacao();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
@@ -47,12 +47,19 @@ export default function Transactions() {
     try {
       await excluirTransacao(deleteId);
       toast({ title: "🗑️ Transação excluída" });
+      // Refresh list
+      if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
     } catch (err) {
       console.error(err);
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {
       setDeleteId(null);
     }
+  };
+
+  const handleEditar = (t: Transacao) => {
+    // Navigate to edit page or show edit modal - for now navigate
+    navigate(`/nova-transacao?edit=${t.id}`);
   };
 
   const filtered = filtroTipo === "todos" ? transacoes : transacoes.filter(t => t.tipo === filtroTipo);
@@ -112,34 +119,30 @@ export default function Transactions() {
               </p>
               <div className="space-y-2">
                 {items.map((t) => (
-                  <div key={t.id} className="relative group">
-                    <TransacaoCard transacao={t} />
-                    <AlertDialog open={deleteId === t.id} onOpenChange={(o) => !o && setDeleteId(null)}>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          onClick={() => setDeleteId(t.id)}
-                          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-destructive/20"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-card border-border">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
-                          <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDelete} className="bg-destructive">Excluir</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <TransacaoCard
+                    key={t.id}
+                    transacao={t}
+                    onEdit={handleEditar}
+                    onDelete={(id) => setDeleteId(id)}
+                  />
                 ))}
               </div>
             </div>
           ))
         )}
+
+        <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+              <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive">Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <BottomNav />
     </div>
