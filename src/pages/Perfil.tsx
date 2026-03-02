@@ -38,7 +38,7 @@ export default function Perfil() {
   const handleSalvar = async () => {
     setSalvando(true);
     try {
-      await atualizarPerfil({ nome_completo: nome, telefone } as Record<string, unknown>);
+      await atualizarPerfil({ nome_completo: nome, telefone });
       toast({ title: "✅ Perfil atualizado!" });
     } catch (err) {
       console.error(err);
