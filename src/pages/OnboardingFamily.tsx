@@ -41,15 +41,20 @@ export default function OnboardingFamily() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-[400px] space-y-6">
         <div className="text-center">
-          <span className="text-4xl">👑</span>
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full gradient-gold shadow-lg shadow-primary/30">
+            <span className="text-3xl">🛡️</span>
+          </div>
           <h1 className="mt-2 text-xl font-bold text-primary">Bem-vindo ao Legacy Kingdom</h1>
-          <p className="text-sm text-muted-foreground mt-1">Como deseja começar?</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {user?.user_metadata?.nome_completo ? `Olá, ${user.user_metadata.nome_completo.split(" ")[0]}! ` : ""}
+            Como deseja começar?
+          </p>
         </div>
 
         {modo === "escolha" ? (
           <div className="space-y-4">
             <Card
-              className="cursor-pointer border-primary/30 hover:border-primary transition-colors"
+              className="cursor-pointer card-glass-gold hover:border-primary transition-colors"
               onClick={() => setModo("criar")}
             >
               <CardHeader className="pb-2">
@@ -65,7 +70,7 @@ export default function OnboardingFamily() {
             </Card>
 
             <Card
-              className="cursor-pointer border-primary/30 hover:border-primary transition-colors"
+              className="cursor-pointer card-glass hover:border-primary transition-colors"
               onClick={() => navigate("/join-family")}
             >
               <CardHeader className="pb-2">
@@ -86,7 +91,7 @@ export default function OnboardingFamily() {
               placeholder="Nome da família (ex: Família Silva)"
               value={nomeFamilia}
               onChange={(e) => setNomeFamilia(e.target.value)}
-              className="min-h-[48px]"
+              className="min-h-[48px] input-premium"
               disabled={loading}
             />
             <Button
@@ -94,14 +99,14 @@ export default function OnboardingFamily() {
               className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold"
               disabled={loading || !nomeFamilia.trim()}
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Criar Família"}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🏠 Criar Família"}
             </Button>
             <Button
               variant="ghost"
               className="w-full text-muted-foreground"
               onClick={() => setModo("escolha")}
             >
-              Voltar
+              ← Voltar
             </Button>
           </div>
         )}

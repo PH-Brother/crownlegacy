@@ -51,12 +51,12 @@ export default function Checkin() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-6">
         <h1 className="text-lg font-bold text-foreground">Check-in Diário</h1>
 
         {jaFez ? (
-          <Card className="border-success/30">
+          <Card className="card-glass-gold">
             <CardContent className="p-6 text-center">
               <span className="text-4xl">✅</span>
               <p className="mt-2 text-foreground font-medium">Você já fez seu check-in hoje!</p>
@@ -88,7 +88,7 @@ export default function Checkin() {
                   placeholder="Quer compartilhar algo? (opcional)"
                   value={texto}
                   onChange={(e) => setTexto(e.target.value)}
-                  className="min-h-[80px]"
+                  className="min-h-[80px] input-premium"
                 />
                 <Button
                   onClick={handleRegistrar}

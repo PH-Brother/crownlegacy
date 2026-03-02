@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Upload as UploadIcon, FileText, Loader2 } from "lucide-react";
+import { Upload as UploadIcon, FileText, Loader2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,7 @@ export default function UploadPage() {
   const { user } = useAuth();
   const { adicionarPontos } = useGamificacao();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -59,12 +61,17 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
-        <h1 className="text-lg font-bold text-foreground">Upload de Fatura</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground">Upload de Fatura</h1>
+        </div>
 
         <Card
-          className="border-dashed border-2 border-primary/30 cursor-pointer hover:border-primary transition-colors"
+          className="border-dashed border-2 border-primary/30 cursor-pointer hover:border-primary transition-colors card-glass"
           onClick={() => fileRef.current?.click()}
         >
           <CardContent className="flex flex-col items-center gap-3 py-8">
@@ -92,7 +99,7 @@ export default function UploadPage() {
         )}
 
         {resultado && (
-          <Card>
+          <Card className="card-glass-gold">
             <CardContent className="p-4">
               <h2 className="text-sm font-semibold text-primary mb-2">Resultado da Análise</h2>
               <p className="text-sm text-foreground/80 whitespace-pre-wrap">{resultado}</p>

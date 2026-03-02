@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -7,10 +9,9 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTransacoes } from "@/hooks/useTransacoes";
 import { useGamificacao } from "@/hooks/useGamificacao";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
-import { formatarMoeda } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { Activity, Plus } from "lucide-react";
+import { Activity, Plus, Loader2 } from "lucide-react";
 
 export default function FinancialHealth() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function FinancialHealth() {
   const { transacoes, buscarTransacoes, calcularTotais } = useTransacoes();
   const { adicionarPontos } = useGamificacao();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [analises, setAnalises] = useState<Array<{ id: string; tipo_analise: string; resultado: unknown; created_at: string | null }>>([]);
   const [gerando, setGerando] = useState(false);
 
@@ -68,14 +70,19 @@ export default function FinancialHealth() {
   const scoreColor = score >= 70 ? "text-success" : score >= 40 ? "text-primary" : "text-destructive";
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
-        <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" /> Saúde Financeira
-        </h1>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" /> Saúde Financeira
+          </h1>
+        </div>
 
         {/* Score gauge */}
-        <Card className="border-primary/20">
+        <Card className="card-glass-gold">
           <CardContent className="p-6 text-center">
             <div className="relative inline-flex items-center justify-center">
               <svg viewBox="0 0 100 60" className="w-48 h-28">
@@ -90,7 +97,8 @@ export default function FinancialHealth() {
         </Card>
 
         <Button onClick={gerarNova} disabled={gerando} className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold">
-          <Plus className="h-5 w-5 mr-2" /> {gerando ? "Gerando..." : "Nova Análise IA"}
+          {gerando ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
+          {gerando ? "Gerando..." : "Invocar Conselho Financeiro"}
         </Button>
 
         {/* Histórico */}
@@ -100,7 +108,7 @@ export default function FinancialHealth() {
             <p className="text-sm text-muted-foreground text-center py-4">Nenhuma análise ainda</p>
           ) : (
             analises.map((a) => (
-              <Card key={a.id}>
+              <Card key={a.id} className="card-glass">
                 <CardContent className="p-3">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs text-primary font-medium">{a.tipo_analise}</span>

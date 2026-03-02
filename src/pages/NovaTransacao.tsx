@@ -13,6 +13,13 @@ import { useGamificacao } from "@/hooks/useGamificacao";
 import { CATEGORIAS_RECEITA, CATEGORIAS_DESPESA } from "@/lib/utils";
 import BottomNav from "@/components/BottomNav";
 
+const EMOJIS_CAT: Record<string, string> = {
+  "Alimentação": "🍽️", "Transporte": "🚗", "Saúde": "❤️", "Educação": "📚",
+  "Lazer": "🎉", "Moradia": "🏠", "Salário": "💰", "Freelance": "💻",
+  "Investimentos": "📈", "Dízimo/Oferta": "🙏", "Roupas": "👕",
+  "Presente": "🎁", "Outros": "📦",
+};
+
 export default function NovaTransacao() {
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -35,10 +42,12 @@ export default function NovaTransacao() {
       toast({ title: "Preencha valor e categoria", variant: "destructive" });
       return;
     }
+    if (parseFloat(valor) <= 0) {
+      toast({ title: "Valor deve ser maior que zero", variant: "destructive" });
+      return;
+    }
 
     setSalvando(true);
-    const toastId = toast({ title: "💾 Salvando..." });
-
     try {
       await criarTransacao({
         familia_id: profile.familia_id,
@@ -66,7 +75,7 @@ export default function NovaTransacao() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-5">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -79,17 +88,17 @@ export default function NovaTransacao() {
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant={tipo === "receita" ? "default" : "outline"}
-            className={tipo === "receita" ? "bg-success hover:bg-success/90 text-primary-foreground" : ""}
+            className={tipo === "receita" ? "gradient-green text-foreground font-bold" : ""}
             onClick={() => { setTipo("receita"); setCategoria(""); }}
           >
-            Receita
+            💰 Receita
           </Button>
           <Button
             variant={tipo === "despesa" ? "default" : "outline"}
-            className={tipo === "despesa" ? "bg-destructive hover:bg-destructive/90" : ""}
+            className={tipo === "despesa" ? "gradient-red text-foreground font-bold" : ""}
             onClick={() => { setTipo("despesa"); setCategoria(""); }}
           >
-            Despesa
+            💸 Despesa
           </Button>
         </div>
 
@@ -101,7 +110,7 @@ export default function NovaTransacao() {
             placeholder="0,00"
             value={valor}
             onChange={(e) => setValor(e.target.value)}
-            className="min-h-[48px] text-2xl font-bold"
+            className="min-h-[48px] text-2xl font-bold input-premium"
             step="0.01"
             min="0"
             disabled={salvando}
@@ -111,12 +120,12 @@ export default function NovaTransacao() {
         <div className="space-y-2">
           <Label>Categoria</Label>
           <Select value={categoria} onValueChange={setCategoria} disabled={salvando}>
-            <SelectTrigger className="min-h-[48px]">
+            <SelectTrigger className="min-h-[48px] input-premium">
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
               {categorias.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+                <SelectItem key={c} value={c}>{EMOJIS_CAT[c] || "📦"} {c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -128,7 +137,7 @@ export default function NovaTransacao() {
             placeholder="Ex: Almoço com a família"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            className="min-h-[48px]"
+            className="min-h-[48px] input-premium"
             disabled={salvando}
           />
         </div>
@@ -139,7 +148,7 @@ export default function NovaTransacao() {
             type="date"
             value={data}
             onChange={(e) => setData(e.target.value)}
-            className="min-h-[48px]"
+            className="min-h-[48px] input-premium"
             disabled={salvando}
           />
         </div>
@@ -149,7 +158,7 @@ export default function NovaTransacao() {
           className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold"
           disabled={salvando || !valor || !categoria}
         >
-          {salvando ? <Loader2 className="h-5 w-5 animate-spin" /> : "Salvar Transação"}
+          {salvando ? <Loader2 className="h-5 w-5 animate-spin" /> : "✅ Salvar Transação"}
         </Button>
       </div>
       <BottomNav />
