@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIAS_RECEITA, CATEGORIAS_DESPESA } from "@/lib/utils";
 import BottomNav from "@/components/BottomNav";
@@ -17,9 +17,15 @@ const EMOJIS_CAT: Record<string, string> = {
   "Presente": "🎁", "Outros": "📦",
 };
 
+const converterValor = (v: string): number => {
+  if (!v) return 0;
+  const limpo = v.replace(/[^\d,\.]/g, "");
+  const numero = limpo.replace(",", ".");
+  return parseFloat(numero) || 0;
+};
+
 export default function NovaTransacao() {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const [tipo, setTipo] = useState<"receita" | "despesa" | "">("");
   const [valor, setValor] = useState("");
@@ -31,17 +37,18 @@ export default function NovaTransacao() {
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : tipo === "despesa" ? CATEGORIAS_DESPESA : [];
 
   const handleSalvar = async () => {
+    const valorNum = converterValor(valor);
+
     if (!tipo) {
-      toast({ title: "Selecione Receita ou Despesa", variant: "destructive" });
+      toast.error("Selecione o tipo da transação");
       return;
     }
-    const valorNum = parseFloat(valor.replace(/\./g, "").replace(",", "."));
-    if (!valorNum || valorNum <= 0) {
-      toast({ title: "Digite um valor válido", variant: "destructive" });
+    if (valorNum <= 0) {
+      toast.error("Digite um valor válido");
       return;
     }
-    if (!categoria) {
-      toast({ title: "Selecione uma categoria", variant: "destructive" });
+    if (!categoria || categoria === "") {
+      toast.error("Selecione uma categoria");
       return;
     }
 
@@ -57,7 +64,7 @@ export default function NovaTransacao() {
         .maybeSingle();
 
       if (!profile?.familia_id) {
-        toast({ title: "Família não encontrada", variant: "destructive" });
+        toast.error("Família não encontrada");
         return;
       }
 
@@ -67,101 +74,119 @@ export default function NovaTransacao() {
         tipo,
         valor: valorNum,
         categoria,
-        descricao: descricao || null,
+        descricao: descricao.trim() || null,
         data_transacao: data,
         recorrente: false,
         tags: [],
       });
       if (error) throw error;
 
-      // Use RPC for gamification points
-      await supabase.rpc("add_gamification_points", {
-        p_pontos: 10,
-        p_tipo_evento: "transacao_criada",
-        p_descricao: "Cadastrou transação",
-      });
+      await Promise.all([
+        supabase.from("gamificacao_eventos").insert({
+          usuario_id: session.user.id,
+          tipo_evento: "transacao_criada",
+          pontos_ganhos: 10,
+          metadata: { categoria, tipo, valor: valorNum },
+        }),
+        supabase.from("profiles")
+          .update({ pontos_total: (profile.pontos_total || 0) + 10 })
+          .eq("id", session.user.id),
+      ]);
 
       if (navigator.vibrate) navigator.vibrate(200);
-      toast({ title: "✅ Transação salva! +10 pontos 🎉" });
+      toast.success("✅ Transação salva! +10 pontos");
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao salvar";
-      toast({ title: "Erro", description: msg, variant: "destructive" });
+      toast.error(msg);
     } finally {
       setSalvando(false);
     }
   };
 
+  // Step 1: Choose type
+  if (!tipo) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="mx-auto max-w-[430px] px-4 py-4 space-y-5">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold text-foreground">Nova Transação</h1>
+          </div>
+
+          <p className="text-center text-muted-foreground text-sm">Qual o tipo da transação?</p>
+
+          <div className="grid grid-cols-1 gap-3 mt-4">
+            <button
+              onClick={() => setTipo("receita")}
+              className="py-6 rounded-xl font-bold text-lg transition-all"
+              style={{
+                background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                color: "#fff",
+                boxShadow: "0 4px 20px rgba(34,197,94,0.3)",
+              }}
+            >
+              💰 Receita
+            </button>
+            <button
+              onClick={() => setTipo("despesa")}
+              className="py-6 rounded-xl font-bold text-lg transition-all"
+              style={{
+                background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                color: "#fff",
+                boxShadow: "0 4px 20px rgba(239,68,68,0.3)",
+              }}
+            >
+              💸 Despesa
+            </button>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Step 2: Form
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-5">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => setTipo("")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold text-foreground">Nova Transação</h1>
-        </div>
-
-        {/* Toggle tipo */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => { setTipo("receita"); setCategoria(""); }}
-            className="py-3 rounded-xl font-bold text-sm transition-all"
-            style={{
-              background: tipo === "receita"
-                ? "linear-gradient(135deg, #22c55e, #16a34a)"
-                : "rgba(255,255,255,0.05)",
-              color: tipo === "receita" ? "#fff" : "rgba(255,255,255,0.6)",
-              border: tipo === "receita" ? "none" : "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            💰 Receita
-          </button>
-          <button
-            onClick={() => { setTipo("despesa"); setCategoria(""); }}
-            className="py-3 rounded-xl font-bold text-sm transition-all"
-            style={{
-              background: tipo === "despesa"
-                ? "linear-gradient(135deg, #ef4444, #dc2626)"
-                : "rgba(255,255,255,0.05)",
-              color: tipo === "despesa" ? "#fff" : "rgba(255,255,255,0.6)",
-              border: tipo === "despesa" ? "none" : "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            💸 Despesa
-          </button>
+          <h1 className="text-lg font-bold text-foreground">
+            {tipo === "receita" ? "💰 Nova Receita" : "💸 Nova Despesa"}
+          </h1>
         </div>
 
         <div className="space-y-2">
           <Label>Valor (R$)</Label>
           <Input
-            type="number"
+            type="text"
             inputMode="decimal"
             placeholder="0,00"
             value={valor}
             onChange={(e) => setValor(e.target.value)}
-            className="min-h-[48px] text-2xl font-bold input-premium"
-            step="0.01"
-            min="0"
+            className="min-h-[48px] text-2xl font-bold"
             disabled={salvando}
           />
         </div>
 
-        {tipo && (
-          <div className="space-y-2">
-            <Label>Categoria</Label>
-            <Select value={categoria} onValueChange={setCategoria} disabled={salvando}>
-              <SelectTrigger className="min-h-[48px] input-premium">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {categorias.map((c) => (
-                  <SelectItem key={c} value={c}>{EMOJIS_CAT[c] || "📦"} {c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <div className="space-y-2">
+          <Label>Categoria</Label>
+          <Select value={categoria} onValueChange={setCategoria} disabled={salvando}>
+            <SelectTrigger className="min-h-[48px]">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {categorias.map((c) => (
+                <SelectItem key={c} value={c}>{EMOJIS_CAT[c] || "📦"} {c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="space-y-2">
           <Label>Descrição (opcional)</Label>
@@ -169,7 +194,7 @@ export default function NovaTransacao() {
             placeholder="Ex: Almoço com a família"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            className="min-h-[48px] input-premium"
+            className="min-h-[48px]"
             disabled={salvando}
           />
         </div>
@@ -180,7 +205,7 @@ export default function NovaTransacao() {
             type="date"
             value={data}
             onChange={(e) => setData(e.target.value)}
-            className="min-h-[48px] input-premium"
+            className="min-h-[48px]"
             disabled={salvando}
           />
         </div>
@@ -188,13 +213,20 @@ export default function NovaTransacao() {
         <button
           onClick={handleSalvar}
           disabled={salvando}
-          className="w-full py-4 rounded-xl font-bold text-lg mt-6"
           style={{
             background: salvando
               ? "rgba(212,175,55,0.5)"
               : "linear-gradient(135deg, #D4AF37, #F4E17A, #B8860B)",
-            boxShadow: "0 4px 20px rgba(212,175,55,0.3)",
             color: "#000",
+            fontWeight: "bold",
+            padding: "16px",
+            borderRadius: "12px",
+            width: "100%",
+            fontSize: "16px",
+            border: "none",
+            cursor: salvando ? "not-allowed" : "pointer",
+            boxShadow: "0 4px 20px rgba(212,175,55,0.3)",
+            marginTop: "24px",
           }}
         >
           {salvando ? "⏳ Salvando..." : "✅ Salvar Transação"}
