@@ -1,24 +1,32 @@
 import { useEffect, useState, useCallback } from "react";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useTransacoes } from "@/hooks/useTransacoes";
+import { useTransacoes, type Transacao } from "@/hooks/useTransacoes";
 import { useGamificacao } from "@/hooks/useGamificacao";
 import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import BottomNav from "@/components/BottomNav";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import TransacaoCard from "@/components/TransacaoCard";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+const CORES_CATEGORIA: Record<string, string> = {
+  "Alimentação": "#D4AF37", "Transporte": "#60A5FA", "Saúde": "#34D399",
+  "Lazer": "#F87171", "Educação": "#A78BFA", "Moradia": "#FB923C",
+  "Roupas": "#F472B6", "Dízimo/Oferta": "#FBBF24", "Outros": "#94A3B8",
+};
 
 function getSaudacao(): string {
   const h = new Date().getHours();
@@ -30,7 +38,7 @@ function getSaudacao(): string {
 export default function Dashboard() {
   const { user } = useAuth();
   const { profile, familia, buscarPerfil, buscarFamilia } = useProfile();
-  const { transacoes, loading: loadingTx, buscarTransacoes, calcularTotais, useRealtimeListener } = useTransacoes();
+  const { transacoes, loading: loadingTx, buscarTransacoes, excluirTransacao, calcularTotais, useRealtimeListener } = useTransacoes();
   const { adicionarPontos } = useGamificacao();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,6 +48,7 @@ export default function Dashboard() {
   const [ano, setAno] = useState(now.getFullYear());
   const [analiseIA, setAnaliseIA] = useState("");
   const [analisando, setAnalisando] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
@@ -52,12 +61,9 @@ export default function Dashboard() {
     }
   }, [profile?.familia_id, mes, ano, buscarFamilia, buscarTransacoes]);
 
-  // Re-fetch when navigating back to dashboard
   useEffect(() => {
     const handleFocus = () => {
-      if (profile?.familia_id) {
-        buscarTransacoes(profile.familia_id, mes, ano);
-      }
+      if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
     };
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
@@ -68,17 +74,30 @@ export default function Dashboard() {
   const totais = calcularTotais(transacoes);
   const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
 
+  // Pie chart data
+  const categoriasMap: Record<string, number> = {};
+  transacoes.filter(t => t.tipo === "despesa").forEach(t => {
+    categoriasMap[t.categoria] = (categoriasMap[t.categoria] || 0) + Number(t.valor);
+  });
+  const dadosGrafico = Object.entries(categoriasMap).map(([name, value]) => ({
+    name, value, color: CORES_CATEGORIA[name] || "#94A3B8"
+  }));
+
+  // Trial card
+  const trialDias = familia?.plano === "trial" && familia
+    ? (() => {
+        // familia object doesn't have data_fim_trial in our hook, compute from plano
+        return null; // We'll check in the component
+      })()
+    : null;
+
   const handleIA = useCallback(async () => {
     if (!user || !profile) return;
     setAnalisando(true);
     try {
-      const categorias: Record<string, number> = {};
-      transacoes.filter(t => t.tipo === "despesa").forEach(t => {
-        categorias[t.categoria] = (categorias[t.categoria] || 0) + Number(t.valor);
-      });
       const resultado = await gerarAnaliseFinanceira({
         receitas: totais.receitas, despesas: totais.despesas, saldo: totais.saldo,
-        categorias, mes: `${MESES[mes - 1]} ${ano}`,
+        categorias: categoriasMap, mes: `${MESES[mes - 1]} ${ano}`,
       });
       setAnaliseIA(resultado);
       await adicionarPontos(user.id, 15, "analise_ia", "Consultou IA financeira");
@@ -89,13 +108,30 @@ export default function Dashboard() {
     } finally {
       setAnalisando(false);
     }
-  }, [user, profile, transacoes, totais, mes, ano, adicionarPontos, toast]);
+  }, [user, profile, transacoes, totais, mes, ano, adicionarPontos, toast, categoriasMap]);
 
   const mudarMes = (dir: number) => {
     let m = mes + dir, a = ano;
     if (m > 12) { m = 1; a++; }
     if (m < 1) { m = 12; a--; }
     setMes(m); setAno(a);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await excluirTransacao(deleteId);
+      toast({ title: "🗑️ Transação excluída" });
+      if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
+    } catch {
+      toast({ title: "Erro ao excluir", variant: "destructive" });
+    } finally {
+      setDeleteId(null);
+    }
+  };
+
+  const handleEditar = (t: Transacao) => {
+    navigate(`/nova-transacao?edit=${t.id}`);
   };
 
   const ultimas5 = transacoes.slice(0, 5);
@@ -105,7 +141,7 @@ export default function Dashboard() {
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-full gradient-gold flex items-center justify-center text-primary-foreground font-bold text-lg">
+          <div className="h-11 w-11 rounded-full gradient-gold flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
             ) : primeiroNome[0]?.toUpperCase()}
@@ -119,7 +155,23 @@ export default function Dashboard() {
 
         <GamificacaoBar pontos={profile?.pontos_total ?? 0} nivel={profile?.nivel_gamificacao ?? 1} />
 
-        {/* Navegação mês */}
+        {/* Trial Warning */}
+        {familia?.plano === "trial" && (
+          <Card className="border-yellow-500/30 bg-yellow-500/10">
+            <CardContent className="p-3 flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-400 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-yellow-400">Período de teste</p>
+                <p className="text-[10px] text-muted-foreground">Assine para continuar usando</p>
+              </div>
+              <Button size="sm" className="gradient-gold text-primary-foreground text-xs h-7" onClick={() => navigate("/assinatura")}>
+                Assinar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Month nav */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" onClick={() => mudarMes(-1)}>
             <ChevronLeft className="h-5 w-5" />
@@ -130,7 +182,7 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Cards de totais */}
+        {/* Totals */}
         {loadingTx ? (
           <div className="grid grid-cols-3 gap-2">
             {[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
@@ -163,31 +215,46 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Pie Chart */}
+        {dadosGrafico.length > 0 && (
+          <Card className="card-glass">
+            <CardContent className="p-3">
+              <p className="text-xs font-semibold text-foreground mb-2">Gastos por Categoria</p>
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={dadosGrafico} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={9}>
+                      {dadosGrafico.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatarMoeda(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <ReflexaoDiaria />
 
         {/* IA */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button
-              className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold"
-              disabled={analisando}
-              onClick={handleIA}
-            >
+            <Button className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold" disabled={analisando} onClick={handleIA}>
               <Zap className="h-5 w-5 mr-2" />
               {analisando ? "Analisando..." : "⚡ Invocar Conselho IA"}
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="bg-card border-primary/20">
-            <SheetHeader>
-              <SheetTitle className="text-primary">🤖 Conselho da IA</SheetTitle>
-            </SheetHeader>
+            <SheetHeader><SheetTitle className="text-primary">🤖 Conselho da IA</SheetTitle></SheetHeader>
             <div className="mt-4 whitespace-pre-wrap text-sm text-foreground/90 max-h-[60vh] overflow-y-auto">
               {analiseIA || "Gerando análise..."}
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Últimas transações */}
+        {/* Recent transactions */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold text-foreground">Últimas transações</h2>
@@ -209,12 +276,32 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-2">
-              {ultimas5.map((t) => <TransacaoCard key={t.id} transacao={t} />)}
+              {ultimas5.map((t) => (
+                <TransacaoCard
+                  key={t.id}
+                  transacao={t}
+                  onEdit={handleEditar}
+                  onDelete={(id) => setDeleteId(id)}
+                />
+              ))}
             </div>
           )}
         </div>
-      </div>
 
+        {/* Delete dialog */}
+        <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+              <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive">Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
       <BottomNav />
     </div>
   );

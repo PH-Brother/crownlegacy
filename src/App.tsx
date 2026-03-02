@@ -20,6 +20,8 @@ import Settings from "./pages/Settings";
 import UploadPage from "./pages/Upload";
 import Checkin from "./pages/Checkin";
 import Assinatura from "./pages/Assinatura";
+import IAConselho from "./pages/IAConselho";
+import Metas from "./pages/Metas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +61,8 @@ const App = () => (
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/checkin" element={<Checkin />} />
               <Route path="/assinatura" element={<Assinatura />} />
+              <Route path="/ia-conselho" element={<IAConselho />} />
+              <Route path="/metas" element={<Metas />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
