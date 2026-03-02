@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useTransacoes, type Transacao } from "@/hooks/useTransacoes";
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useGamificacao } from "@/hooks/useGamificacao";
 import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
@@ -19,6 +19,7 @@ import BottomNav from "@/components/BottomNav";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import TransacaoCard from "@/components/TransacaoCard";
+import type { Transacao } from "@/hooks/useTransacoes";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
@@ -35,10 +36,15 @@ function getSaudacao(): string {
   return "Boa noite";
 }
 
+function calcularDiasTrial(dataFimTrial: string | null): number | null {
+  if (!dataFimTrial) return null;
+  const diff = new Date(dataFimTrial).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
-  const { profile, familia, buscarPerfil, buscarFamilia } = useProfile();
-  const { transacoes, loading: loadingTx, buscarTransacoes, excluirTransacao, calcularTotais, useRealtimeListener } = useTransacoes();
+  const { profile, buscarPerfil } = useProfile();
   const { adicionarPontos } = useGamificacao();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,29 +56,15 @@ export default function Dashboard() {
   const [analisando, setAnalisando] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const { totais, transacoes, familia, loading: loadingTx } = useDashboardMetrics(user?.id, mes, ano);
+
+  const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
+
+  // Fetch profile on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user) buscarPerfil(user.id);
   }, [user, buscarPerfil]);
-
-  useEffect(() => {
-    if (profile?.familia_id) {
-      buscarFamilia(profile.familia_id);
-      buscarTransacoes(profile.familia_id, mes, ano);
-    }
-  }, [profile?.familia_id, mes, ano, buscarFamilia, buscarTransacoes]);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
-    };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [profile?.familia_id, mes, ano, buscarTransacoes]);
-
-  useRealtimeListener(profile?.familia_id ?? null);
-
-  const totais = calcularTotais(transacoes);
-  const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
 
   // Pie chart data
   const categoriasMap: Record<string, number> = {};
@@ -83,13 +75,8 @@ export default function Dashboard() {
     name, value, color: CORES_CATEGORIA[name] || "#94A3B8"
   }));
 
-  // Trial card
-  const trialDias = familia?.plano === "trial" && familia
-    ? (() => {
-        // familia object doesn't have data_fim_trial in our hook, compute from plano
-        return null; // We'll check in the component
-      })()
-    : null;
+  // Trial days
+  const trialDias = familia?.plano === "trial" ? calcularDiasTrial(familia.data_fim_trial) : null;
 
   const handleIA = useCallback(async () => {
     if (!user || !profile) return;
@@ -108,7 +95,7 @@ export default function Dashboard() {
     } finally {
       setAnalisando(false);
     }
-  }, [user, profile, transacoes, totais, mes, ano, adicionarPontos, toast, categoriasMap]);
+  }, [user, profile, totais, mes, ano, adicionarPontos, toast, categoriasMap]);
 
   const mudarMes = (dir: number) => {
     let m = mes + dir, a = ano;
@@ -120,9 +107,10 @@ export default function Dashboard() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await excluirTransacao(deleteId);
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.from("transacoes").delete().eq("id", deleteId);
+      if (error) throw error;
       toast({ title: "🗑️ Transação excluída" });
-      if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {
@@ -156,12 +144,14 @@ export default function Dashboard() {
         <GamificacaoBar pontos={profile?.pontos_total ?? 0} nivel={profile?.nivel_gamificacao ?? 1} />
 
         {/* Trial Warning */}
-        {familia?.plano === "trial" && (
-          <Card className="border-yellow-500/30 bg-yellow-500/10">
+        {familia?.plano === "trial" && trialDias !== null && (
+          <Card className={`${trialDias < 3 ? "border-destructive/50 bg-destructive/10" : "border-yellow-500/30 bg-yellow-500/10"}`}>
             <CardContent className="p-3 flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-400 shrink-0" />
+              <AlertTriangle className={`h-5 w-5 shrink-0 ${trialDias < 3 ? "text-destructive" : "text-yellow-400"}`} />
               <div className="flex-1">
-                <p className="text-xs font-semibold text-yellow-400">Período de teste</p>
+                <p className={`text-xs font-semibold ${trialDias < 3 ? "text-destructive" : "text-yellow-400"}`}>
+                  {trialDias === 0 ? "Trial expirado!" : `Trial expira em ${trialDias} dia${trialDias > 1 ? "s" : ""}`}
+                </p>
                 <p className="text-[10px] text-muted-foreground">Assine para continuar usando</p>
               </div>
               <Button size="sm" className="gradient-gold text-primary-foreground text-xs h-7" onClick={() => navigate("/assinatura")}>
@@ -189,21 +179,21 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-2">
-            <Card className="gold-top-border border-success/20 bg-success/5">
+            <Card className="bg-[rgba(255,255,255,0.05)] border-[#D4AF37]/30">
               <CardContent className="p-3 text-center">
-                <TrendingUp className="h-4 w-4 mx-auto mb-1" style={{ color: "#22c55e" }} />
+                <TrendingUp className="h-4 w-4 mx-auto mb-1 text-green-500" />
                 <p className="text-[10px] text-muted-foreground">Entradas</p>
-                <p className="text-sm font-bold" style={{ color: "#22c55e" }}>{formatarMoeda(totais.receitas)}</p>
+                <p className="text-sm font-bold text-green-500">{formatarMoeda(totais.receitas)}</p>
               </CardContent>
             </Card>
-            <Card className="gold-top-border border-destructive/20 bg-destructive/5">
+            <Card className="bg-[rgba(255,255,255,0.05)] border-[#D4AF37]/30">
               <CardContent className="p-3 text-center">
-                <TrendingDown className="h-4 w-4 mx-auto mb-1" style={{ color: "#ef4444" }} />
+                <TrendingDown className="h-4 w-4 mx-auto mb-1 text-red-500" />
                 <p className="text-[10px] text-muted-foreground">Saídas</p>
-                <p className="text-sm font-bold" style={{ color: "#ef4444" }}>{formatarMoeda(totais.despesas)}</p>
+                <p className="text-sm font-bold text-red-500">{formatarMoeda(totais.despesas)}</p>
               </CardContent>
             </Card>
-            <Card className={`gold-top-border ${totais.saldo >= 0 ? "border-primary/20 bg-primary/5" : "border-destructive/20 bg-destructive/5"}`}>
+            <Card className="bg-[rgba(255,255,255,0.05)] border-[#D4AF37]/30">
               <CardContent className="p-3 text-center">
                 <span className="text-sm mb-1 block">{totais.saldo >= 0 ? "💰" : "⚠️"}</span>
                 <p className="text-[10px] text-muted-foreground">Saldo</p>
@@ -217,7 +207,7 @@ export default function Dashboard() {
 
         {/* Pie Chart */}
         {dadosGrafico.length > 0 && (
-          <Card className="card-glass">
+          <Card className="bg-[rgba(255,255,255,0.05)] border-[#D4AF37]/20">
             <CardContent className="p-3">
               <p className="text-xs font-semibold text-foreground mb-2">Gastos por Categoria</p>
               <div className="h-40">
