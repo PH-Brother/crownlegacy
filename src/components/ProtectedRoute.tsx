@@ -1,34 +1,11 @@
-import { useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
 import { Navigate, Outlet } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProtectedRoute() {
-  const [status, setStatus] = useState<"loading" | "auth" | "no-family" | "ok">("loading");
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    const check = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setStatus("auth");
-        return;
-      }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("familia_id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!profile?.familia_id) {
-        setStatus("no-family");
-      } else {
-        setStatus("ok");
-      }
-    };
-    check();
-  }, []);
-
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -39,7 +16,6 @@ export default function ProtectedRoute() {
     );
   }
 
-  if (status === "auth") return <Navigate to="/auth" replace />;
-  if (status === "no-family") return <Navigate to="/onboarding-family" replace />;
+  if (!user) return <Navigate to="/auth" replace />;
   return <Outlet />;
 }

@@ -1,24 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const check = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth", { replace: true });
-        return;
-      }
+    if (loading) return;
+
+    if (!user) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+
+    const checkFamily = async () => {
       const { data: profile } = await supabase
         .from("profiles")
         .select("familia_id")
-        .eq("id", session.user.id)
-        .single();
+        .eq("id", user.id)
+        .maybeSingle();
 
       if (profile?.familia_id) {
         navigate("/dashboard", { replace: true });
@@ -26,10 +29,9 @@ export default function Index() {
         navigate("/onboarding-family", { replace: true });
       }
     };
-    check().finally(() => setLoading(false));
-  }, [navigate]);
 
-  if (!loading) return null;
+    checkFamily();
+  }, [user, loading, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

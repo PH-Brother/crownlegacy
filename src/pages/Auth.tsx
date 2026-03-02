@@ -24,14 +24,16 @@ export default function Auth() {
   const [showLoginPass, setShowLoginPass] = useState(false);
   const [showCadPass, setShowCadPass] = useState(false);
 
-  const navigateAfterAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+  const navigateAfterAuth = async (userId: string) => {
+    // Small delay for trigger to complete on signup
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("familia_id")
-      .eq("id", session.user.id)
-      .single();
+      .eq("id", userId)
+      .maybeSingle();
+
     if (profile?.familia_id) {
       navigate("/dashboard", { replace: true });
     } else {
@@ -47,9 +49,9 @@ export default function Auth() {
     }
     setLoading(true);
     try {
-      await signIn(loginEmail, loginSenha);
+      const data = await signIn(loginEmail, loginSenha);
       toast({ title: "✅ Bem-vindo de volta!" });
-      await navigateAfterAuth();
+      await navigateAfterAuth(data.user.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao entrar";
       toast({ title: "Erro", description: msg, variant: "destructive" });
@@ -70,9 +72,11 @@ export default function Auth() {
     }
     setLoading(true);
     try {
-      await signUp(cadEmail, cadSenha, nome);
+      const data = await signUp(cadEmail, cadSenha, nome);
       toast({ title: "✅ Conta criada!", description: "Verifique seu email para confirmar." });
-      await navigateAfterAuth();
+      if (data.user) {
+        await navigateAfterAuth(data.user.id);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
       toast({ title: "Erro", description: msg, variant: "destructive" });
@@ -100,40 +104,18 @@ export default function Auth() {
             <form onSubmit={handleLogin} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="min-h-[48px] input-premium"
-                  disabled={loading}
-                />
+                <Input type="email" placeholder="seu@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="min-h-[48px] input-premium" disabled={loading} />
               </div>
               <div className="space-y-2">
                 <Label>Senha</Label>
                 <div className="relative">
-                  <Input
-                    type={showLoginPass ? "text" : "password"}
-                    placeholder="••••••"
-                    value={loginSenha}
-                    onChange={(e) => setLoginSenha(e.target.value)}
-                    className="min-h-[48px] pr-12 input-premium"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPass(!showLoginPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
+                  <Input type={showLoginPass ? "text" : "password"} placeholder="••••••" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} className="min-h-[48px] pr-12 input-premium" disabled={loading} />
+                  <button type="button" onClick={() => setShowLoginPass(!showLoginPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showLoginPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              <Button
-                type="submit"
-                className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base" disabled={loading}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "✨ Entrar"}
               </Button>
             </form>
@@ -143,50 +125,22 @@ export default function Auth() {
             <form onSubmit={handleCadastro} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label>Nome completo</Label>
-                <Input
-                  placeholder="Seu nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="min-h-[48px] input-premium"
-                  disabled={loading}
-                />
+                <Input placeholder="Seu nome" value={nome} onChange={(e) => setNome(e.target.value)} className="min-h-[48px] input-premium" disabled={loading} />
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={cadEmail}
-                  onChange={(e) => setCadEmail(e.target.value)}
-                  className="min-h-[48px] input-premium"
-                  disabled={loading}
-                />
+                <Input type="email" placeholder="seu@email.com" value={cadEmail} onChange={(e) => setCadEmail(e.target.value)} className="min-h-[48px] input-premium" disabled={loading} />
               </div>
               <div className="space-y-2">
                 <Label>Senha</Label>
                 <div className="relative">
-                  <Input
-                    type={showCadPass ? "text" : "password"}
-                    placeholder="Mínimo 6 caracteres"
-                    value={cadSenha}
-                    onChange={(e) => setCadSenha(e.target.value)}
-                    className="min-h-[48px] pr-12 input-premium"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCadPass(!showCadPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
+                  <Input type={showCadPass ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={cadSenha} onChange={(e) => setCadSenha(e.target.value)} className="min-h-[48px] pr-12 input-premium" disabled={loading} />
+                  <button type="button" onClick={() => setShowCadPass(!showCadPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showCadPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              <Button
-                type="submit"
-                className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base" disabled={loading}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🚀 Criar Conta Grátis"}
               </Button>
             </form>
