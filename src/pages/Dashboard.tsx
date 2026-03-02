@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ export default function Dashboard() {
             <p className="font-semibold text-foreground text-sm">{getSaudacao()}, {primeiroNome}!</p>
             <p className="text-xs text-muted-foreground">{familia?.nome || ""}</p>
           </div>
-          <span className="text-2xl">🛡️</span>
+          <img src={logo} alt="Legacy Kingdom" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
         </div>
 
         {/* Gamificação */}

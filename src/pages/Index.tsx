@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,12 +34,7 @@ export default function Index() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
-        <div
-          style={{ background: 'linear-gradient(135deg, #D4AF37, #F4E17A, #B8860B)', boxShadow: '0 0 40px rgba(212,175,55,0.5), 0 8px 32px rgba(0,0,0,0.4)' }}
-          className="w-20 h-20 flex items-center justify-center text-4xl rounded-2xl animate-shield-pulse"
-        >
-          🛡️
-        </div>
+        <img src={logo} alt="Legacy Kingdom" className="w-20 h-20 rounded-2xl animate-shield-pulse drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
         <h1 className="text-2xl font-bold text-primary">Legacy Kingdom</h1>
         <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
