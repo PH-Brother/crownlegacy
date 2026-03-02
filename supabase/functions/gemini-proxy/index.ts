@@ -7,24 +7,50 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { tipo, dados } = await req.json();
+    // Verificar autenticação
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let body: { tipo?: string; dados?: Record<string, unknown> };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { tipo, dados } = body;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not configured");
+      return new Response(JSON.stringify({ error: "Service configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let systemPrompt = "";
     let userPrompt = "";
 
     if (tipo === "analise_financeira") {
+      const d = dados as Record<string, unknown> | undefined;
       systemPrompt = `Você é um conselheiro financeiro cristão sábio e acolhedor. Analise os dados financeiros da família e dê conselhos práticos baseados em princípios bíblicos. Seja direto, use emojis, e termine com um versículo bíblico relevante. Responda em português do Brasil.`;
-      userPrompt = `Analise estes dados financeiros do mês de ${dados?.mes || "atual"}:
-- Receitas: R$ ${dados?.receitas?.toFixed(2) || "0.00"}
-- Despesas: R$ ${dados?.despesas?.toFixed(2) || "0.00"}  
-- Saldo: R$ ${dados?.saldo?.toFixed(2) || "0.00"}
-- Gastos por categoria: ${JSON.stringify(dados?.categorias || {})}
+      userPrompt = `Analise estes dados financeiros do mês de ${String(d?.mes || "atual").slice(0, 50)}:
+- Receitas: R$ ${Number(d?.receitas || 0).toFixed(2)}
+- Despesas: R$ ${Number(d?.despesas || 0).toFixed(2)}  
+- Saldo: R$ ${Number(d?.saldo || 0).toFixed(2)}
+- Gastos por categoria: ${JSON.stringify(d?.categorias || {}).slice(0, 2000)}
 
 Dê uma análise breve (máximo 300 palavras) com:
 1. Avaliação geral
@@ -38,10 +64,14 @@ Linha 1: O versículo bíblico completo
 Linha 2: A referência (ex: Provérbios 21:5)
 Linhas seguintes: Uma reflexão prática de 2-3 frases sobre como aplicar este versículo à vida financeira.`;
     } else if (tipo === "analise_fatura") {
+      const d = dados as Record<string, unknown> | undefined;
       systemPrompt = `Você é um assistente financeiro que analisa faturas e documentos financeiros. Responda em português do Brasil.`;
-      userPrompt = `O usuário fez upload de um arquivo (${dados?.filename || "documento"}). Gere uma análise simulada com sugestões de como categorizar os gastos encontrados e dicas de economia.`;
+      userPrompt = `O usuário fez upload de um arquivo (${String(d?.filename || "documento").slice(0, 100)}). Gere uma análise simulada com sugestões de como categorizar os gastos encontrados e dicas de economia.`;
     } else {
-      throw new Error("Tipo de análise não reconhecido");
+      return new Response(JSON.stringify({ error: "Tipo de análise não reconhecido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -61,6 +91,8 @@ Linhas seguintes: Uma reflexão prática de 2-3 frases sobre como aplicar este v
 
     if (!response.ok) {
       const status = response.status;
+      const text = await response.text();
+      console.error("AI Gateway error:", status, text);
       if (status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }), {
           status: 429,
@@ -68,14 +100,15 @@ Linhas seguintes: Uma reflexão prática de 2-3 frases sobre como aplicar este v
         });
       }
       if (status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const text = await response.text();
-      console.error("AI Gateway error:", status, text);
-      throw new Error(`Gateway error: ${status}`);
+      return new Response(JSON.stringify({ error: "Erro ao processar análise" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
@@ -86,7 +119,7 @@ Linhas seguintes: Uma reflexão prática de 2-3 frases sobre como aplicar este v
     });
   } catch (e) {
     console.error("gemini-proxy error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

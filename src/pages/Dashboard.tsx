@@ -134,21 +134,21 @@ export default function Dashboard() {
               <CardContent className="p-3 text-center">
                 <TrendingUp className="h-4 w-4 text-success mx-auto mb-1" />
                 <p className="text-[10px] text-muted-foreground">Entradas</p>
-                <p className="text-sm font-bold text-success">{formatarMoeda(totais.receitas)}</p>
+                <p className="text-sm font-bold" style={{ color: "#22c55e" }}>{formatarMoeda(totais.receitas)}</p>
               </CardContent>
             </Card>
             <Card className="gold-top-border border-destructive/20 bg-destructive/5">
               <CardContent className="p-3 text-center">
                 <TrendingDown className="h-4 w-4 text-destructive mx-auto mb-1" />
                 <p className="text-[10px] text-muted-foreground">Saídas</p>
-                <p className="text-sm font-bold text-destructive">{formatarMoeda(totais.despesas)}</p>
+                <p className="text-sm font-bold" style={{ color: "#ef4444" }}>{formatarMoeda(totais.despesas)}</p>
               </CardContent>
             </Card>
-            <Card className={`gold-top-border ${totais.saldo >= 0 ? "border-primary/20 bg-primary/5" : "border-muted bg-muted/30"}`}>
+            <Card className={`gold-top-border ${totais.saldo >= 0 ? "border-primary/20 bg-primary/5" : "border-destructive/20 bg-destructive/5"}`}>
               <CardContent className="p-3 text-center">
                 <span className="text-sm mb-1 block">{totais.saldo >= 0 ? "💰" : "⚠️"}</span>
                 <p className="text-[10px] text-muted-foreground">Saldo</p>
-                <p className={`text-sm font-bold ${totais.saldo >= 0 ? "text-primary" : "text-destructive"}`}>
+                <p className="text-sm font-bold" style={{ color: totais.saldo >= 0 ? "#D4AF37" : "#ef4444" }}>
                   {formatarMoeda(totais.saldo)}
                 </p>
               </CardContent>
