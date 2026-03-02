@@ -11,36 +11,18 @@ function calcularNivel(pontos: number): number {
 
 export function useGamificacao() {
   const adicionarPontos = useCallback(async (
-    userId: string,
+    _userId: string,
     pontos: number,
     tipo: string,
     descricao: string
   ) => {
     try {
-      const { error: eventoError } = await supabase
-        .from("gamificacao_eventos")
-        .insert({
-          usuario_id: userId,
-          tipo_evento: tipo,
-          pontos_ganhos: pontos,
-          metadata: { descricao },
-        });
-      if (eventoError) console.error("Erro ao registrar evento:", eventoError);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("pontos_total")
-        .eq("id", userId)
-        .single();
-
-      if (profile) {
-        const novosPontos = Math.max(0, (profile.pontos_total ?? 0) + pontos);
-        const novoNivel = calcularNivel(novosPontos);
-        await supabase
-          .from("profiles")
-          .update({ pontos_total: novosPontos, nivel_gamificacao: novoNivel })
-          .eq("id", userId);
-      }
+      const { error } = await supabase.rpc("add_gamification_points", {
+        p_pontos: pontos,
+        p_tipo_evento: tipo,
+        p_descricao: descricao,
+      });
+      if (error) console.error("Erro na gamificação:", error);
     } catch (err) {
       console.error("Erro na gamificação:", err);
     }

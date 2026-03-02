@@ -421,9 +421,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_gamification_points: {
+        Args: { p_descricao: string; p_pontos: number; p_tipo_evento: string }
+        Returns: undefined
+      }
+      create_family_with_admin: {
+        Args: { p_codigo_convite: string; p_nome: string }
+        Returns: {
+          codigo_convite: string
+          id: string
+          nome: string
+        }[]
+      }
       get_user_familia_id:
         | { Args: never; Returns: string }
         | { Args: { user_id: string }; Returns: string }
+      join_family_with_code: {
+        Args: { p_codigo_convite: string }
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
