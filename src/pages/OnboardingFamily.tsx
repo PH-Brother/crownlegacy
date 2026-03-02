@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { gerarCodigo8 } from "@/lib/utils";
 import { Loader2, Home, KeyRound } from "lucide-react";
 
 export default function OnboardingFamily() {
   const { user } = useAuth();
-  const { criarFamilia } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [modo, setModo] = useState<"escolha" | "criar">("escolha");
@@ -23,10 +23,42 @@ export default function OnboardingFamily() {
       toast({ title: "❌ Nome da família deve ter pelo menos 2 caracteres", variant: "destructive" });
       return;
     }
-    if (!user) return;
+    if (!user) { navigate("/auth"); return; }
     setLoading(true);
     try {
-      await criarFamilia(nomeFamilia.trim(), user.id);
+      // Check if user already has a family (possibly created by trigger)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("familia_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.familia_id) {
+        // Already has family → just update the name
+        await supabase
+          .from("familias")
+          .update({ nome: nomeFamilia.trim() })
+          .eq("id", profile.familia_id);
+        toast({ title: "🏠 Família atualizada com sucesso!" });
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      // No family yet → create manually
+      const codigo = gerarCodigo8();
+      const { data: familia, error: familiaError } = await supabase
+        .from("familias")
+        .insert({ nome: nomeFamilia.trim(), codigo_convite: codigo })
+        .select("id")
+        .single();
+      if (familiaError) throw familiaError;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ familia_id: familia.id, role: "admin" })
+        .eq("id", user.id);
+      if (updateError) throw updateError;
+
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
