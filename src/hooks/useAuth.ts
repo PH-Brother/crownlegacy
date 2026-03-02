@@ -40,12 +40,7 @@ export function useAuth() {
     });
     if (error) throw error;
 
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({ id: data.user.id, nome_completo });
-      if (profileError) console.error("Erro ao criar perfil:", profileError);
-    }
+    // Profile is created automatically by handle_new_user trigger
 
     return data;
   }, []);
