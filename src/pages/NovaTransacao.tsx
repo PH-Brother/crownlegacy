@@ -17,18 +17,12 @@ const EMOJIS_CAT: Record<string, string> = {
   "Presente": "🎁", "Outros": "📦",
 };
 
-const converterValor = (v: string): number => {
-  if (!v) return 0;
-  const limpo = v.replace(/[^\d,\.]/g, "");
-  const numero = limpo.replace(",", ".");
-  return parseFloat(numero) || 0;
-};
-
 export default function NovaTransacao() {
   const navigate = useNavigate();
 
   const [tipo, setTipo] = useState<"receita" | "despesa" | "">("");
-  const [valor, setValor] = useState("");
+  const [valorDisplay, setValorDisplay] = useState("");
+  const [valorNum, setValorNum] = useState(0);
   const [categoria, setCategoria] = useState("");
   const [descricao, setDescricao] = useState("");
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
@@ -36,9 +30,15 @@ export default function NovaTransacao() {
 
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : tipo === "despesa" ? CATEGORIAS_DESPESA : [];
 
-  const handleSalvar = async () => {
-    const valorNum = converterValor(valor);
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "");
+    if (!raw) { setValorDisplay(""); setValorNum(0); return; }
+    const num = parseInt(raw) / 100;
+    setValorNum(num);
+    setValorDisplay(num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  };
 
+  const handleSalvar = async () => {
     if (!tipo) {
       toast.error("Selecione o tipo da transação");
       return;
@@ -165,10 +165,10 @@ export default function NovaTransacao() {
           <Label>Valor (R$)</Label>
           <Input
             type="text"
-            inputMode="decimal"
+            inputMode="numeric"
             placeholder="0,00"
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
+            value={valorDisplay}
+            onChange={handleValorChange}
             className="min-h-[48px] text-2xl font-bold"
             disabled={salvando}
           />
