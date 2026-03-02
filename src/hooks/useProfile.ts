@@ -89,39 +89,25 @@ export function useProfile() {
     return f;
   }, []);
 
-  const criarFamilia = useCallback(async (nome: string, userId: string) => {
+  const criarFamilia = useCallback(async (nome: string, _userId: string) => {
     const codigo = gerarCodigo8();
-    const { data, error } = await supabase
-      .from("familias")
-      .insert({ nome, codigo_convite: codigo })
-      .select("id, nome, codigo_convite")
-      .single();
+    const { data, error } = await supabase.rpc("create_family_with_admin", {
+      p_nome: nome,
+      p_codigo_convite: codigo,
+    });
     if (error) throw error;
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ familia_id: data.id, role: "admin" })
-      .eq("id", userId);
-    if (updateError) throw updateError;
-
-    return data;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row;
   }, []);
 
-  const entrarFamilia = useCallback(async (codigo: string, userId: string) => {
-    const { data, error } = await supabase
-      .from("familias")
-      .select("id, nome, codigo_convite")
-      .eq("codigo_convite", codigo)
-      .maybeSingle();
-    if (error || !data) throw new Error("Código de família não encontrado");
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ familia_id: data.id, role: "membro" })
-      .eq("id", userId);
-    if (updateError) throw updateError;
-
-    return data;
+  const entrarFamilia = useCallback(async (codigo: string, _userId: string) => {
+    const { data, error } = await supabase.rpc("join_family_with_code", {
+      p_codigo_convite: codigo,
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error("Código de família não encontrado");
+    return row;
   }, []);
 
   return { profile, familia, loading, buscarPerfil, atualizarPerfil, buscarFamilia, criarFamilia, entrarFamilia };
