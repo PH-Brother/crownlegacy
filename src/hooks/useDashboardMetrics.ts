@@ -93,7 +93,7 @@ export function useDashboardMetrics(userId: string | undefined, mes: number, ano
 
       setMetas((metasData || []) as MetaFinanceira[]);
     } catch (err) {
-      console.error("Dashboard metrics error:", err);
+      // error silenced for production
     } finally {
       setLoading(false);
     }

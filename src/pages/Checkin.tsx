@@ -43,7 +43,7 @@ export default function Checkin() {
       toast({ title: `${EMOJIS[selecionado].emoji} Check-in registrado! +5 pontos` });
       setJaFez(true);
     } catch (err) {
-      console.error(err);
+      // error silenced for production
       toast({ title: "Erro ao registrar", variant: "destructive" });
     } finally {
       setSalvando(false);

@@ -94,7 +94,10 @@ export default function IAConselho() {
       const { error: uploadError } = await supabase.storage.from("documentos").upload(path, file);
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("documentos").getPublicUrl(path);
+      const { data: signedData, error: signError } = await supabase.storage
+        .from("documentos")
+        .createSignedUrl(path, 3600);
+      if (signError) throw signError;
 
       const { data, error } = await supabase.functions.invoke("gemini-proxy", {
         body: {
@@ -108,7 +111,7 @@ export default function IAConselho() {
 Responda APENAS em JSON válido:
 {"estabelecimento": "nome", "valor": 0.00, "data": "YYYY-MM-DD", "categoria": "Categoria", "descricao": "descrição curta"}
 
-URL do documento: ${urlData.publicUrl}`,
+URL do documento: ${signedData.signedUrl}`,
         },
       });
 
@@ -217,8 +220,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
         p_descricao: "Gerou análise mensal IA",
       });
       toast({ title: "⚡ +15 pontos!" });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao gerar análise", variant: "destructive" });
     } finally {
       setGerandoMensal(false);
