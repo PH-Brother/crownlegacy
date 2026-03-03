@@ -22,9 +22,9 @@ export function useGamificacao() {
         p_tipo_evento: tipo,
         p_descricao: descricao,
       });
-      if (error) console.error("Erro na gamificação:", error);
-    } catch (err) {
-      console.error("Erro na gamificação:", err);
+      if (error) { /* silently fail */ }
+    } catch {
+      /* silently fail */
     }
   }, []);
 
@@ -36,7 +36,6 @@ export function useGamificacao() {
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) {
-      console.error("Erro ao buscar eventos:", error);
       return [];
     }
     return data;

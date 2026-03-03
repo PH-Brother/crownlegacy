@@ -80,7 +80,6 @@ export function useDashboardData(
       setPontos(profileRes.data?.pontos_total ?? 0);
       setNivel(profileRes.data?.nivel_gamificacao ?? 1);
     } catch (err: any) {
-      console.error("Dashboard data error:", err);
       setError(err.message || "Erro ao carregar dados");
     } finally {
       setIsLoading(false);

@@ -49,8 +49,7 @@ export default function Transactions() {
       toast({ title: "🗑️ Transação excluída" });
       // Refresh list
       if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {
       setDeleteId(null);

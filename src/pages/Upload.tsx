@@ -42,7 +42,7 @@ export default function UploadPage() {
     setAnalisando(true);
     try {
       const path = `${user.id}/${Date.now()}_${file.name}`;
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file);
+      const { error: upErr } = await supabase.storage.from("documentos").upload(path, file);
       if (upErr) throw upErr;
 
       const { data } = await supabase.functions.invoke("gemini-proxy", {
@@ -52,8 +52,7 @@ export default function UploadPage() {
       setResultado(data?.resultado || "Análise concluída. Revise os dados extraídos.");
       await adicionarPontos(user.id, 20, "upload_fatura", "Upload e análise de fatura");
       toast({ title: "✅ Análise concluída! +20 pontos" });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro na análise", variant: "destructive" });
     } finally {
       setAnalisando(false);

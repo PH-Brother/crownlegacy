@@ -33,8 +33,7 @@ export default function Assinatura() {
     try {
       // TODO: Integrate with Stripe Checkout
       toast({ title: "🔧 Integração com Stripe em breve!", description: "Por enquanto, aproveite o trial." });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao iniciar checkout", variant: "destructive" });
     } finally {
       setLoading(false);

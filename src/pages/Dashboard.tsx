@@ -121,8 +121,7 @@ export default function Dashboard() {
       setAnaliseIA(resultado);
       await adicionarPontos(user.id, 15, "analise_ia", "Consultou IA financeira");
       toast({ title: "⚡ +15 pontos por usar IA!" });
-    } catch (err) {
-      console.error("Erro IA:", err);
+    } catch {
       toast({ title: "Erro ao gerar análise", variant: "destructive" });
     } finally {
       setAnalisando(false);

@@ -59,8 +59,7 @@ export default function FinancialHealth() {
 
       const { data } = await supabase.from("ia_analises").select("*").eq("familia_id", profile.familia_id).order("created_at", { ascending: false }).limit(10);
       if (data) setAnalises(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao gerar", variant: "destructive" });
     } finally {
       setGerando(false);

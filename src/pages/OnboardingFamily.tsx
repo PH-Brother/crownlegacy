@@ -19,8 +19,9 @@ export default function OnboardingFamily() {
   const [loading, setLoading] = useState(false);
 
   const handleCriar = async () => {
-    if (!nomeFamilia.trim() || nomeFamilia.trim().length < 2) {
-      toast({ title: "❌ Nome da família deve ter pelo menos 2 caracteres", variant: "destructive" });
+    const trimmed = nomeFamilia.trim();
+    if (trimmed.length < 2 || trimmed.length > 50) {
+      toast({ title: "❌ Nome da família deve ter entre 2 e 50 caracteres", variant: "destructive" });
       return;
     }
     if (!user) { navigate("/auth"); return; }
@@ -63,7 +64,6 @@ export default function OnboardingFamily() {
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao criar família";
-      console.error("Erro ao criar família:", err);
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -121,10 +121,14 @@ export default function OnboardingFamily() {
             <Input
               placeholder="Nome da família (ex: Família Silva)"
               value={nomeFamilia}
-              onChange={(e) => setNomeFamilia(e.target.value)}
+              onChange={(e) => setNomeFamilia(e.target.value.slice(0, 50))}
               className="min-h-[48px] input-premium"
               disabled={loading}
+              maxLength={50}
             />
+            {nomeFamilia.trim().length > 0 && nomeFamilia.trim().length < 2 && (
+              <p className="text-xs text-destructive">Mínimo 2 caracteres</p>
+            )}
             <Button
               onClick={handleCriar}
               className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold"

@@ -53,8 +53,7 @@ export function useProfile() {
       };
       setProfile(p);
       return p;
-    } catch (err) {
-      console.error("Erro ao buscar perfil:", err);
+    } catch {
       return null;
     } finally {
       setLoading(false);
