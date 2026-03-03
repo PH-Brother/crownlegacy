@@ -64,8 +64,7 @@ export default function Metas() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       setMetas((data || []) as Meta[]);
-    } catch (err) {
-      console.error(err);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -108,8 +107,7 @@ export default function Metas() {
       setDialogOpen(false);
       setTitulo(""); setDescricao(""); setValorAlvo(""); setPrazo(""); setCategoria("");
       buscarMetas();
-    } catch (err: unknown) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao criar meta", variant: "destructive" });
     } finally {
       setCriando(false);
@@ -135,8 +133,7 @@ export default function Metas() {
       setAporteDialogId(null);
       setAporteValor("");
       buscarMetas();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao registrar", variant: "destructive" });
     }
   };

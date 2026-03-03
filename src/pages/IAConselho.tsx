@@ -124,7 +124,6 @@ URL do documento: ${urlData.publicUrl}`,
         toast({ title: "Não foi possível extrair dados", variant: "destructive" });
       }
     } catch (err: unknown) {
-      console.error(err);
       const msg = err instanceof Error ? err.message : "Erro ao analisar";
       toast({ title: msg, variant: "destructive" });
     } finally {
@@ -166,8 +165,7 @@ URL do documento: ${urlData.publicUrl}`,
       setResultadoAnalise(null);
       setPreviewUrl(null);
       navigate("/dashboard");
-    } catch (err: unknown) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao lançar", variant: "destructive" });
     }
   };
@@ -194,8 +192,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
         p_descricao: "Consultou conselho IA",
       });
       toast({ title: "⚡ +15 pontos por consultar a IA!" });
-    } catch (err: unknown) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro ao consultar IA", variant: "destructive" });
     } finally {
       setConsultando(false);

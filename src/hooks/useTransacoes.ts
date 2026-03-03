@@ -42,8 +42,7 @@ export function useTransacoes() {
       if (error) throw error;
       setTransacoes(data as Transacao[]);
       return data as Transacao[];
-    } catch (err) {
-      console.error("Erro ao buscar transações:", err);
+    } catch {
       return [];
     } finally {
       setLoading(false);

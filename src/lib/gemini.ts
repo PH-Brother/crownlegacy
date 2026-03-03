@@ -29,13 +29,11 @@ export async function gerarAnaliseFinanceira(dados: DadosFinanceiros): Promise<s
     });
 
     if (error) {
-      console.error("Erro ao chamar IA:", error);
       throw error;
     }
 
     return data?.resultado || "Não foi possível gerar a análise no momento.";
-  } catch (err) {
-    console.error("Fallback para análise local:", err);
+  } catch {
     const v = getVersiculoAleatorio();
     return `📊 Resumo: Receitas R$ ${dados.receitas.toFixed(2)} | Despesas R$ ${dados.despesas.toFixed(2)} | Saldo R$ ${dados.saldo.toFixed(2)}\n\n💡 ${v.versiculo} — ${v.referencia}`;
   }
@@ -62,8 +60,7 @@ export async function gerarReflexaoDiaria(): Promise<{
       };
     }
     throw new Error("Sem resultado");
-  } catch (err) {
-    console.error("Fallback para versículo local:", err);
+  } catch {
     const v = getVersiculoAleatorio();
     return {
       versiculo: v.versiculo,

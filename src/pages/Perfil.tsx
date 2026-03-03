@@ -56,7 +56,6 @@ export default function Perfil() {
       if (error) throw error;
       toast({ title: "✅ Perfil atualizado!" });
     } catch (err: unknown) {
-      console.error(err);
       const msg = err instanceof Error ? err.message : "Erro ao salvar perfil";
       toast({ title: msg, variant: "destructive" });
     } finally {
@@ -73,11 +72,11 @@ export default function Perfil() {
       const path = `${user.id}/avatar.${ext}`;
       const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", user.id);
+      const { data: signedData, error: signError } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signError) throw signError;
+      await supabase.from("profiles").update({ avatar_url: signedData.signedUrl }).eq("id", user.id);
       toast({ title: "📸 Avatar atualizado!" });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro no upload", variant: "destructive" });
     } finally {
       setAvatarUploading(false);

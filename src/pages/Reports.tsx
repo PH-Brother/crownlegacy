@@ -65,8 +65,7 @@ export default function Reports() {
       setAnalise(r);
       await adicionarPontos(user.id, 15, "analise_ia", "Analisou relatório com IA");
       toast({ title: "⚡ +15 pontos!" });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast({ title: "Erro na análise", variant: "destructive" });
     } finally {
       setAnalisando(false);

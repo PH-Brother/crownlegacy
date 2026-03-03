@@ -24,7 +24,6 @@ export default function JoinWithCode() {
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Código não encontrado";
-      console.error("Erro ao entrar na família:", err);
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
