@@ -17,7 +17,7 @@ export function useAssinatura() {
     setLoading(true);
     try {
       // TODO: Integrate with Stripe
-      console.log("Stripe checkout pending");
+      // TODO: Integrate with Stripe
     } finally {
       setLoading(false);
     }
@@ -27,7 +27,7 @@ export function useAssinatura() {
     setLoading(true);
     try {
       // TODO: Integrate with Stripe Portal
-      console.log("Stripe portal pending");
+      // TODO: Integrate with Stripe Portal
     } finally {
       setLoading(false);
     }

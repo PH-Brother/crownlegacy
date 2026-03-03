@@ -79,8 +79,8 @@ export function useDashboardData(
       setMetas(metasRes.data || []);
       setPontos(profileRes.data?.pontos_total ?? 0);
       setNivel(profileRes.data?.nivel_gamificacao ?? 1);
-    } catch (err: any) {
-      setError(err.message || "Erro ao carregar dados");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar dados");
     } finally {
       setIsLoading(false);
     }
