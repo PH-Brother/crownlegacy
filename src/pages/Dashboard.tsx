@@ -313,12 +313,12 @@ export default function Dashboard() {
                   <span className="text-amber-400 text-sm italic" style={{fontFamily: 'Lora, serif'}}>Buscando sabedoria...</span>
                 </div>
               ) : analiseIA ? (
-                <div className="bg-[#0d0d1a] border border-amber-400/30 rounded-xl p-4 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="bg-muted border border-primary/20 rounded-xl p-4 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <ReactMarkdown components={{
-                    h3: ({children}) => <h3 className="text-amber-400 font-semibold text-sm mt-4 mb-1" style={{fontFamily: 'Lora, serif'}}>{children}</h3>,
-                    strong: ({children}) => <strong className="text-amber-300 font-bold">{children}</strong>,
-                    p: ({children}) => <p className="text-gray-200 text-sm leading-relaxed mb-2" style={{fontFamily: 'Lora, serif'}}>{children}</p>,
-                    li: ({children}) => <li className="text-gray-200 text-sm leading-relaxed flex gap-2 mb-1"><span className="text-amber-400 flex-shrink-0">•</span><span>{children}</span></li>,
+                    h3: ({children}) => <h3 className="text-primary font-semibold text-sm mt-4 mb-1" style={{fontFamily: 'Lora, serif'}}>{children}</h3>,
+                    strong: ({children}) => <strong className="text-primary font-bold">{children}</strong>,
+                    p: ({children}) => <p className="text-foreground text-sm leading-relaxed mb-2" style={{fontFamily: 'Lora, serif'}}>{children}</p>,
+                    li: ({children}) => <li className="text-foreground text-sm leading-relaxed flex gap-2 mb-1"><span className="text-primary flex-shrink-0">•</span><span>{children}</span></li>,
                     ul: ({children}) => <ul className="list-none pl-0 space-y-1 mb-2">{children}</ul>,
                   }}>{analiseIA}</ReactMarkdown>
                 </div>
