@@ -41,6 +41,25 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!loginEmail) {
+      toast({ title: "Digite seu email primeiro", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({ title: "📧 Email de recuperação enviado!", description: "Verifique sua caixa de entrada." });
+    } catch {
+      toast({ title: "Erro ao enviar email", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginSenha) {
