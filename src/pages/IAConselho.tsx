@@ -236,7 +236,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold text-foreground">⚡ Conselho IA</h1>
+          <h1 className="text-lg font-bold" style={{ fontFamily: "'Lora', serif", color: "#d4af37" }}>📖 Dicas de Sabedoria</h1>
         </div>
 
         {/* SEÇÃO 1: Upload de Documentos */}
