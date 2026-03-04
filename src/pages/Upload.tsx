@@ -25,8 +25,7 @@ export default function UploadPage() {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(f.type)) {
+    if (!isAllowedMime(f.type)) {
       toast({ title: "Formato não suportado", description: "Use PDF, JPG, PNG ou WEBP", variant: "destructive" });
       return;
     }
