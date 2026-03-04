@@ -13,6 +13,7 @@ import { useTransacoes } from "@/hooks/useTransacoes";
 import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
+import { safeStoragePath } from "@/lib/sanitize";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import BottomNav from "@/components/BottomNav";
 
@@ -90,7 +91,7 @@ export default function IAConselho() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
 
-      const path = `${session.user.id}/${Date.now()}_${file.name}`;
+      const path = safeStoragePath(session.user.id, file.type);
       const { error: uploadError } = await supabase.storage.from("documentos").upload(path, file);
       if (uploadError) throw uploadError;
 

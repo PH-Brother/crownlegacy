@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useGamificacao } from "@/hooks/useGamificacao";
 import { supabase } from "@/integrations/supabase/client";
+import { isAllowedMime, safeStoragePath } from "@/lib/sanitize";
 import BottomNav from "@/components/BottomNav";
 
 export default function UploadPage() {
@@ -24,8 +25,7 @@ export default function UploadPage() {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(f.type)) {
+    if (!isAllowedMime(f.type)) {
       toast({ title: "Formato não suportado", description: "Use PDF, JPG, PNG ou WEBP", variant: "destructive" });
       return;
     }
@@ -41,7 +41,7 @@ export default function UploadPage() {
     if (!file || !user) return;
     setAnalisando(true);
     try {
-      const path = `${user.id}/${Date.now()}_${file.name}`;
+      const path = safeStoragePath(user.id, file.type);
       const { error: upErr } = await supabase.storage.from("documentos").upload(path, file);
       if (upErr) throw upErr;
 
