@@ -109,20 +109,19 @@ export default function Onboarding() {
     if (!user) return;
     setLoading(true);
     try {
-      const codigo = gerarCodigo8();
       const { data, error } = await supabase.rpc("create_family_with_admin", {
         p_nome: trimmed,
-        p_codigo_convite: codigo,
+        p_user_id: user.id,
       });
       if (error) throw error;
 
-      // Fetch trial end date
-      const row = Array.isArray(data) ? data[0] : data;
-      if (row?.id) {
+      // data is the familia UUID
+      const familiaId = typeof data === 'string' ? data : null;
+      if (familiaId) {
         const { data: fam } = await supabase
           .from("familias")
           .select("data_fim_trial")
-          .eq("id", row.id)
+          .eq("id", familiaId)
           .maybeSingle();
         setTrialEndDate(fam?.data_fim_trial ?? null);
       }

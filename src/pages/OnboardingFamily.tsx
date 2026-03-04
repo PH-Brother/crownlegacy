@@ -46,10 +46,9 @@ export default function OnboardingFamily() {
       }
 
       // No family yet → create via secure RPC (sets role server-side)
-      const codigo = gerarCodigo8();
       const { error: rpcError } = await supabase.rpc("create_family_with_admin", {
         p_nome: nomeFamilia.trim(),
-        p_codigo_convite: codigo,
+        p_user_id: user.id,
       });
       if (rpcError) throw rpcError;
 

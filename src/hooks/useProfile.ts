@@ -88,15 +88,13 @@ export function useProfile() {
     return f;
   }, []);
 
-  const criarFamilia = useCallback(async (nome: string, _userId: string) => {
-    const codigo = gerarCodigo8();
+  const criarFamilia = useCallback(async (nome: string, userId: string) => {
     const { data, error } = await supabase.rpc("create_family_with_admin", {
       p_nome: nome,
-      p_codigo_convite: codigo,
+      p_user_id: userId,
     });
     if (error) throw error;
-    const row = Array.isArray(data) ? data[0] : data;
-    return row;
+    return data; // UUID of created family
   }, []);
 
   const entrarFamilia = useCallback(async (codigo: string, _userId: string) => {
