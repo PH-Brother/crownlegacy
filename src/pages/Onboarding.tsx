@@ -109,24 +109,28 @@ export default function Onboarding() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("create_family_with_admin" as any, {
-        p_nome: trimmed,
-        p_user_id: user.id,
-      } as any);
-      if (error) throw error;
+      // Create family directly (no RPC)
+      const codigoConvite = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const { data: familia, error: familiaError } = await supabase
+        .from("familias")
+        .insert({
+          nome: trimmed,
+          plano: "trial",
+          data_fim_trial: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          codigo_convite: codigoConvite,
+        })
+        .select()
+        .single();
+      if (familiaError) throw familiaError;
 
-      // data is JSON: { familia_id, codigo_convite, data_fim_trial }
-      const result = typeof data === 'object' && data !== null ? data : (typeof data === 'string' ? JSON.parse(data) : null);
-      if (result?.data_fim_trial) {
-        setTrialEndDate(result.data_fim_trial);
-      } else if (result?.familia_id) {
-        const { data: fam } = await supabase
-          .from("familias")
-          .select("data_fim_trial")
-          .eq("id", result.familia_id)
-          .maybeSingle();
-        setTrialEndDate(fam?.data_fim_trial ?? null);
-      }
+      // Link user to family
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ familia_id: familia.id, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (profileError) throw profileError;
+
+      setTrialEndDate(familia.data_fim_trial);
       goToStep(3);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao criar família";
