@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import { Upload, FileText, Image, Loader2, Eye, X, Copy, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useDocumentos, type Documento } from "@/hooks/useDocumentos";
 
@@ -235,22 +236,25 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85vh] overflow-y-auto border-t-2 border-primary bg-card"
+          className="max-h-[80vh] overflow-hidden flex flex-col border-t-2 border-primary bg-card"
         >
-          <SheetHeader className="pr-8">
+          <SheetHeader className="pr-8 shrink-0">
             <SheetTitle
               className="text-base text-primary"
               style={{ fontFamily: "Lora, serif" }}
             >
               📊 Análise IA — {truncate(sheetDocName, 25)}
             </SheetTitle>
-            <p className="text-[10px] text-primary/60">Powered by Google Gemini</p>
+            <SheetDescription className="text-[10px] text-primary/60">
+              Powered by Google Gemini
+            </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-muted border border-primary/20 rounded-xl p-4 max-h-96 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-muted border border-primary/20 rounded-xl p-4">
               <div className="prose prose-sm max-w-none">
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   components={{
                     h2: ({ children }) => (
                       <h2
@@ -296,31 +300,49 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
                         {children}
                       </blockquote>
                     ),
+                    table: ({ children }) => (
+                      <div className="overflow-x-auto my-3">
+                        <table className="w-full text-sm border-collapse">{children}</table>
+                      </div>
+                    ),
+                    thead: ({ children }) => <thead>{children}</thead>,
+                    tbody: ({ children }) => <tbody>{children}</tbody>,
+                    tr: ({ children }) => <tr>{children}</tr>,
+                    th: ({ children }) => (
+                      <th className="border border-primary/30 px-3 py-2 text-primary font-semibold text-left bg-primary/10">
+                        {children}
+                      </th>
+                    ),
+                    td: ({ children }) => (
+                      <td className="border border-primary/20 px-3 py-2 text-foreground">
+                        {children}
+                      </td>
+                    ),
                   }}
                 >
                   {sheetResult}
                 </ReactMarkdown>
               </div>
             </div>
+          </div>
 
-            <div className="flex gap-2 pt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={copyResult}
-                className="text-xs border-primary/30 text-primary"
-              >
-                <Copy className="h-3 w-3 mr-1" /> Copiar análise
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSheetOpen(false)}
-                className="text-xs text-muted-foreground"
-              >
-                <X className="h-3 w-3 mr-1" /> Fechar
-              </Button>
-            </div>
+          <div className="flex gap-2 pt-3 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyResult}
+              className="text-xs border-primary/30 text-primary"
+            >
+              <Copy className="h-3 w-3 mr-1" /> Copiar análise
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSheetOpen(false)}
+              className="text-xs text-muted-foreground"
+            >
+              <X className="h-3 w-3 mr-1" /> Fechar
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
