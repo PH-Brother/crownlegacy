@@ -58,8 +58,10 @@ export default function Dashboard() {
   const { profile, buscarPerfil } = useProfile();
   const { adicionarPontos } = useGamificacao();
   const { familiaId, isLoading: loadingFamilia } = useFamiliaId();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [themeRotating, setThemeRotating] = useState(false);
 
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
