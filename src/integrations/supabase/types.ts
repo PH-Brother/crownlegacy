@@ -282,6 +282,7 @@ export type Database = {
           pontos_total: number | null
           role: string | null
           telefone: string | null
+          tema_preferido: string | null
           updated_at: string | null
         }
         Insert: {
@@ -296,6 +297,7 @@ export type Database = {
           pontos_total?: number | null
           role?: string | null
           telefone?: string | null
+          tema_preferido?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -310,6 +312,7 @@ export type Database = {
           pontos_total?: number | null
           role?: string | null
           telefone?: string | null
+          tema_preferido?: string | null
           updated_at?: string | null
         }
         Relationships: [

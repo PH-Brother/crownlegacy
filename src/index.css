@@ -5,40 +5,77 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 4%;
+  :root,
+  .theme-obsidian {
+    --background: 240 33% 3%;
     --foreground: 34 33% 94%;
-    --card: 0 0% 8%;
+    --card: 240 25% 7%;
     --card-foreground: 34 33% 94%;
-    --popover: 0 0% 8%;
+    --popover: 240 25% 7%;
     --popover-foreground: 34 33% 94%;
     --primary: 43 56% 52%;
-    --primary-foreground: 0 0% 4%;
+    --primary-foreground: 240 33% 3%;
     --primary-light: 48 82% 71%;
     --primary-dark: 36 56% 38%;
-    --secondary: 0 0% 7%;
+    --secondary: 240 20% 5%;
     --secondary-foreground: 34 33% 94%;
-    --muted: 0 0% 10%;
+    --muted: 240 15% 8%;
     --muted-foreground: 39 14% 56%;
     --accent: 43 56% 52%;
-    --accent-foreground: 0 0% 4%;
+    --accent-foreground: 240 33% 3%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 34 33% 94%;
     --success: 142 71% 45%;
     --success-foreground: 34 33% 94%;
     --border: 43 30% 18%;
-    --input: 0 0% 7%;
+    --input: 240 20% 5%;
     --ring: 43 56% 52%;
     --radius: 1rem;
-    --sidebar-background: 0 0% 5%;
+    --sidebar-background: 240 30% 4%;
     --sidebar-foreground: 34 33% 94%;
     --sidebar-primary: 43 56% 52%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 10%;
+    --sidebar-primary-foreground: 240 33% 3%;
+    --sidebar-accent: 240 15% 8%;
     --sidebar-accent-foreground: 34 33% 94%;
     --sidebar-border: 43 30% 18%;
     --sidebar-ring: 43 56% 52%;
-    --nav-background: 0 0% 7%;
+    --nav-background: 240 20% 5%;
+  }
+
+  .theme-ivory {
+    --background: 36 33% 96%;
+    --foreground: 240 33% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 33% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 33% 13%;
+    --primary: 42 65% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 45 55% 55%;
+    --primary-dark: 38 65% 35%;
+    --secondary: 36 25% 92%;
+    --secondary-foreground: 240 33% 13%;
+    --muted: 36 20% 88%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 42 65% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 35%;
+    --success-foreground: 0 0% 100%;
+    --border: 42 30% 78%;
+    --input: 36 25% 92%;
+    --ring: 42 65% 45%;
+    --radius: 1rem;
+    --sidebar-background: 36 30% 94%;
+    --sidebar-foreground: 240 33% 13%;
+    --sidebar-primary: 42 65% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 36 20% 88%;
+    --sidebar-accent-foreground: 240 33% 13%;
+    --sidebar-border: 42 30% 78%;
+    --sidebar-ring: 42 65% 45%;
+    --nav-background: 36 30% 94%;
   }
 }
 

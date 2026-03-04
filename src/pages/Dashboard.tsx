@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Plus } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -57,8 +58,10 @@ export default function Dashboard() {
   const { profile, buscarPerfil } = useProfile();
   const { adicionarPontos } = useGamificacao();
   const { familiaId, isLoading: loadingFamilia } = useFamiliaId();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [themeRotating, setThemeRotating] = useState(false);
 
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
@@ -167,6 +170,14 @@ export default function Dashboard() {
               {familiaInfo.plano === "trial" && trialDias !== null ? `TRIAL · ${trialDias}d` : "PREMIUM"}
             </div>
           )}
+          <button
+            onClick={() => { setThemeRotating(true); toggleTheme(); setTimeout(() => setThemeRotating(false), 400); }}
+            className="h-9 w-9 rounded-full flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            title="Mudar tema"
+            style={{ transition: "transform 0.3s ease", transform: themeRotating ? "rotate(360deg)" : "rotate(0deg)" }}
+          >
+            <span className="text-base">{theme === "obsidian" ? "☀️" : "🌑"}</span>
+          </button>
           <img src={logo} alt="Legacy Kingdom" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
         </div>
 
