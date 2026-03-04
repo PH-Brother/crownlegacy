@@ -305,18 +305,3 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
   );
 }
 
-/** Basic markdown to HTML */
-function formatMarkdown(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37">$1</strong>')
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/^### (.+)$/gm, '<h3 style="color:#d4af37;margin-top:1rem;font-size:0.9rem">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="color:#d4af37;margin-top:1rem;font-size:1rem">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="color:#d4af37;margin-top:1rem;font-size:1.1rem">$1</h1>')
-    .replace(/^- (.+)$/gm, '<li style="margin-left:1rem">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin-left:1rem">$1. $2</li>')
-    .replace(/\n/g, "<br/>");
-}
