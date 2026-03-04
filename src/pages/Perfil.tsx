@@ -45,6 +45,8 @@ interface FamiliaData {
 
 export default function Perfil() {
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [familia, setFamilia] = useState<FamiliaData | null>(null);
