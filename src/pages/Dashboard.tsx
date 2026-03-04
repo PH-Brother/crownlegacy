@@ -170,6 +170,14 @@ export default function Dashboard() {
               {familiaInfo.plano === "trial" && trialDias !== null ? `TRIAL · ${trialDias}d` : "PREMIUM"}
             </div>
           )}
+          <button
+            onClick={() => { setThemeRotating(true); toggleTheme(); setTimeout(() => setThemeRotating(false), 400); }}
+            className="h-9 w-9 rounded-full flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            title="Mudar tema"
+            style={{ transition: "transform 0.3s ease", transform: themeRotating ? "rotate(360deg)" : "rotate(0deg)" }}
+          >
+            <span className="text-base">{theme === "obsidian" ? "☀️" : "🌑"}</span>
+          </button>
           <img src={logo} alt="Legacy Kingdom" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
         </div>
 
