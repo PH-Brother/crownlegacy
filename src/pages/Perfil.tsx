@@ -1,25 +1,26 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import GamificacaoBar from "@/components/GamificacaoBar";
 import BottomNav from "@/components/BottomNav";
 import ProfileAvatar from "@/components/perfil/ProfileAvatar";
 import ProfileForm from "@/components/perfil/ProfileForm";
 import FamilyCard from "@/components/perfil/FamilyCard";
+import FamilyMembersList from "@/components/perfil/FamilyMembersList";
+import JourneyCard from "@/components/perfil/JourneyCard";
 import ProfileSkeleton from "@/components/perfil/ProfileSkeleton";
 
-const ROLE_LABELS: Record<string, string> = {
-  pai: "👨 Pai",
-  mae: "👩 Mãe",
-  filho: "👦 Filho",
-  filha: "👧 Filha",
-  membro: "👤 Membro",
+const ROLE_LABELS: Record<string, { label: string; emoji: string }> = {
+  pai: { label: "Pai", emoji: "👑" },
+  mae: { label: "Mãe", emoji: "👑" },
+  filho: { label: "Filho", emoji: "🌱" },
+  filha: { label: "Filha", emoji: "🌱" },
+  membro: { label: "Membro", emoji: "👤" },
 };
 
 interface ProfileData {
@@ -56,10 +57,8 @@ export default function Perfil() {
         .select("nome_completo, telefone, data_nascimento, role, avatar_url, familia_id, pontos_total, nivel_gamificacao")
         .eq("id", user.id)
         .maybeSingle();
-
       if (!p) return;
       setProfile(p);
-
       if (p.familia_id) {
         const { data: f } = await supabase
           .from("familias")
@@ -80,30 +79,38 @@ export default function Perfil() {
     navigate("/auth", { replace: true });
   };
 
+  const roleInfo = ROLE_LABELS[profile?.role || ""] || ROLE_LABELS.membro;
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-5">
+        {/* Back button */}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground font-display">Meu Perfil</h1>
+        </div>
+
         {loading ? (
           <ProfileSkeleton />
         ) : profile && user ? (
           <>
-            {/* Header */}
-            <div className="text-center space-y-1">
-              <h1 className="text-lg font-bold text-foreground">Meu Perfil</h1>
+            {/* Avatar + Name + Badge */}
+            <div className="text-center space-y-2">
+              <ProfileAvatar
+                avatarUrl={profile.avatar_url}
+                nome={profile.nome_completo}
+                userId={user.id}
+                onAvatarUpdated={(url) => setProfile((prev) => prev ? { ...prev, avatar_url: url } : null)}
+              />
+              <h2 className="text-lg font-semibold text-foreground font-display">{profile.nome_completo}</h2>
               <Badge variant="secondary" className="text-xs">
-                {ROLE_LABELS[profile.role || ""] || "👤 Membro"}
+                {roleInfo.emoji} {roleInfo.label}
               </Badge>
             </div>
 
-            <ProfileAvatar
-              avatarUrl={profile.avatar_url}
-              nome={profile.nome_completo}
-              userId={user.id}
-              onAvatarUpdated={(url) => setProfile((prev) => prev ? { ...prev, avatar_url: url } : null)}
-            />
-
-            <GamificacaoBar pontos={profile.pontos_total ?? 0} nivel={profile.nivel_gamificacao ?? 1} />
-
+            {/* Form */}
             <ProfileForm
               userId={user.id}
               nomeInicial={profile.nome_completo || ""}
@@ -113,23 +120,33 @@ export default function Perfil() {
               email={user.email || ""}
             />
 
-            {familia && (
-              <FamilyCard
-                nome={familia.nome}
-                plano={familia.plano}
-                dataFimTrial={familia.data_fim_trial}
-                codigoConvite={familia.codigo_convite}
-              />
+            {/* Family Card */}
+            {familia && profile.familia_id && (
+              <div>
+                <FamilyCard
+                  nome={familia.nome}
+                  plano={familia.plano}
+                  dataFimTrial={familia.data_fim_trial}
+                  codigoConvite={familia.codigo_convite}
+                />
+                <FamilyMembersList familiaId={profile.familia_id} />
+              </div>
             )}
 
-            {/* Assinatura */}
+            {/* Journey Card */}
+            <JourneyCard
+              pontos={profile.pontos_total ?? 0}
+              nivel={profile.nivel_gamificacao ?? 1}
+              userId={user.id}
+              familiaId={profile.familia_id}
+            />
+
+            {/* Subscription */}
             <Card className="card-glass">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Minha Assinatura</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">Plano: {familia?.plano || "Trial"}</p>
-                <Button variant="link" className="text-primary p-0 h-auto text-sm" onClick={() => navigate("/assinatura")}>
-                  Gerenciar →
-                </Button>
+                <Button variant="link" className="text-primary p-0 h-auto text-sm" onClick={() => navigate("/assinatura")}>Gerenciar →</Button>
               </CardContent>
             </Card>
 

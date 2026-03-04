@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -14,21 +14,17 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useGamificacao } from "@/hooks/useGamificacao";
 import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import BottomNav from "@/components/BottomNav";
 import PaywallBanner from "@/components/PaywallBanner";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import TransacaoCard from "@/components/TransacaoCard";
+import CategoryBars from "@/components/dashboard/CategoryBars";
+import QuickTransactionModal from "@/components/dashboard/QuickTransactionModal";
+import DocumentUpload from "@/components/dashboard/DocumentUpload";
 import type { Transacao } from "@/hooks/useTransacoes";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-const CORES_CATEGORIA: Record<string, string> = {
-  "Alimentação": "#D4AF37", "Transporte": "#60A5FA", "Saúde": "#34D399",
-  "Lazer": "#F87171", "Educação": "#A78BFA", "Moradia": "#FB923C",
-  "Roupas": "#F472B6", "Dízimo/Oferta": "#FBBF24", "Outros": "#94A3B8",
-};
 
 function getSaudacao(): string {
   const h = new Date().getHours();
@@ -43,7 +39,6 @@ function calcularDiasTrial(dataFimTrial: string | null): number | null {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-/* Golden skeleton pulse */
 function GoldenSkeleton({ className = "" }: { className?: string }) {
   return (
     <div
@@ -70,6 +65,7 @@ export default function Dashboard() {
   const [analiseIA, setAnaliseIA] = useState("");
   const [analisando, setAnalisando] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [quickType, setQuickType] = useState<"receita" | "despesa" | null>(null);
 
   const {
     receitas, despesas, saldo, transacoes, metas, pontos, nivel,
@@ -77,37 +73,29 @@ export default function Dashboard() {
   } = useDashboardData(familiaId, user?.id ?? null, mes, ano);
 
   const loading = loadingFamilia || loadingData;
-
   const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
   }, [user, buscarPerfil]);
 
-  // Fetch familia data for trial info
   const [familiaInfo, setFamiliaInfo] = useState<{ plano: string | null; data_fim_trial: string | null; nome: string } | null>(null);
   useEffect(() => {
     if (!familiaId) return;
     const fetchFam = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data } = await supabase
-        .from("familias")
-        .select("plano, data_fim_trial, nome")
-        .eq("id", familiaId)
-        .maybeSingle();
+        .from("familias").select("plano, data_fim_trial, nome").eq("id", familiaId).maybeSingle();
       if (data) setFamiliaInfo(data);
     };
     fetchFam();
   }, [familiaId]);
 
-  // Pie chart data
+  // Category data for bars
   const categoriasMap: Record<string, number> = {};
   transacoes.filter(t => t.tipo === "despesa").forEach(t => {
     categoriasMap[t.categoria] = (categoriasMap[t.categoria] || 0) + Number(t.valor);
   });
-  const dadosGrafico = Object.entries(categoriasMap).map(([name, value]) => ({
-    name, value, color: CORES_CATEGORIA[name] || "#94A3B8"
-  }));
 
   const trialDias = familiaInfo?.plano === "trial" ? calcularDiasTrial(familiaInfo.data_fim_trial) : null;
 
@@ -163,28 +151,19 @@ export default function Dashboard() {
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-full gradient-gold flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
+          <button onClick={() => navigate("/perfil")} className="h-11 w-11 rounded-full gradient-gold flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
             ) : primeiroNome[0]?.toUpperCase()}
-          </div>
+          </button>
           <div className="flex-1">
             <p className="font-display font-semibold text-foreground text-sm">{getSaudacao()}, {primeiroNome}!</p>
             <p className="text-xs text-muted-foreground">{familiaInfo?.nome || ""}</p>
           </div>
-          {/* Trial/Premium badge */}
           {familiaInfo && (
-            <div
-              className="px-2 py-1 rounded-lg text-[10px] font-bold tracking-wide"
-              style={{
-                border: "1px solid rgba(212,175,55,0.3)",
-                color: familiaInfo.plano === "trial" ? "#F4E17A" : "#D4AF37",
-                background: "rgba(212,175,55,0.08)",
-              }}
-            >
-              {familiaInfo.plano === "trial" && trialDias !== null
-                ? `TRIAL · ${trialDias}d`
-                : "PREMIUM"}
+            <div className="px-2 py-1 rounded-lg text-[10px] font-bold tracking-wide"
+              style={{ border: "1px solid rgba(212,175,55,0.3)", color: familiaInfo.plano === "trial" ? "#F4E17A" : "#D4AF37", background: "rgba(212,175,55,0.08)" }}>
+              {familiaInfo.plano === "trial" && trialDias !== null ? `TRIAL · ${trialDias}d` : "PREMIUM"}
             </div>
           )}
           <img src={logo} alt="Legacy Kingdom" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
@@ -203,22 +182,16 @@ export default function Dashboard() {
                 </p>
                 <p className="text-[10px] text-muted-foreground">Assine para continuar usando</p>
               </div>
-              <Button size="sm" className="gradient-gold text-primary-foreground text-xs h-7" onClick={() => navigate("/assinatura")}>
-                Assinar
-              </Button>
+              <Button size="sm" className="gradient-gold text-primary-foreground text-xs h-7" onClick={() => navigate("/assinatura")}>Assinar</Button>
             </CardContent>
           </Card>
         )}
 
         {/* Month nav */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => mudarMes(-1)}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+          <Button variant="ghost" size="icon" onClick={() => mudarMes(-1)}><ChevronLeft className="h-5 w-5" /></Button>
           <span className="font-display font-semibold text-foreground">{MESES[mes - 1]} {ano}</span>
-          <Button variant="ghost" size="icon" onClick={() => mudarMes(1)}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          <Button variant="ghost" size="icon" onClick={() => mudarMes(1)}><ChevronRight className="h-5 w-5" /></Button>
         </div>
 
         {/* Totals */}
@@ -263,25 +236,46 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Pie Chart */}
-        {!loading && dadosGrafico.length > 0 && (
-          <Card className="card-premium">
-            <CardContent className="p-3">
-              <p className="text-xs font-semibold text-foreground mb-2">Gastos por Categoria</p>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={dadosGrafico} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={9}>
-                      {dadosGrafico.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => formatarMoeda(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Quick Action Buttons */}
+        {!loading && !error && familiaId && user && (
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => setQuickType("receita")}
+              className="min-h-[48px] text-sm font-bold rounded-xl"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 4px 16px rgba(34,197,94,0.25)" }}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Nova Receita
+            </Button>
+            <Button
+              onClick={() => setQuickType("despesa")}
+              className="min-h-[48px] text-sm font-bold rounded-xl"
+              style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#fff", boxShadow: "0 4px 16px rgba(239,68,68,0.25)" }}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Nova Despesa
+            </Button>
+          </div>
+        )}
+
+        {/* Quick Transaction Modal */}
+        {quickType && familiaId && user && (
+          <QuickTransactionModal
+            open={!!quickType}
+            onOpenChange={(o) => { if (!o) setQuickType(null); }}
+            tipo={quickType}
+            familiaId={familiaId}
+            userId={user.id}
+            onSuccess={refetch}
+          />
+        )}
+
+        {/* Category Bars (replaces pie chart) */}
+        {!loading && Object.keys(categoriasMap).length > 0 && (
+          <CategoryBars categoriasMap={categoriasMap} />
+        )}
+
+        {/* Document Upload */}
+        {!loading && familiaId && user && (
+          <DocumentUpload userId={user.id} familiaId={familiaId} />
         )}
 
         <ReflexaoDiaria />
@@ -306,31 +300,20 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold text-foreground">Últimas transações</h2>
-            <Button variant="link" className="text-primary text-xs p-0 h-auto" onClick={() => navigate("/transacoes")}>
-              Ver todas
-            </Button>
+            <Button variant="link" className="text-primary text-xs p-0 h-auto" onClick={() => navigate("/transacoes")}>Ver todas</Button>
           </div>
           {loading ? (
-            <div className="space-y-2">
-              {[1,2,3].map(i => <GoldenSkeleton key={i} className="h-16" />)}
-            </div>
+            <div className="space-y-2">{[1,2,3].map(i => <GoldenSkeleton key={i} className="h-16" />)}</div>
           ) : ultimas5.length === 0 ? (
             <div className="text-center py-8">
               <span className="text-4xl block mb-2">📊</span>
               <p className="text-sm text-muted-foreground">Nenhuma transação neste mês</p>
-              <Button variant="link" className="text-primary mt-1" onClick={() => navigate("/nova-transacao")}>
-                Adicionar primeira transação
-              </Button>
+              <Button variant="link" className="text-primary mt-1" onClick={() => navigate("/nova-transacao")}>Adicionar primeira transação</Button>
             </div>
           ) : (
             <div className="space-y-2">
               {ultimas5.map((t) => (
-                <TransacaoCard
-                  key={t.id}
-                  transacao={t}
-                  onEdit={handleEditar}
-                  onDelete={(id) => setDeleteId(id)}
-                />
+                <TransacaoCard key={t.id} transacao={t} onEdit={handleEditar} onDelete={(id) => setDeleteId(id)} />
               ))}
             </div>
           )}

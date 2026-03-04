@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      documentos: {
+        Row: {
+          analise_resultado: string | null
+          created_at: string | null
+          familia_id: string | null
+          id: string
+          nome_original: string
+          status: string | null
+          storage_path: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          analise_resultado?: string | null
+          created_at?: string | null
+          familia_id?: string | null
+          id?: string
+          nome_original: string
+          status?: string | null
+          storage_path: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          analise_resultado?: string | null
+          created_at?: string | null
+          familia_id?: string | null
+          id?: string
+          nome_original?: string
+          status?: string | null
+          storage_path?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_familia_id_fkey"
+            columns: ["familia_id"]
+            isOneToOne: false
+            referencedRelation: "familias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       educacao_modulos: {
         Row: {
           ativo: boolean | null
