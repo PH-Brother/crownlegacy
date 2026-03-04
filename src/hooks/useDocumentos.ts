@@ -79,6 +79,10 @@ export function useDocumentos(userId: string, familiaId: string) {
 
   const analisarDocumento = useCallback(
     async (doc: Documento) => {
+      console.log("🔍 Iniciando análise:", doc.id);
+      console.log("📁 Storage path:", doc.storage_path);
+      console.log("📄 Mime type:", doc.tipo);
+
       setAnalyzingId(doc.id);
       setDocs((prev) =>
         prev.map((d) => (d.id === doc.id ? { ...d, status: "analisando" } : d))
@@ -91,7 +95,9 @@ export function useDocumentos(userId: string, familiaId: string) {
           .update({ status: "analisando" })
           .eq("id", doc.id);
 
+        console.log("⚡ Chamando analisarDocumentoGemini...");
         const resultado = await analisarDocumentoGemini(doc.storage_path, doc.tipo);
+        console.log("✅ Resultado recebido:", resultado?.substring(0, 100));
 
         await supabase
           .from("documentos")
@@ -108,8 +114,10 @@ export function useDocumentos(userId: string, familiaId: string) {
 
         toast({ title: "✅ Análise concluída!" });
         return resultado;
-      } catch (err) {
-        console.error("Analyze error:", err);
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : "Erro desconhecido";
+        console.error("❌ Erro na análise:", errorMsg, err);
+
         await supabase
           .from("documentos")
           .update({ status: "pendente" })
@@ -121,7 +129,7 @@ export function useDocumentos(userId: string, familiaId: string) {
 
         toast({
           title: "Erro na análise",
-          description: "Tente novamente.",
+          description: errorMsg,
           variant: "destructive",
         });
         return null;

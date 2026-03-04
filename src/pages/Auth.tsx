@@ -41,6 +41,25 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!loginEmail) {
+      toast({ title: "Digite seu email primeiro", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({ title: "📧 Email de recuperação enviado!", description: "Verifique sua caixa de entrada." });
+    } catch {
+      toast({ title: "Erro ao enviar email", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginSenha) {
@@ -114,6 +133,16 @@ export default function Auth() {
                     {showLoginPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-primary text-sm hover:text-primary/80 transition-colors underline-offset-2 hover:underline"
+                  disabled={loading}
+                >
+                  Esqueci minha senha
+                </button>
               </div>
               <Button type="submit" className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base" disabled={loading}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "✨ Entrar"}
