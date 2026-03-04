@@ -37,7 +37,7 @@ export default function Auth() {
     if (profile?.familia_id) {
       navigate("/dashboard", { replace: true });
     } else {
-      navigate("/onboarding-family", { replace: true });
+      navigate("/onboarding", { replace: true });
     }
   };
 
