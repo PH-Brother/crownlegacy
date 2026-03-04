@@ -332,8 +332,21 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
             </button>
 
             {respostaIA && (
-              <div className="p-3 rounded-xl card-glass whitespace-pre-wrap text-sm text-foreground/90 max-h-[40vh] overflow-y-auto">
-                {respostaIA}
+              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto" style={{ background: "#0d0d1a" }}>
+                <div className="prose prose-invert prose-sm max-w-none">
+                  <ReactMarkdown components={{
+                    h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2 flex items-center gap-2">{children}</h3>,
+                    strong: ({ children }) => <strong className="text-[#f5e6c8] font-semibold">{children}</strong>,
+                    p: ({ children }) => <p className="text-gray-200 leading-relaxed mb-3">{children}</p>,
+                    li: ({ children }) => <li className="text-gray-200 mb-2 flex items-start gap-2"><span className="text-[#d4af37] mt-1">•</span><span>{children}</span></li>,
+                    ul: ({ children }) => <ul className="space-y-1 mb-3 list-none pl-0">{children}</ul>,
+                    ol: ({ children }) => <ol className="space-y-1 mb-3 list-none pl-0">{children}</ol>,
+                    blockquote: ({ children }) => <blockquote className="border-l-2 border-[#d4af37] pl-3 italic text-gray-300 my-3">{children}</blockquote>,
+                  }}>{respostaIA}</ReactMarkdown>
+                </div>
+                <div className="flex justify-end mt-3">
+                  <span className="text-xs text-[#d4af37] font-medium">⚡ +15 pontos por usar IA!</span>
+                </div>
               </div>
             )}
           </CardContent>
