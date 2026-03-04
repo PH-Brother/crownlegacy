@@ -9,7 +9,6 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function JoinWithCode() {
   const { user } = useAuth();
-  const { entrarFamilia } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [codigo, setCodigo] = useState("");
