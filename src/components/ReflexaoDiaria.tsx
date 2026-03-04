@@ -11,17 +11,64 @@ export default function ReflexaoDiaria() {
   useEffect(() => { renovar(); }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">📖</span>
-        <h3 className="text-sm font-semibold text-primary">Reflexão do Dia</h3>
-      </div>
-      <p className="italic text-sm text-foreground/90 mb-1">"{verso.versiculo}"</p>
-      <p className="text-xs font-semibold text-primary mb-2">— {verso.referencia}</p>
+    <div
+      className="relative overflow-hidden rounded-xl border border-primary/20 pl-6 pr-5 py-6"
+      style={{
+        background: "#1a1a2e",
+        borderLeft: "3px solid hsl(43 56% 52%)",
+      }}
+    >
+      {/* Decorative opening quote */}
+      <span
+        className="absolute select-none pointer-events-none"
+        style={{
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: "4rem",
+          lineHeight: 1,
+          color: "hsl(43 56% 52%)",
+          opacity: 0.3,
+          top: "0.25rem",
+          left: "0.75rem",
+        }}
+        aria-hidden="true"
+      >
+        {"\u201C"}
+      </span>
+
+      <p
+        style={{
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: "1.15rem",
+          fontStyle: "italic",
+          fontWeight: 500,
+          lineHeight: 1.8,
+          letterSpacing: "0.01em",
+          color: "#f5e6c8",
+          marginTop: "1rem",
+        }}
+      >
+        {verso.versiculo}
+      </p>
+
+      <p
+        className="mt-2"
+        style={{
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          color: "hsl(43 56% 52%)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        — {verso.referencia}
+      </p>
+
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 text-xs text-muted-foreground"
+        className="mt-3 h-auto p-0 text-primary hover:bg-transparent hover:text-primary/80"
+        style={{ fontSize: "0.8rem" }}
         onClick={renovar}
       >
         <RefreshCw className="h-3 w-3 mr-1" /> Nova reflexão
