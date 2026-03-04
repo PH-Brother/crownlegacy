@@ -137,6 +137,43 @@ export default function Perfil() {
               </div>
             )}
 
+            {/* Appearance */}
+            <Card className="card-glass">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">🎨 Aparência</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Obsidian */}
+                  <button
+                    onClick={() => { setTheme("obsidian"); toast({ title: "Tema Obsidian ativado 🌑" }); }}
+                    className={`rounded-xl p-3 text-center transition-all border-2 ${
+                      theme === "obsidian" ? "ring-2 ring-amber-400 border-amber-400/50" : "border-border"
+                    }`}
+                    style={{ background: "#0a0a0f" }}
+                  >
+                    <div className="w-full h-8 rounded-lg mb-2" style={{ background: "#0a0a0f", border: "1px solid #d4af37" }} />
+                    <span className="text-lg block">🌑</span>
+                    <p className="text-xs font-semibold" style={{ color: "#f5f0e8" }}>Obsidian</p>
+                    <p className="text-[10px]" style={{ color: "#9ca3af" }}>Escuro & Premium</p>
+                  </button>
+                  {/* Ivory */}
+                  <button
+                    onClick={() => { setTheme("ivory"); toast({ title: "Tema Ivory ativado ✨" }); }}
+                    className={`rounded-xl p-3 text-center transition-all border-2 ${
+                      theme === "ivory" ? "ring-2 ring-amber-600 border-amber-600/50" : "border-border"
+                    }`}
+                    style={{ background: "#faf7f2" }}
+                  >
+                    <div className="w-full h-8 rounded-lg mb-2" style={{ background: "#faf7f2", border: "1px solid #b8962e" }} />
+                    <span className="text-lg block">☀️</span>
+                    <p className="text-xs font-semibold" style={{ color: "#1a1a2e" }}>Ivory</p>
+                    <p className="text-[10px]" style={{ color: "#6b7280" }}>Claro & Elegante</p>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Journey Card */}
             <JourneyCard
               pontos={profile.pontos_total ?? 0}
