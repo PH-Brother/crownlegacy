@@ -304,7 +304,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
         <Card className="card-glass-gold">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" /> Conselho Financeiro
+              <Zap className="h-4 w-4 text-primary" /> 📖 Dicas de Sabedoria
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
