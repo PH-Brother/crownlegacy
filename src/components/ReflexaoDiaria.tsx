@@ -12,21 +12,18 @@ export default function ReflexaoDiaria() {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl border border-primary/20 pl-6 pr-5 py-6"
+      className="relative overflow-hidden rounded-xl border border-primary/20 pl-6 pr-5 py-6 bg-card"
       style={{
-        background: "#1a1a2e",
-        borderLeft: "3px solid hsl(43 56% 52%)",
+        borderLeft: "3px solid hsl(var(--primary))",
       }}
     >
       {/* Decorative opening quote */}
       <span
-        className="absolute select-none pointer-events-none"
+        className="absolute select-none pointer-events-none text-primary/30"
         style={{
           fontFamily: "'Lora', Georgia, serif",
           fontSize: "4rem",
           lineHeight: 1,
-          color: "hsl(43 56% 52%)",
-          opacity: 0.3,
           top: "0.25rem",
           left: "0.75rem",
         }}
@@ -36,6 +33,7 @@ export default function ReflexaoDiaria() {
       </span>
 
       <p
+        className="text-foreground"
         style={{
           fontFamily: "'Lora', Georgia, serif",
           fontSize: "1.15rem",
@@ -43,7 +41,6 @@ export default function ReflexaoDiaria() {
           fontWeight: 500,
           lineHeight: 1.8,
           letterSpacing: "0.01em",
-          color: "#f5e6c8",
           marginTop: "1rem",
         }}
       >
@@ -51,12 +48,11 @@ export default function ReflexaoDiaria() {
       </p>
 
       <p
-        className="mt-2"
+        className="mt-2 text-primary"
         style={{
           fontFamily: "'Lora', Georgia, serif",
           fontSize: "0.85rem",
           fontWeight: 600,
-          color: "hsl(43 56% 52%)",
           letterSpacing: "0.08em",
           textTransform: "uppercase",
         }}

@@ -21,13 +21,13 @@ function GoldenLoadingDots() {
         {[0, 150, 300].map((delay) => (
           <div
             key={delay}
-            className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"
+            className="w-2 h-2 rounded-full bg-primary animate-bounce"
             style={{ animationDelay: `${delay}ms` }}
           />
         ))}
       </div>
       <span
-        className="text-amber-400 text-sm italic"
+        className="text-primary text-sm italic"
         style={{ fontFamily: "Lora, serif" }}
       >
         Analisando documento...
@@ -41,19 +41,19 @@ function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case "analisando":
       return (
-        <Badge variant="secondary" className="text-[10px] gap-1 bg-blue-500/20 text-blue-300 border-blue-500/30">
+        <Badge variant="secondary" className="text-[10px] gap-1 bg-blue-500/20 text-blue-500 border-blue-500/30">
           <Loader2 className="h-3 w-3 animate-spin" /> Analisando...
         </Badge>
       );
     case "analisado":
       return (
-        <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+        <Badge variant="secondary" className="text-[10px] bg-success/20 text-success border-success/30">
           ✅ Analisado
         </Badge>
       );
     default:
       return (
-        <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-300 border-amber-500/30">
+        <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary border-primary/30">
           ⏳ Pendente
         </Badge>
       );
@@ -63,9 +63,9 @@ function StatusBadge({ status }: { status: string }) {
 /* ── Doc icon ── */
 function DocIcon({ tipo }: { tipo: string }) {
   if (tipo.includes("pdf")) {
-    return <FileText className="h-5 w-5 text-red-400 shrink-0" />;
+    return <FileText className="h-5 w-5 text-destructive shrink-0" />;
   }
-  return <Image className="h-5 w-5 text-blue-400 shrink-0" />;
+  return <Image className="h-5 w-5 text-blue-500 shrink-0" />;
 }
 
 /* ── Empty state ── */
@@ -248,8 +248,8 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
           </SheetHeader>
 
           <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-[var(--bg-secondary,#0d0d1a)] border border-primary/20 rounded-xl p-4 max-h-96 overflow-y-auto">
-              <div className="prose prose-invert prose-sm max-w-none">
+            <div className="bg-muted border border-primary/20 rounded-xl p-4 max-h-96 overflow-y-auto">
+              <div className="prose prose-sm max-w-none">
                 <ReactMarkdown
                   components={{
                     h2: ({ children }) => (
@@ -262,25 +262,25 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
                     ),
                     h3: ({ children }) => (
                       <h3
-                        className="text-amber-400 font-semibold text-sm mt-4 mb-1"
+                        className="text-primary font-semibold text-sm mt-4 mb-1"
                         style={{ fontFamily: "Lora, serif" }}
                       >
                         {children}
                       </h3>
                     ),
                     strong: ({ children }) => (
-                      <strong className="text-amber-300 font-bold">{children}</strong>
+                      <strong className="text-primary font-bold">{children}</strong>
                     ),
                     p: ({ children }) => (
                       <p
-                        className="text-muted-foreground text-sm leading-relaxed mb-2"
+                        className="text-foreground text-sm leading-relaxed mb-2"
                         style={{ fontFamily: "Lora, serif" }}
                       >
                         {children}
                       </p>
                     ),
                     li: ({ children }) => (
-                      <li className="text-muted-foreground text-sm leading-relaxed flex gap-2 mb-1">
+                      <li className="text-foreground text-sm leading-relaxed flex gap-2 mb-1">
                         <span className="text-primary flex-shrink-0">•</span>
                         <span>{children}</span>
                       </li>

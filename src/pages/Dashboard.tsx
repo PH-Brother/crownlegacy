@@ -301,7 +301,7 @@ export default function Dashboard() {
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="bg-card border-primary/20">
-            <SheetHeader><SheetTitle className="text-[#d4af37] font-bold" style={{fontFamily: 'Lora, serif'}}>📖 Dicas de Sabedoria</SheetTitle></SheetHeader>
+            <SheetHeader><SheetTitle className="text-primary font-bold" style={{fontFamily: 'Lora, serif'}}>📖 Dicas de Sabedoria</SheetTitle></SheetHeader>
             <div className="mt-4 max-h-[60vh] overflow-y-auto">
               {analisando ? (
                 <div className="flex items-center gap-3 py-4">
