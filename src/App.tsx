@@ -45,6 +45,7 @@ const App = () => (
         }}
       />
       <AuthProvider>
+        <ThemeProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
