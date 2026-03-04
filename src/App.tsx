@@ -24,6 +24,7 @@ import Checkin from "./pages/Checkin";
 import Assinatura from "./pages/Assinatura";
 import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
