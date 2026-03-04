@@ -24,28 +24,18 @@ export default function OnboardingFamily() {
       toast({ title: "❌ Nome da família deve ter entre 2 e 50 caracteres", variant: "destructive" });
       return;
     }
-    if (!user) { navigate("/auth"); return; }
+
     setLoading(true);
     try {
-      // Check if user already has a family
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("familia_id")
-        .eq("id", user.id)
-        .single();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error("Usuário não autenticado");
 
-      if (profile?.familia_id) {
-        await supabase
-          .from("familias")
-          .update({ nome: trimmed })
-          .eq("id", profile.familia_id);
-        toast({ title: "🏠 Família atualizada com sucesso!" });
-        navigate("/dashboard", { replace: true });
-        return;
-      }
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const codigoConvite = Array.from(
+        { length: 8 },
+        () => chars[Math.floor(Math.random() * chars.length)],
+      ).join("");
 
-      // Create family directly (no RPC)
-      const codigoConvite = Math.random().toString(36).substring(2, 10).toUpperCase();
       const { data: familia, error: familiaError } = await supabase
         .from("familias")
         .insert({
@@ -54,22 +44,21 @@ export default function OnboardingFamily() {
           data_fim_trial: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           codigo_convite: codigoConvite,
         })
-        .select()
+        .select("id, nome, codigo_convite, data_fim_trial")
         .single();
       if (familiaError) throw familiaError;
 
-      // Link user to family
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ familia_id: familia.id, updated_at: new Date().toISOString() })
-        .eq("id", user.id);
+        .eq("id", authUser.id);
       if (profileError) throw profileError;
 
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao criar família";
-      toast({ title: "Erro", description: msg, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro ao criar família. Tente novamente.", variant: "destructive" });
+      console.error(err);
     } finally {
       setLoading(false);
     }
