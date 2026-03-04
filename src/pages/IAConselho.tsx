@@ -236,7 +236,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold text-foreground">⚡ Conselho IA</h1>
+          <h1 className="text-lg font-bold" style={{ fontFamily: "'Lora', serif", color: "#d4af37" }}>📖 Dicas de Sabedoria</h1>
         </div>
 
         {/* SEÇÃO 1: Upload de Documentos */}
@@ -304,7 +304,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
         <Card className="card-glass-gold">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" /> Conselho Financeiro
+              <Zap className="h-4 w-4 text-primary" /> 📖 Dicas de Sabedoria
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -328,11 +328,20 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                 cursor: consultando ? "not-allowed" : "pointer",
               }}
             >
-              {consultando ? <><Loader2 className="h-4 w-4 animate-spin" /> Consultando...</> : "⚡ Invocar Conselho"}
+              {consultando ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span>Consultando...</span>
+                </div>
+              ) : "📖 Pedir Sabedoria"}
             </button>
 
             {respostaIA && (
-              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto" style={{ background: "#0d0d1a" }}>
+              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto animate-fade-in" style={{ background: "#0d0d1a" }}>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <ReactMarkdown components={{
                     h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2 flex items-center gap-2">{children}</h3>,
@@ -399,11 +408,20 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                 color: "#000",
               }}
             >
-              {gerandoMensal ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando...</> : "📊 Gerar Análise Completa"}
+              {gerandoMensal ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span>Gerando...</span>
+                </div>
+              ) : "📊 Gerar Análise Completa"}
             </button>
 
             {analiseMenusal && (
-              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto" style={{ background: "#0d0d1a" }}>
+              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto animate-fade-in" style={{ background: "#0d0d1a" }}>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <ReactMarkdown components={{
                     h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2 flex items-center gap-2">{children}</h3>,

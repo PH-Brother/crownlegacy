@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, FileText, Image, Loader2, Sparkles, Eye, RotateCcw, X, Copy } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -276,11 +277,19 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
           <SheetHeader className="flex-row items-center justify-between pr-8">
             <SheetTitle className="text-base" style={{ color: "#d4af37" }}>📊 Análise Gemini IA</SheetTitle>
           </SheetHeader>
-          <div className="mt-4 space-y-3">
-            <div
-              className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed prose prose-invert prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: formatMarkdown(sheetResult) }}
-            />
+          <div className="mt-4 space-y-3 animate-fade-in">
+            <div className="prose prose-invert prose-sm max-w-none">
+              <ReactMarkdown components={{
+                h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2">{children}</h3>,
+                h2: ({ children }) => <h2 className="text-[#d4af37] font-semibold text-lg mt-4 mb-2">{children}</h2>,
+                strong: ({ children }) => <strong className="text-[#f5e6c8] font-semibold">{children}</strong>,
+                p: ({ children }) => <p className="text-gray-200 leading-relaxed mb-3">{children}</p>,
+                li: ({ children }) => <li className="text-gray-200 mb-2 flex items-start gap-2"><span className="text-[#d4af37] mt-1">•</span><span>{children}</span></li>,
+                ul: ({ children }) => <ul className="space-y-1 mb-3 list-none pl-0">{children}</ul>,
+                ol: ({ children }) => <ol className="space-y-1 mb-3 list-none pl-0">{children}</ol>,
+                blockquote: ({ children }) => <blockquote className="border-l-2 border-[#d4af37] pl-3 italic text-gray-300 my-3">{children}</blockquote>,
+              }}>{sheetResult}</ReactMarkdown>
+            </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={copyResult} className="text-xs border-primary/30 text-primary">
                 <Copy className="h-3 w-3 mr-1" /> Copiar análise
@@ -296,18 +305,3 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
   );
 }
 
-/** Basic markdown to HTML */
-function formatMarkdown(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37">$1</strong>')
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/^### (.+)$/gm, '<h3 style="color:#d4af37;margin-top:1rem;font-size:0.9rem">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="color:#d4af37;margin-top:1rem;font-size:1rem">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="color:#d4af37;margin-top:1rem;font-size:1.1rem">$1</h1>')
-    .replace(/^- (.+)$/gm, '<li style="margin-left:1rem">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin-left:1rem">$1. $2</li>')
-    .replace(/\n/g, "<br/>");
-}
