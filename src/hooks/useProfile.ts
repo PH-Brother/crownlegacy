@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { gerarCodigo8 } from "@/lib/utils";
+
 
 interface Profile {
   id: string;
@@ -88,15 +88,13 @@ export function useProfile() {
     return f;
   }, []);
 
-  const criarFamilia = useCallback(async (nome: string, _userId: string) => {
-    const codigo = gerarCodigo8();
-    const { data, error } = await supabase.rpc("create_family_with_admin", {
+  const criarFamilia = useCallback(async (nome: string, userId: string) => {
+    const { data, error } = await supabase.rpc("create_family_with_admin" as any, {
       p_nome: nome,
-      p_codigo_convite: codigo,
-    });
+      p_user_id: userId,
+    } as any);
     if (error) throw error;
-    const row = Array.isArray(data) ? data[0] : data;
-    return row;
+    return data; // UUID of created family
   }, []);
 
   const entrarFamilia = useCallback(async (codigo: string, _userId: string) => {

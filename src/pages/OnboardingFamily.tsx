@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { gerarCodigo8 } from "@/lib/utils";
+
 import { Loader2, Home, KeyRound } from "lucide-react";
 
 export default function OnboardingFamily() {
@@ -46,11 +46,10 @@ export default function OnboardingFamily() {
       }
 
       // No family yet → create via secure RPC (sets role server-side)
-      const codigo = gerarCodigo8();
-      const { error: rpcError } = await supabase.rpc("create_family_with_admin", {
+      const { error: rpcError } = await supabase.rpc("create_family_with_admin" as any, {
         p_nome: nomeFamilia.trim(),
-        p_codigo_convite: codigo,
-      });
+        p_user_id: user.id,
+      } as any);
       if (rpcError) throw rpcError;
 
       toast({ title: "🏠 Família criada com sucesso!" });

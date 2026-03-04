@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { gerarCodigo8 } from "@/lib/utils";
+
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,20 +109,19 @@ export default function Onboarding() {
     if (!user) return;
     setLoading(true);
     try {
-      const codigo = gerarCodigo8();
-      const { data, error } = await supabase.rpc("create_family_with_admin", {
+      const { data, error } = await supabase.rpc("create_family_with_admin" as any, {
         p_nome: trimmed,
-        p_codigo_convite: codigo,
-      });
+        p_user_id: user.id,
+      } as any);
       if (error) throw error;
 
-      // Fetch trial end date
-      const row = Array.isArray(data) ? data[0] : data;
-      if (row?.id) {
+      // data is the familia UUID
+      const familiaId = typeof data === 'string' ? data : null;
+      if (familiaId) {
         const { data: fam } = await supabase
           .from("familias")
           .select("data_fim_trial")
-          .eq("id", row.id)
+          .eq("id", familiaId)
           .maybeSingle();
         setTrialEndDate(fam?.data_fim_trial ?? null);
       }
