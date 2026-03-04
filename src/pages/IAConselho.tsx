@@ -328,7 +328,16 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                 cursor: consultando ? "not-allowed" : "pointer",
               }}
             >
-              {consultando ? <><Loader2 className="h-4 w-4 animate-spin" /> Consultando...</> : "⚡ Invocar Conselho"}
+              {consultando ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span>Consultando...</span>
+                </div>
+              ) : "📖 Pedir Sabedoria"}
             </button>
 
             {respostaIA && (
