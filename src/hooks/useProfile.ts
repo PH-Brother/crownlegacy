@@ -89,10 +89,10 @@ export function useProfile() {
   }, []);
 
   const criarFamilia = useCallback(async (nome: string, userId: string) => {
-    const { data, error } = await supabase.rpc("create_family_with_admin", {
+    const { data, error } = await supabase.rpc("create_family_with_admin" as any, {
       p_nome: nome,
       p_user_id: userId,
-    });
+    } as any);
     if (error) throw error;
     return data; // UUID of created family
   }, []);

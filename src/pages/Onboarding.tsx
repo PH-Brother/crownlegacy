@@ -109,10 +109,10 @@ export default function Onboarding() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("create_family_with_admin", {
+      const { data, error } = await supabase.rpc("create_family_with_admin" as any, {
         p_nome: trimmed,
         p_user_id: user.id,
-      });
+      } as any);
       if (error) throw error;
 
       // data is the familia UUID

@@ -46,10 +46,10 @@ export default function OnboardingFamily() {
       }
 
       // No family yet → create via secure RPC (sets role server-side)
-      const { error: rpcError } = await supabase.rpc("create_family_with_admin", {
+      const { error: rpcError } = await supabase.rpc("create_family_with_admin" as any, {
         p_nome: nomeFamilia.trim(),
         p_user_id: user.id,
-      });
+      } as any);
       if (rpcError) throw rpcError;
 
       toast({ title: "🏠 Família criada com sucesso!" });
