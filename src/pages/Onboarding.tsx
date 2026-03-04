@@ -106,54 +106,62 @@ export default function Onboarding() {
       toast({ title: "Nome da família deve ter entre 2 e 50 caracteres", variant: "destructive" });
       return;
     }
-    if (!user) return;
+
     setLoading(true);
     try {
-      // Create family directly (no RPC)
-      const codigoConvite = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error("Usuário não autenticado");
+
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const inviteCode = Array.from(
+        { length: 8 },
+        () => chars[Math.floor(Math.random() * chars.length)],
+      ).join("");
+
       const { data: familia, error: familiaError } = await supabase
         .from("familias")
         .insert({
           nome: trimmed,
           plano: "trial",
           data_fim_trial: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          codigo_convite: codigoConvite,
+          codigo_convite: inviteCode,
         })
-        .select()
+        .select("id, nome, codigo_convite, data_fim_trial")
         .single();
       if (familiaError) throw familiaError;
 
-      // Link user to family
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ familia_id: familia.id, updated_at: new Date().toISOString() })
-        .eq("id", user.id);
+        .eq("id", authUser.id);
       if (profileError) throw profileError;
 
       setTrialEndDate(familia.data_fim_trial);
       goToStep(3);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao criar família";
-      toast({ title: msg, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro ao criar família. Tente novamente.", variant: "destructive" });
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleJoinFamily = async () => {
-    const code = codigoConvite.trim().toUpperCase();
-    if (code.length !== 8) {
+    const formattedCode = codigoConvite.toUpperCase().trim();
+    if (formattedCode.length !== 8) {
       toast({ title: "Código deve ter 8 caracteres", variant: "destructive" });
       return;
     }
-    if (!user) return;
+
     setLoading(true);
     try {
-      // Find family by invite code
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error("Usuário não autenticado");
+
       const { data: familiaEncontrada, error: buscaError } = await supabase
         .from("familias")
-        .select("id, data_fim_trial")
-        .eq("codigo_convite", code)
+        .select("id, nome, data_fim_trial, plano")
+        .eq("codigo_convite", formattedCode)
         .single();
 
       if (buscaError || !familiaEncontrada) {
@@ -161,10 +169,9 @@ export default function Onboarding() {
         return;
       }
 
-      // Check member limit
       const { count } = await supabase
         .from("profiles")
-        .select("id", { count: "exact" })
+        .select("id", { count: "exact", head: true })
         .eq("familia_id", familiaEncontrada.id);
 
       if ((count ?? 0) >= 5) {
@@ -172,17 +179,17 @@ export default function Onboarding() {
         return;
       }
 
-      // Link user to family
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ familia_id: familiaEncontrada.id, updated_at: new Date().toISOString() })
-        .eq("id", user.id);
+        .eq("id", authUser.id);
       if (profileError) throw profileError;
 
       setTrialEndDate(familiaEncontrada.data_fim_trial);
       goToStep(3);
-    } catch (err: unknown) {
-      toast({ title: "Erro ao entrar na família", variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro ao entrar na família. Tente novamente.", variant: "destructive" });
+      console.error(err);
     } finally {
       setLoading(false);
     }

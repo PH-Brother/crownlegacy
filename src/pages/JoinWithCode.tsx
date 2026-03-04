@@ -30,10 +30,9 @@ export default function JoinWithCode() {
         return;
       }
 
-      // Check member limit
       const { count } = await supabase
         .from("profiles")
-        .select("id", { count: "exact" })
+        .select("id", { count: "exact", head: true })
         .eq("familia_id", familiaEncontrada.id);
 
       if ((count ?? 0) >= 5) {
@@ -50,9 +49,9 @@ export default function JoinWithCode() {
 
       toast({ title: "🎉 Você entrou na família!" });
       navigate("/dashboard", { replace: true });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao entrar na família";
-      toast({ title: "Erro", description: msg, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro ao entrar na família. Tente novamente.", variant: "destructive" });
+      console.error(err);
     } finally {
       setLoading(false);
     }
