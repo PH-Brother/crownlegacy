@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Plus } from "lucide-react";
