@@ -6,20 +6,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FORBIDDEN_PATTERNS = [
-  "ignore previous", "ignore all", "disregard",
-  "system prompt", "jailbreak", "dan mode",
-  "act as", "pretend you", "you are now",
-  "forget your", "new instructions",
+const INJECTION_PATTERNS = [
+  /ign[o0]re\s+(previous|all|instructions|above)/i,
+  /disreg[a4]rd/i,
+  /system\s*prompt/i,
+  /(jailbreak|dan\s*mode)/i,
+  /(act|pretend)\s+(as|you)/i,
+  /forget\s+your/i,
+  /new\s+instructions/i,
+  /you\s+are\s+now/i,
+  /do\s+not\s+follow/i,
+  /override\s+(previous|system)/i,
 ];
+
+function normalizeText(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u200b-\u200f\u2028-\u202f\u2060\ufeff]/g, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
 
 function sanitize(text: string, maxLen = 200): string {
   return text.replace(/<[^>]*>/g, "").replace(/[\n\r]+/g, " ").slice(0, maxLen).trim();
 }
 
+function sanitizeJsonKey(key: string): string {
+  return key.replace(/["\\{}]/g, "").trim();
+}
+
 function checkInjection(text: string): boolean {
-  const lower = text.toLowerCase();
-  return FORBIDDEN_PATTERNS.some((p) => lower.includes(p));
+  const normalized = normalizeText(text);
+  return INJECTION_PATTERNS.some((p) => p.test(normalized));
 }
 
 serve(async (req) => {
@@ -87,7 +106,7 @@ serve(async (req) => {
         let catCount = 0;
         for (const [k, v] of Object.entries(rawCat)) {
           if (catCount >= 30) break;
-          const safeKey = sanitize(k, 30);
+          const safeKey = sanitizeJsonKey(sanitize(k, 30));
           if (safeKey && !checkInjection(safeKey)) {
             safeCat[safeKey] = Math.max(0, Math.min(1e9, Number(v || 0)));
             catCount++;
