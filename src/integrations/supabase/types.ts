@@ -426,12 +426,8 @@ export type Database = {
         Returns: undefined
       }
       create_family_with_admin: {
-        Args: { p_codigo_convite: string; p_nome: string }
-        Returns: {
-          codigo_convite: string
-          id: string
-          nome: string
-        }[]
+        Args: { p_nome: string; p_user_id: string }
+        Returns: Json
       }
       get_user_familia_id:
         | { Args: never; Returns: string }

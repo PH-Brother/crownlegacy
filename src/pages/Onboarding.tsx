@@ -115,13 +115,15 @@ export default function Onboarding() {
       } as any);
       if (error) throw error;
 
-      // data is the familia UUID
-      const familiaId = typeof data === 'string' ? data : null;
-      if (familiaId) {
+      // data is JSON: { familia_id, codigo_convite, data_fim_trial }
+      const result = typeof data === 'object' && data !== null ? data : (typeof data === 'string' ? JSON.parse(data) : null);
+      if (result?.data_fim_trial) {
+        setTrialEndDate(result.data_fim_trial);
+      } else if (result?.familia_id) {
         const { data: fam } = await supabase
           .from("familias")
           .select("data_fim_trial")
-          .eq("id", familiaId)
+          .eq("id", result.familia_id)
           .maybeSingle();
         setTrialEndDate(fam?.data_fim_trial ?? null);
       }
