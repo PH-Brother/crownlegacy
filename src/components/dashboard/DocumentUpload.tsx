@@ -1,216 +1,138 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, FileText, Image, Loader2, Sparkles, Eye, RotateCcw, X, Copy } from "lucide-react";
+import { useState, useRef } from "react";
+import { Upload, FileText, Image, Loader2, Eye, X, Copy, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { isAllowedMime } from "@/lib/sanitize";
-
-const MAX_SIZE = 10 * 1024 * 1024;
-
-interface Documento {
-  id: string;
-  nome_original: string;
-  storage_path: string;
-  tipo: string;
-  status: string;
-  analise_resultado: string | null;
-  created_at: string | null;
-}
+import { useDocumentos, type Documento } from "@/hooks/useDocumentos";
 
 interface DocumentUploadProps {
   userId: string;
   familiaId: string;
 }
 
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+/* ── Loading dots ── */
+function GoldenLoadingDots() {
+  return (
+    <div className="flex items-center gap-3 py-4 justify-center">
+      <div className="flex gap-1">
+        {[0, 150, 300].map((delay) => (
+          <div
+            key={delay}
+            className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"
+            style={{ animationDelay: `${delay}ms` }}
+          />
+        ))}
+      </div>
+      <span
+        className="text-amber-400 text-sm italic"
+        style={{ fontFamily: "Lora, serif" }}
+      >
+        Analisando documento...
+      </span>
+    </div>
+  );
 }
 
+/* ── Status badge ── */
+function StatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "analisando":
+      return (
+        <Badge variant="secondary" className="text-[10px] gap-1 bg-blue-500/20 text-blue-300 border-blue-500/30">
+          <Loader2 className="h-3 w-3 animate-spin" /> Analisando...
+        </Badge>
+      );
+    case "analisado":
+      return (
+        <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+          ✅ Analisado
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-300 border-amber-500/30">
+          ⏳ Pendente
+        </Badge>
+      );
+  }
+}
+
+/* ── Doc icon ── */
+function DocIcon({ tipo }: { tipo: string }) {
+  if (tipo.includes("pdf")) {
+    return <FileText className="h-5 w-5 text-red-400 shrink-0" />;
+  }
+  return <Image className="h-5 w-5 text-blue-400 shrink-0" />;
+}
+
+/* ── Empty state ── */
+function EmptyState() {
+  return (
+    <div className="text-center py-6 space-y-2">
+      <Upload className="h-12 w-12 mx-auto text-primary/40" />
+      <p className="text-sm text-foreground font-medium">Nenhum documento ainda</p>
+      <p className="text-xs text-muted-foreground">Envie faturas, extratos ou comprovantes</p>
+    </div>
+  );
+}
+
+/* ── Main component ── */
 export default function DocumentUpload({ userId, familiaId }: DocumentUploadProps) {
-  const [docs, setDocs] = useState<Documento[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const {
+    docs,
+    uploading,
+    analyzingId,
+    uploadDocumento,
+    analisarDocumento,
+  } = useDocumentos(userId, familiaId);
+
   const [dragging, setDragging] = useState(false);
-  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetResult, setSheetResult] = useState("");
+  const [sheetDocName, setSheetDocName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const fetchDocs = useCallback(async () => {
-    const { data } = await supabase
-      .from("documentos")
-      .select("id, nome_original, storage_path, tipo, status, analise_resultado, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(5);
-    if (data) setDocs(data);
-  }, [userId]);
-
-  useEffect(() => { fetchDocs(); }, [fetchDocs]);
-
-  const handleUpload = async (file: File) => {
-    if (!isAllowedMime(file.type) && file.type !== "application/pdf") {
-      toast({ title: "Formato não suportado", variant: "destructive" }); return;
-    }
-    if (file.size > MAX_SIZE) {
-      toast({ title: "Arquivo muito grande. Máximo 10MB.", variant: "destructive" }); return;
-    }
-
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${userId}/${familiaId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("documentos").upload(path, file, { upsert: false });
-      if (upErr) throw upErr;
-
-      const { error: dbErr } = await supabase.from("documentos").insert({
-        user_id: userId,
-        familia_id: familiaId,
-        nome_original: file.name,
-        storage_path: path,
-        tipo: file.type,
-        status: "pendente",
-      });
-      if (dbErr) throw dbErr;
-
-      toast({ title: "📎 Documento enviado!" });
-      fetchDocs();
-    } catch {
-      toast({ title: "Erro no upload", variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleAnalyze = async (doc: Documento) => {
-    setAnalyzingId(doc.id);
-
-    // Optimistic status update
-    setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, status: "analisando" } : d));
-
-    try {
-      // 1. Get signed URL
-      const { data: urlData, error: urlErr } = await supabase.storage
-        .from("documentos")
-        .createSignedUrl(doc.storage_path, 120);
-      if (urlErr || !urlData?.signedUrl) throw new Error("Não foi possível acessar o arquivo");
-
-      // 2. Download and convert to base64
-      const response = await fetch(urlData.signedUrl);
-      if (!response.ok) throw new Error("Falha ao baixar arquivo");
-      const blob = await response.blob();
-      const base64Full = await blobToBase64(blob);
-      const base64Data = base64Full.split(",")[1];
-
-      // 3. Call edge function with file data
-      const { data, error } = await supabase.functions.invoke("gemini-proxy", {
-        body: {
-          tipo: "analise_documento",
-          dados: {
-            file_base64: base64Data,
-            mime_type: doc.tipo,
-            filename: doc.nome_original,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      const resultado = data?.resultado || "Análise concluída sem detalhes.";
-
-      // 4. Save result
-      await supabase
-        .from("documentos")
-        .update({ status: "analisado", analise_resultado: resultado })
-        .eq("id", doc.id);
-
-      setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, status: "analisado", analise_resultado: resultado } : d));
-
-      // 5. Show result
-      setSheetResult(resultado);
-      setSheetOpen(true);
-
-      toast({ title: "✅ Análise concluída!" });
-    } catch (err) {
-      console.error("Analyze error:", err);
-      setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, status: "erro" } : d));
-      await supabase.from("documentos").update({ status: "erro" }).eq("id", doc.id);
-      toast({ title: "Erro na análise", description: "Tente novamente.", variant: "destructive" });
-    } finally {
-      setAnalyzingId(null);
-    }
-  };
-
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleUpload(file);
+    if (file) uploadDocumento(file);
     e.target.value = "";
   };
 
   const onDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setDragging(false);
+    e.preventDefault();
+    setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) handleUpload(file);
+    if (file) uploadDocumento(file);
+  };
+
+  const openResult = (doc: Documento) => {
+    if (doc.analise_resultado) {
+      setSheetResult(doc.analise_resultado);
+      setSheetDocName(doc.nome_original);
+      setSheetOpen(true);
+    }
+  };
+
+  const handleAnalyze = async (doc: Documento) => {
+    const resultado = await analisarDocumento(doc);
+    if (resultado) {
+      setSheetResult(resultado);
+      setSheetDocName(doc.nome_original);
+      setSheetOpen(true);
+    }
   };
 
   const copyResult = async () => {
     await navigator.clipboard.writeText(sheetResult);
-    toast({ title: "📋 Análise copiada!" });
+    toast({ title: "Análise copiada! 📋" });
   };
 
-  const statusBadge = (doc: Documento) => {
-    switch (doc.status) {
-      case "analisando":
-        return <span className="text-[10px] text-primary flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Analisando...</span>;
-      case "analisado":
-        return <span className="text-[10px] text-emerald-400">✅ Analisado</span>;
-      case "erro":
-        return <span className="text-[10px] text-destructive">🔴 Erro</span>;
-      default:
-        return <span className="text-[10px] text-muted-foreground">🟡 Pendente</span>;
-    }
-  };
-
-  const actionButton = (doc: Documento) => {
-    const isAnalyzing = analyzingId === doc.id;
-
-    if (doc.status === "analisado" && doc.analise_resultado) {
-      return (
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-primary text-[10px]"
-          onClick={() => { setSheetResult(doc.analise_resultado!); setSheetOpen(true); }}>
-          <Eye className="h-3 w-3 mr-1" /> Ver
-        </Button>
-      );
-    }
-
-    if (doc.status === "erro") {
-      return (
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-primary text-[10px]"
-          onClick={() => handleAnalyze(doc)} disabled={isAnalyzing}>
-          <RotateCcw className="h-3 w-3 mr-1" /> Retry
-        </Button>
-      );
-    }
-
-    if (doc.status === "analisando") {
-      return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
-    }
-
-    return (
-      <Button size="sm" variant="ghost" className="h-7 px-2 text-primary text-[10px]"
-        onClick={() => handleAnalyze(doc)} disabled={isAnalyzing}>
-        <Sparkles className="h-3 w-3 mr-1" /> IA
-      </Button>
-    );
-  };
+  const truncate = (s: string, n: number) =>
+    s.length > n ? s.slice(0, n) + "…" : s;
 
   return (
     <>
@@ -241,60 +163,161 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
               </>
             )}
           </div>
-          <input ref={inputRef} type="file" className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={onFileChange} />
+          <input
+            ref={inputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.jpg,.jpeg,.png,.webp"
+            onChange={onFileChange}
+          />
 
-          {/* Recent docs */}
-          {docs.length > 0 && (
+          {/* Document list */}
+          {docs.length === 0 ? (
+            <EmptyState />
+          ) : (
             <div className="space-y-2">
-              {docs.map((d) => (
-                <div key={d.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
-                  {d.tipo.includes("pdf") ? (
-                    <FileText className="h-4 w-4 text-destructive shrink-0" />
-                  ) : (
-                    <Image className="h-4 w-4 text-blue-400 shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-foreground truncate">{d.nome_original}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-[10px] text-muted-foreground">
-                        {d.created_at ? new Date(d.created_at).toLocaleDateString("pt-BR") : ""}
+              {docs.map((d) => {
+                const isAnalyzing = analyzingId === d.id;
+                return (
+                  <div
+                    key={d.id}
+                    className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50"
+                  >
+                    <DocIcon tipo={d.tipo} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground truncate">
+                        {truncate(d.nome_original, 30)}
                       </p>
-                      {statusBadge(d)}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] text-muted-foreground">
+                          {d.created_at
+                            ? new Date(d.created_at).toLocaleDateString("pt-BR")
+                            : ""}
+                        </p>
+                        <StatusBadge status={d.status ?? "pendente"} />
+                      </div>
                     </div>
+
+                    {/* Actions */}
+                    {d.status === "analisado" && d.analise_resultado ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[10px] border-primary/30 text-primary"
+                        onClick={() => openResult(d)}
+                      >
+                        <Eye className="h-3 w-3 mr-1" /> Ver
+                      </Button>
+                    ) : d.status === "analisando" ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="h-7 px-2 text-[10px] bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => handleAnalyze(d)}
+                        disabled={isAnalyzing}
+                      >
+                        <Zap className="h-3 w-3 mr-1" /> Analisar
+                      </Button>
+                    )}
                   </div>
-                  {actionButton(d)}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+
+          {/* Inline loading */}
+          {analyzingId && <GoldenLoadingDots />}
         </CardContent>
       </Card>
 
       {/* Result Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto" style={{ background: "#0f0f1a", borderTop: "2px solid #d4af37" }}>
-          <SheetHeader className="flex-row items-center justify-between pr-8">
-            <SheetTitle className="text-base" style={{ color: "#d4af37" }}>📊 Análise Gemini IA</SheetTitle>
+        <SheetContent
+          side="bottom"
+          className="max-h-[85vh] overflow-y-auto border-t-2 border-primary bg-card"
+        >
+          <SheetHeader className="pr-8">
+            <SheetTitle
+              className="text-base text-primary"
+              style={{ fontFamily: "Lora, serif" }}
+            >
+              📊 Análise IA — {truncate(sheetDocName, 25)}
+            </SheetTitle>
+            <p className="text-[10px] text-primary/60">Powered by Google Gemini</p>
           </SheetHeader>
-          <div className="mt-4 space-y-3 animate-fade-in">
-            <div className="prose prose-invert prose-sm max-w-none">
-              <ReactMarkdown components={{
-                h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2">{children}</h3>,
-                h2: ({ children }) => <h2 className="text-[#d4af37] font-semibold text-lg mt-4 mb-2">{children}</h2>,
-                strong: ({ children }) => <strong className="text-[#f5e6c8] font-semibold">{children}</strong>,
-                p: ({ children }) => <p className="text-gray-200 leading-relaxed mb-3">{children}</p>,
-                li: ({ children }) => <li className="text-gray-200 mb-2 flex items-start gap-2"><span className="text-[#d4af37] mt-1">•</span><span>{children}</span></li>,
-                ul: ({ children }) => <ul className="space-y-1 mb-3 list-none pl-0">{children}</ul>,
-                ol: ({ children }) => <ol className="space-y-1 mb-3 list-none pl-0">{children}</ol>,
-                blockquote: ({ children }) => <blockquote className="border-l-2 border-[#d4af37] pl-3 italic text-gray-300 my-3">{children}</blockquote>,
-              }}>{sheetResult}</ReactMarkdown>
+
+          <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-[var(--bg-secondary,#0d0d1a)] border border-primary/20 rounded-xl p-4 max-h-96 overflow-y-auto">
+              <div className="prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown
+                  components={{
+                    h2: ({ children }) => (
+                      <h2
+                        className="text-primary font-semibold text-lg mt-4 mb-2"
+                        style={{ fontFamily: "Lora, serif" }}
+                      >
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3
+                        className="text-amber-400 font-semibold text-sm mt-4 mb-1"
+                        style={{ fontFamily: "Lora, serif" }}
+                      >
+                        {children}
+                      </h3>
+                    ),
+                    strong: ({ children }) => (
+                      <strong className="text-amber-300 font-bold">{children}</strong>
+                    ),
+                    p: ({ children }) => (
+                      <p
+                        className="text-muted-foreground text-sm leading-relaxed mb-2"
+                        style={{ fontFamily: "Lora, serif" }}
+                      >
+                        {children}
+                      </p>
+                    ),
+                    li: ({ children }) => (
+                      <li className="text-muted-foreground text-sm leading-relaxed flex gap-2 mb-1">
+                        <span className="text-primary flex-shrink-0">•</span>
+                        <span>{children}</span>
+                      </li>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="list-none pl-0 space-y-1 mb-2">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="list-none pl-0 space-y-1 mb-2">{children}</ol>
+                    ),
+                    blockquote: ({ children }) => (
+                      <blockquote className="border-l-2 border-primary pl-3 italic text-muted-foreground my-3">
+                        {children}
+                      </blockquote>
+                    ),
+                  }}
+                >
+                  {sheetResult}
+                </ReactMarkdown>
+              </div>
             </div>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={copyResult} className="text-xs border-primary/30 text-primary">
+
+            <div className="flex gap-2 pt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyResult}
+                className="text-xs border-primary/30 text-primary"
+              >
                 <Copy className="h-3 w-3 mr-1" /> Copiar análise
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setSheetOpen(false)} className="text-xs text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSheetOpen(false)}
+                className="text-xs text-muted-foreground"
+              >
                 <X className="h-3 w-3 mr-1" /> Fechar
               </Button>
             </div>
@@ -304,4 +327,3 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
     </>
   );
 }
-
