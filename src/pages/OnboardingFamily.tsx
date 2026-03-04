@@ -36,7 +36,8 @@ export default function OnboardingFamily() {
         () => chars[Math.floor(Math.random() * chars.length)],
       ).join("");
 
-      const { data: familia, error: familiaError } = await supabase
+      // Step 1: Insert família — só captura o id
+      const { data: familiaInsert, error: familiaError } = await supabase
         .from("familias")
         .insert({
           nome: trimmed,
@@ -44,15 +45,25 @@ export default function OnboardingFamily() {
           data_fim_trial: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           codigo_convite: codigoConvite,
         })
-        .select("id, nome, codigo_convite, data_fim_trial")
+        .select("id")
         .single();
       if (familiaError) throw familiaError;
+      if (!familiaInsert) throw new Error("Falha ao criar família");
 
+      // Step 2: Vincular usuário à família
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ familia_id: familia.id, updated_at: new Date().toISOString() })
+        .update({ familia_id: familiaInsert.id, updated_at: new Date().toISOString() })
         .eq("id", authUser.id);
       if (profileError) throw profileError;
+
+      // Step 3: Agora sim buscar dados completos (RLS já permite após vínculo)
+      const { data: familiaCompleta, error: errSelect } = await supabase
+        .from("familias")
+        .select("id, nome, codigo_convite, data_fim_trial")
+        .eq("id", familiaInsert.id)
+        .single();
+      if (errSelect) console.warn("Select família:", errSelect);
 
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });
