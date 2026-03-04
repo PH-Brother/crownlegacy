@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tema_preferido TEXT DEFAULT 'obsidian';
