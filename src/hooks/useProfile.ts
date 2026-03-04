@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { gerarCodigo8 } from "@/lib/utils";
+
 
 interface Profile {
   id: string;
