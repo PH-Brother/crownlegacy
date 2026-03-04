@@ -285,14 +285,35 @@ export default function Dashboard() {
         <Sheet>
           <SheetTrigger asChild>
             <Button className="w-full min-h-[48px] btn-premium font-bold" disabled={analisando} onClick={handleIA}>
-              <Zap className="h-5 w-5 mr-2" />
-              {analisando ? "Analisando..." : "⚡ Invocar Conselho IA"}
+              <span className="mr-2">✨</span>
+              {analisando ? "Buscando sabedoria..." : "✨ Invocar Dicas de Sabedoria"}
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="bg-card border-primary/20">
-            <SheetHeader><SheetTitle className="text-primary font-display">🤖 Conselho da IA</SheetTitle></SheetHeader>
-            <div className="mt-4 whitespace-pre-wrap text-sm text-foreground/90 max-h-[60vh] overflow-y-auto">
-              {analiseIA || "Gerando análise..."}
+            <SheetHeader><SheetTitle className="text-[#d4af37] font-bold" style={{fontFamily: 'Lora, serif'}}>📖 Dicas de Sabedoria</SheetTitle></SheetHeader>
+            <div className="mt-4 max-h-[60vh] overflow-y-auto">
+              {analisando ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="flex gap-1">
+                    {[0, 150, 300].map((delay) => (
+                      <div key={delay} className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{animationDelay: `${delay}ms`}} />
+                    ))}
+                  </div>
+                  <span className="text-amber-400 text-sm italic" style={{fontFamily: 'Lora, serif'}}>Buscando sabedoria...</span>
+                </div>
+              ) : analiseIA ? (
+                <div className="bg-[#0d0d1a] border border-amber-400/30 rounded-xl p-4 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <ReactMarkdown components={{
+                    h3: ({children}) => <h3 className="text-amber-400 font-semibold text-sm mt-4 mb-1" style={{fontFamily: 'Lora, serif'}}>{children}</h3>,
+                    strong: ({children}) => <strong className="text-amber-300 font-bold">{children}</strong>,
+                    p: ({children}) => <p className="text-gray-200 text-sm leading-relaxed mb-2" style={{fontFamily: 'Lora, serif'}}>{children}</p>,
+                    li: ({children}) => <li className="text-gray-200 text-sm leading-relaxed flex gap-2 mb-1"><span className="text-amber-400 flex-shrink-0">•</span><span>{children}</span></li>,
+                    ul: ({children}) => <ul className="list-none pl-0 space-y-1 mb-2">{children}</ul>,
+                  }}>{analiseIA}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm italic">Toque no botão para receber sabedoria financeira.</p>
+              )}
             </div>
           </SheetContent>
         </Sheet>
