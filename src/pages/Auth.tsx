@@ -134,6 +134,16 @@ export default function Auth() {
                   </button>
                 </div>
               </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-primary text-sm hover:text-primary/80 transition-colors underline-offset-2 hover:underline"
+                  disabled={loading}
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
               <Button type="submit" className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base" disabled={loading}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "✨ Entrar"}
               </Button>
