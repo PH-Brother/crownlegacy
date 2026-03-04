@@ -90,7 +90,7 @@ export default function IAConselho() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
 
-      const path = `${session.user.id}/${Date.now()}_${file.name}`;
+      const path = safeStoragePath(session.user.id, file.type);
       const { error: uploadError } = await supabase.storage.from("documentos").upload(path, file);
       if (uploadError) throw uploadError;
 

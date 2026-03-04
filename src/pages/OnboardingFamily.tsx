@@ -45,20 +45,13 @@ export default function OnboardingFamily() {
         return;
       }
 
-      // No family yet → create manually
+      // No family yet → create via secure RPC (sets role server-side)
       const codigo = gerarCodigo8();
-      const { data: familia, error: familiaError } = await supabase
-        .from("familias")
-        .insert({ nome: nomeFamilia.trim(), codigo_convite: codigo })
-        .select("id")
-        .single();
-      if (familiaError) throw familiaError;
-
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ familia_id: familia.id, role: "admin" })
-        .eq("id", user.id);
-      if (updateError) throw updateError;
+      const { error: rpcError } = await supabase.rpc("create_family_with_admin", {
+        p_nome: nomeFamilia.trim(),
+        p_codigo_convite: codigo,
+      });
+      if (rpcError) throw rpcError;
 
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });

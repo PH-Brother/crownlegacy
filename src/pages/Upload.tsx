@@ -41,7 +41,7 @@ export default function UploadPage() {
     if (!file || !user) return;
     setAnalisando(true);
     try {
-      const path = `${user.id}/${Date.now()}_${file.name}`;
+      const path = safeStoragePath(user.id, file.type);
       const { error: upErr } = await supabase.storage.from("documentos").upload(path, file);
       if (upErr) throw upErr;
 
