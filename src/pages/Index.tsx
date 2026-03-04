@@ -26,7 +26,7 @@ export default function Index() {
       if (profile?.familia_id) {
         navigate("/dashboard", { replace: true });
       } else {
-        navigate("/onboarding-family", { replace: true });
+        navigate("/onboarding", { replace: true });
       }
     };
 

@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import OnboardingFamily from "./pages/OnboardingFamily";
+import Onboarding from "./pages/Onboarding";
 import JoinWithCode from "./pages/JoinWithCode";
 import Dashboard from "./pages/Dashboard";
 import NovaTransacao from "./pages/NovaTransacao";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding-family" element={<OnboardingFamily />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/join-family" element={<JoinWithCode />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />

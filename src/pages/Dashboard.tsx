@@ -16,6 +16,7 @@ import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import BottomNav from "@/components/BottomNav";
+import PaywallBanner from "@/components/PaywallBanner";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import TransacaoCard from "@/components/TransacaoCard";
@@ -158,6 +159,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      <PaywallBanner />
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
