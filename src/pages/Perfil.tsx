@@ -68,8 +68,10 @@ export default function Perfil() {
     if (!file || !user) return;
     setAvatarUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${user.id}/avatar.${ext}`;
+      const mimeToExt: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+      const ext = mimeToExt[file.type];
+      if (!ext) { toast({ title: "Formato não suportado", variant: "destructive" }); return; }
+      const path = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: signedData, error: signError } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365);

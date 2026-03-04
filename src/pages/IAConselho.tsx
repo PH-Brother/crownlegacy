@@ -13,6 +13,7 @@ import { useTransacoes } from "@/hooks/useTransacoes";
 import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
+import { safeStoragePath } from "@/lib/sanitize";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import BottomNav from "@/components/BottomNav";
 
