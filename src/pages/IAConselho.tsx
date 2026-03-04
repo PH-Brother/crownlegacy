@@ -341,7 +341,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
             </button>
 
             {respostaIA && (
-              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto" style={{ background: "#0d0d1a" }}>
+              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto animate-fade-in" style={{ background: "#0d0d1a" }}>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <ReactMarkdown components={{
                     h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2 flex items-center gap-2">{children}</h3>,
