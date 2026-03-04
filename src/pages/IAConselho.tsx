@@ -408,11 +408,20 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                 color: "#000",
               }}
             >
-              {gerandoMensal ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando...</> : "📊 Gerar Análise Completa"}
+              {gerandoMensal ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span>Gerando...</span>
+                </div>
+              ) : "📊 Gerar Análise Completa"}
             </button>
 
             {analiseMenusal && (
-              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto" style={{ background: "#0d0d1a" }}>
+              <div className="p-4 rounded-xl border border-[#d4af37]/30 max-h-96 overflow-y-auto animate-fade-in" style={{ background: "#0d0d1a" }}>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <ReactMarkdown components={{
                     h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2 flex items-center gap-2">{children}</h3>,

@@ -277,11 +277,19 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
           <SheetHeader className="flex-row items-center justify-between pr-8">
             <SheetTitle className="text-base" style={{ color: "#d4af37" }}>📊 Análise Gemini IA</SheetTitle>
           </SheetHeader>
-          <div className="mt-4 space-y-3">
-            <div
-              className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed prose prose-invert prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: formatMarkdown(sheetResult) }}
-            />
+          <div className="mt-4 space-y-3 animate-fade-in">
+            <div className="prose prose-invert prose-sm max-w-none">
+              <ReactMarkdown components={{
+                h3: ({ children }) => <h3 className="text-[#d4af37] font-semibold text-base mt-4 mb-2">{children}</h3>,
+                h2: ({ children }) => <h2 className="text-[#d4af37] font-semibold text-lg mt-4 mb-2">{children}</h2>,
+                strong: ({ children }) => <strong className="text-[#f5e6c8] font-semibold">{children}</strong>,
+                p: ({ children }) => <p className="text-gray-200 leading-relaxed mb-3">{children}</p>,
+                li: ({ children }) => <li className="text-gray-200 mb-2 flex items-start gap-2"><span className="text-[#d4af37] mt-1">•</span><span>{children}</span></li>,
+                ul: ({ children }) => <ul className="space-y-1 mb-3 list-none pl-0">{children}</ul>,
+                ol: ({ children }) => <ol className="space-y-1 mb-3 list-none pl-0">{children}</ol>,
+                blockquote: ({ children }) => <blockquote className="border-l-2 border-[#d4af37] pl-3 italic text-gray-300 my-3">{children}</blockquote>,
+              }}>{sheetResult}</ReactMarkdown>
+            </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={copyResult} className="text-xs border-primary/30 text-primary">
                 <Copy className="h-3 w-3 mr-1" /> Copiar análise
