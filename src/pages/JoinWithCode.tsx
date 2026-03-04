@@ -19,11 +19,40 @@ export default function JoinWithCode() {
     if (codigo.length !== 8 || !user) return;
     setLoading(true);
     try {
-      await entrarFamilia(codigo.toUpperCase(), user.id);
+      // Find family by invite code
+      const { data: familiaEncontrada, error: buscaError } = await supabase
+        .from("familias")
+        .select("id")
+        .eq("codigo_convite", codigo.toUpperCase())
+        .single();
+
+      if (buscaError || !familiaEncontrada) {
+        toast({ title: "Código inválido", description: "Verifique e tente novamente.", variant: "destructive" });
+        return;
+      }
+
+      // Check member limit
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact" })
+        .eq("familia_id", familiaEncontrada.id);
+
+      if ((count ?? 0) >= 5) {
+        toast({ title: "Limite atingido", description: "Esta família já tem 5 membros.", variant: "destructive" });
+        return;
+      }
+
+      // Link user to family
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ familia_id: familiaEncontrada.id, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (profileError) throw profileError;
+
       toast({ title: "🎉 Você entrou na família!" });
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Código não encontrado";
+      const msg = err instanceof Error ? err.message : "Erro ao entrar na família";
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);

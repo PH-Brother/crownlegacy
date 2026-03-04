@@ -149,26 +149,37 @@ export default function Onboarding() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("join_family_with_code", {
-        p_codigo_convite: code,
-      });
-      if (error) {
-        if (error.message.includes("Invalid family code")) {
-          toast({ title: "Código inválido. Verifique e tente novamente.", variant: "destructive" });
-        } else {
-          toast({ title: error.message, variant: "destructive" });
-        }
+      // Find family by invite code
+      const { data: familiaEncontrada, error: buscaError } = await supabase
+        .from("familias")
+        .select("id, data_fim_trial")
+        .eq("codigo_convite", code)
+        .single();
+
+      if (buscaError || !familiaEncontrada) {
+        toast({ title: "Código inválido. Verifique e tente novamente.", variant: "destructive" });
         return;
       }
-      const row = Array.isArray(data) ? data[0] : data;
-      if (row?.id) {
-        const { data: fam } = await supabase
-          .from("familias")
-          .select("data_fim_trial")
-          .eq("id", row.id)
-          .maybeSingle();
-        setTrialEndDate(fam?.data_fim_trial ?? null);
+
+      // Check member limit
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact" })
+        .eq("familia_id", familiaEncontrada.id);
+
+      if ((count ?? 0) >= 5) {
+        toast({ title: "Esta família já atingiu o limite de 5 membros.", variant: "destructive" });
+        return;
       }
+
+      // Link user to family
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ familia_id: familiaEncontrada.id, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (profileError) throw profileError;
+
+      setTrialEndDate(familiaEncontrada.data_fim_trial);
       goToStep(3);
     } catch (err: unknown) {
       toast({ title: "Erro ao entrar na família", variant: "destructive" });

@@ -27,7 +27,7 @@ export default function OnboardingFamily() {
     if (!user) { navigate("/auth"); return; }
     setLoading(true);
     try {
-      // Check if user already has a family (possibly created by trigger)
+      // Check if user already has a family
       const { data: profile } = await supabase
         .from("profiles")
         .select("familia_id")
@@ -35,22 +35,35 @@ export default function OnboardingFamily() {
         .single();
 
       if (profile?.familia_id) {
-        // Already has family → just update the name
         await supabase
           .from("familias")
-          .update({ nome: nomeFamilia.trim() })
+          .update({ nome: trimmed })
           .eq("id", profile.familia_id);
         toast({ title: "🏠 Família atualizada com sucesso!" });
         navigate("/dashboard", { replace: true });
         return;
       }
 
-      // No family yet → create via secure RPC (sets role server-side)
-      const { error: rpcError } = await supabase.rpc("create_family_with_admin" as any, {
-        p_nome: nomeFamilia.trim(),
-        p_user_id: user.id,
-      } as any);
-      if (rpcError) throw rpcError;
+      // Create family directly (no RPC)
+      const codigoConvite = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const { data: familia, error: familiaError } = await supabase
+        .from("familias")
+        .insert({
+          nome: trimmed,
+          plano: "trial",
+          data_fim_trial: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          codigo_convite: codigoConvite,
+        })
+        .select()
+        .single();
+      if (familiaError) throw familiaError;
+
+      // Link user to family
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ familia_id: familia.id, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (profileError) throw profileError;
 
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });
