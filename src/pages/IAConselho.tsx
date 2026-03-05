@@ -179,24 +179,23 @@ export default function IAConselho() {
       const { error: uploadError } = await supabase.storage.from("documentos").upload(path, file);
       if (uploadError) throw uploadError;
 
-      // Download for base64
-      const { data: urlData } = await supabase.storage.from("documentos").createSignedUrl(path, 120);
+      // Signed URL — sem base64, sem carregar em memória
+      const { data: urlData } = await supabase.storage.from("documentos").createSignedUrl(path, 600);
       if (!urlData?.signedUrl) throw new Error("Arquivo não encontrado");
 
-      const response = await fetch(urlData.signedUrl);
-      const blob = await response.blob();
-      const base64Full = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      const base64Data = base64Full.split(",")[1];
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      const MIME_MAP: Record<string, string> = {
+        pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg",
+        png: "image/png", webp: "image/webp", heic: "image/heic",
+      };
+      const mimeResolvido = (file.type && file.type !== "application/octet-stream")
+        ? file.type.toLowerCase().trim()
+        : MIME_MAP[ext] || "application/pdf";
 
       const { data, error } = await supabase.functions.invoke("gemini-proxy", {
         body: {
-          base64Data,
-          mimeType: blob.type || file.type,
+          signedUrl: urlData.signedUrl,
+          mimeType: mimeResolvido,
           fileName: file.name,
         },
       });
