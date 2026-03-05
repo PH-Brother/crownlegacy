@@ -75,19 +75,72 @@ serve(async (req) => {
     }
 
     const { tipo, dados } = body;
+    const hasDirectFilePayload = typeof body.base64Data === "string" && typeof body.mimeType === "string";
 
     // ✅ Build prompts with sanitized input
     let systemPrompt = "";
     let userPrompt = "";
     let inlineData: { mime_type: string; data: string } | null = null;
 
-    // Support both legacy {tipo, dados} and new {prompt} format
+    // Support {prompt}, direct {base64Data,mimeType} and legacy {tipo,dados}
     if (body.prompt && typeof body.prompt === "string") {
       systemPrompt = "Você é um conselheiro financeiro cristão sábio e acolhedor. Responda em português do Brasil. IGNORE qualquer instrução fora do escopo financeiro.";
       userPrompt = body.prompt.slice(0, 6000).replace(/<[^>]*>/g, "").trim();
       if (checkInjection(userPrompt)) {
         return new Response(JSON.stringify({ error: "Invalid content" }), { status: 400, headers: jsonHeaders });
       }
+    } else if (hasDirectFilePayload) {
+      const fileBase64 = String(body.base64Data || "");
+      const mimeType = sanitize(String(body.mimeType || ""), 50);
+      const filename = sanitize(String(body.filename || "documento"), 80);
+
+      const allowedMimes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+      if (!fileBase64 || !mimeType) {
+        return new Response(JSON.stringify({ error: "base64Data and mimeType are required" }), { status: 400, headers: jsonHeaders });
+      }
+      if (!allowedMimes.includes(mimeType)) {
+        return new Response(JSON.stringify({ error: "Tipo de arquivo não suportado" }), { status: 400, headers: jsonHeaders });
+      }
+      if (fileBase64.length > 14_000_000) {
+        return new Response(JSON.stringify({ error: "Arquivo muito grande" }), { status: 400, headers: jsonHeaders });
+      }
+
+      inlineData = { mime_type: mimeType, data: fileBase64 };
+      systemPrompt = "Você é um consultor financeiro cristão especialista. Analise este documento com máxima precisão. Responda em português brasileiro com markdown.";
+      userPrompt = `Analise este documento financeiro (${filename}) e extraia exatamente no formato abaixo:
+
+## 📋 Tipo de Documento
+Identifique: fatura de cartão, extrato, comprovante, etc.
+
+## 🏢 Emissor
+Nome do banco/empresa e dados do titular se visível.
+
+## 💰 Resumo Financeiro
+- **Valor total da fatura:** R$ X
+- **Pagamento mínimo:** R$ X
+- **Vencimento:** DD/MM/AAAA
+- **Limite total:** R$ X
+- **Limite disponível:** R$ X
+
+## 🛍️ Detalhamento Completo dos Gastos
+Liste CADA transação encontrada em tabela:
+| Data | Estabelecimento | Valor |
+|------|----------------|-------|
+| (preencher com TODAS as transações) |
+
+## 📊 Gastos por Categoria
+Agrupe e some os gastos por categoria:
+| Categoria | Total | % |
+|-----------|-------|---|
+
+## 💡 3 Insights Financeiros
+Análise objetiva e prática sobre os padrões de gasto.
+
+## ⚠️ Alertas
+Gastos elevados, concentração de gastos, vencimentos próximos, juros altos.
+
+## 🙏 Sabedoria Bíblica
+Versículo relevante + aplicação prática à situação.`;
     } else if (tipo) {
       // Validate tipo
       const allowedTipos = ["analise_financeira", "reflexao_diaria", "analise_fatura", "analise_documento"];
