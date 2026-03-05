@@ -353,7 +353,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Envie um comprovante, cupom fiscal ou fatura e a IA extrai os dados automaticamente.
+              Envie PDF ou imagem (JPEG, PNG, WEBP) de faturas, extratos, comprovantes ou notas fiscais.
             </p>
             <div className="grid grid-cols-2 gap-2">
               <label className="cursor-pointer">
