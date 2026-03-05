@@ -41,41 +41,42 @@ function checkInjection(text: string): boolean {
   return INJECTION_PATTERNS.some((p) => p.test(normalized));
 }
 
-const DOCUMENT_ANALYSIS_PROMPT = `Você é um extrator de dados financeiros especialista.
-Analise o documento e extraia TODAS as transações.
+const DOCUMENT_ANALYSIS_PROMPT = `Você é um extrator de dados financeiros de MÁXIMA PRECISÃO.
+Analise o documento anexado e extraia TODAS as transações.
 
-Retorne SOMENTE um JSON válido, sem texto adicional, sem markdown, sem explicações. Apenas o JSON puro:
+REGRAS CRÍTICAS:
+- Extraia APENAS dados VISIVELMENTE presentes no documento
+- NUNCA invente, estime ou suponha valores não visíveis
+- Se um campo não estiver claro, use null
+- Para faturas de cartão: inclua CADA compra individualmente
+- Valores devem ser números (não strings)
+- Datas no formato DD/MM/AAAA exatamente como no documento
+
+Retorne SOMENTE um JSON válido, sem texto adicional, sem markdown, sem explicações:
 
 {
   "tipo_documento": "fatura_cartao|extrato|comprovante|nota_fiscal",
-  "emissor": "nome do banco ou empresa",
-  "titular": "nome do titular se visível",
-  "valor_total": 0.00,
-  "vencimento": "DD/MM/AAAA",
-  "periodo": "MM/AAAA",
+  "emissor": "nome exato do banco/empresa conforme documento",
+  "titular": "nome exato do titular conforme documento ou null",
+  "valor_total": numero_exato_ou_null,
+  "vencimento": "DD/MM/AAAA exato ou null",
+  "periodo": "MM/AAAA exato do período da fatura ou null",
   "transacoes": [
     {
-      "data": "DD/MM/AAAA",
-      "descricao": "nome do estabelecimento",
-      "valor": 0.00,
+      "data": "DD/MM/AAAA exata conforme documento",
+      "descricao": "nome exato do estabelecimento conforme documento",
+      "valor": numero_exato,
       "categoria": "Alimentação|Transporte|Moradia|Saúde|Educação|Lazer|Assinaturas|Outros"
     }
   ],
   "resumo_categorias": [
-    { "categoria": "nome", "total": 0.00, "percentual": 0 }
+    { "categoria": "nome", "total": numero_calculado, "percentual": numero_inteiro }
   ],
   "insights": ["insight 1", "insight 2", "insight 3"],
-  "alerta": "principal alerta financeiro",
-  "versiculo": "versículo bíblico relevante",
-  "versiculo_ref": "referência do versículo"
-}
-
-REGRAS OBRIGATÓRIAS:
-- Extrair TODAS as transações sem exceção
-- Para faturas de cartão: incluir cada compra individualmente
-- Valores devem ser números (não strings)
-- Datas no formato DD/MM/AAAA
-- Retornar APENAS o JSON, nada mais`;
+  "alerta": "principal alerta financeiro ou null",
+  "versiculo": "versículo bíblico relevante ou null",
+  "versiculo_ref": "referência do versículo ou null"
+}`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
