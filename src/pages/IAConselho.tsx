@@ -409,11 +409,11 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                 </div>
 
                 {/* Transactions list */}
-                {resultadoAnalise.transacoes?.length > 0 && (
+                {transacoesEditaveis.length > 0 && (
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <p className="text-foreground text-sm font-semibold">
-                        {resultadoAnalise.transacoes.length} transações encontradas
+                        {transacoesEditaveis.length} transações encontradas
                       </p>
                       <Button
                         size="sm"
@@ -426,24 +426,42 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                         ) : (
                           <Rocket className="h-3 w-3 mr-1" />
                         )}
-                        Lançar todas ({resultadoAnalise.transacoes.length})
+                        Lançar todas ({transacoesEditaveis.length})
                       </Button>
                     </div>
-                    <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                      {resultadoAnalise.transacoes.map((t, i) => (
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                      {transacoesEditaveis.map((t, i) => (
                         <div
                           key={i}
-                          className="flex justify-between items-center p-2.5 rounded-lg bg-muted/30 border border-border/50"
+                          className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50"
                         >
+                          {isParcela(t.descricao) && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium shrink-0">
+                              parcela
+                            </span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="text-foreground text-sm font-medium truncate">{t.descricao}</p>
-                            <p className="text-muted-foreground text-xs">
-                              {t.data} • {t.categoria}
-                            </p>
+                            <p className="text-muted-foreground text-xs">{t.data}</p>
                           </div>
-                          <p className="text-destructive font-bold text-sm ml-2 shrink-0">
-                            R$ {t.valor?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          <p className="text-destructive font-bold text-sm shrink-0">
+                            R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </p>
+                          <Select
+                            value={t.categoria}
+                            onValueChange={(val) => handleCategoriaChange(i, val)}
+                          >
+                            <SelectTrigger className="w-28 h-7 text-xs border-border/50 bg-muted/50">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIAS_DROPDOWN.map((cat) => (
+                                <SelectItem key={cat} value={cat} className="text-xs">
+                                  {cat}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       ))}
                     </div>
