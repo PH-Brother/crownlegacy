@@ -67,7 +67,7 @@ serve(async (req) => {
     }
 
     // ✅ Parse body
-    let body: { tipo?: string; dados?: Record<string, unknown>; prompt?: string };
+    let body: { tipo?: string; dados?: Record<string, unknown>; prompt?: string; base64Data?: string; mimeType?: string; filename?: string };
     try {
       body = await req.json();
     } catch {
