@@ -23,7 +23,7 @@ import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import TransacaoCard from "@/components/TransacaoCard";
 import CategoryBars from "@/components/dashboard/CategoryBars";
 import QuickTransactionModal from "@/components/dashboard/QuickTransactionModal";
-import DocumentUpload from "@/components/dashboard/DocumentUpload";
+
 import type { Transacao } from "@/hooks/useTransacoes";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
