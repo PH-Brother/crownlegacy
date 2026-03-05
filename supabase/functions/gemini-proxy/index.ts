@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=" + key
+    const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + key
     let contents = []
 
     // BRANCH 1: Análise de documento (PDF/imagem)

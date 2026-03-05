@@ -322,7 +322,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                   <FileText className="h-6 w-6 text-primary" />
                   <span className="text-xs text-muted-foreground">PDF</span>
                 </div>
-                <input type="file" accept=".pdf" className="hidden" onChange={handleUploadDocumento} disabled={analisando} />
+                <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleUploadDocumento} disabled={analisando} />
               </label>
             </div>
 

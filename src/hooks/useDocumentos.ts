@@ -125,7 +125,7 @@ export function useDocumentos(userId: string, familiaId: string) {
           body: {
             base64Data,
             mimeType: blob.type || doc.tipo || "application/pdf",
-            filename: doc.nome_original,
+            fileName: doc.nome_original,
           },
         });
 
