@@ -72,12 +72,17 @@ export function useDocumentos(userId: string, familiaId: string) {
           tipo: file.type,
           status: "pendente",
         });
-        if (dbErr) throw dbErr;
+        if (dbErr) {
+          console.error("❌ INSERT documentos falhou:", dbErr);
+          throw dbErr;
+        }
 
         toast({ title: "📎 Documento enviado!" });
-        listarDocumentos();
-      } catch {
-        toast({ title: "Erro no upload", variant: "destructive" });
+        await listarDocumentos();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("❌ Erro upload completo:", err);
+        toast({ title: `Erro no upload: ${msg}`, variant: "destructive" });
       } finally {
         setUploading(false);
       }
