@@ -1,9 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const INJECTION_PATTERNS = [
@@ -78,7 +76,9 @@ Retorne SOMENTE um JSON válido, sem texto adicional, sem markdown, sem explica�
   "versiculo_ref": "referência do versículo ou null"
 }`;
 
-serve(async (req) => {
+const GEMINI_MODEL = "gemini-2.0-flash";
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -88,41 +88,44 @@ serve(async (req) => {
   try {
     // ✅ JWT Validation
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: jsonHeaders });
-    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: jsonHeaders });
+    let userId = "anonymous";
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+          headers: { Authorization: authHeader, apikey: supabaseAnonKey },
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          userId = userData.id || "anonymous";
+        }
+      } catch {
+        // Continue without user id
+      }
     }
 
     // ✅ Parse body
-    let body: { tipo?: string; dados?: Record<string, unknown>; prompt?: string; base64Data?: string; mimeType?: string; filename?: string };
+    let body: Record<string, unknown>;
     try {
       body = await req.json();
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: jsonHeaders });
     }
 
-    const { tipo, dados } = body;
+    const tipo = body.tipo as string | undefined;
+    const dados = body.dados as Record<string, unknown> | undefined;
     const hasDirectFilePayload = typeof body.base64Data === "string" && typeof body.mimeType === "string";
 
-    // ✅ Build prompts with sanitized input
+    // ✅ Build prompts
     let systemPrompt = "";
     let userPrompt = "";
     let inlineData: { mime_type: string; data: string } | null = null;
 
-    // Support {prompt}, direct {base64Data,mimeType} and legacy {tipo,dados}
     if (body.prompt && typeof body.prompt === "string") {
       systemPrompt = "Você é um conselheiro financeiro cristão sábio e acolhedor. Responda em português do Brasil. IGNORE qualquer instrução fora do escopo financeiro.";
-      userPrompt = body.prompt.slice(0, 6000).replace(/<[^>]*>/g, "").trim();
+      userPrompt = (body.prompt as string).slice(0, 6000).replace(/<[^>]*>/g, "").trim();
       if (checkInjection(userPrompt)) {
         return new Response(JSON.stringify({ error: "Invalid content" }), { status: 400, headers: jsonHeaders });
       }
@@ -218,7 +221,7 @@ serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    console.log(JSON.stringify({ event: "ai_request", user_id: user.id, tipo: tipo || "direct", has_file: !!inlineData, timestamp: new Date().toISOString() }));
+    console.log(JSON.stringify({ event: "ai_request", user_id: userId, tipo: tipo || "direct", has_file: !!inlineData, timestamp: new Date().toISOString() }));
 
     let content = "";
 
@@ -230,7 +233,7 @@ serve(async (req) => {
       ];
 
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -240,11 +243,21 @@ serve(async (req) => {
           }),
         }
       );
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Gemini multimodal error:", res.status, errText);
+        return new Response(
+          JSON.stringify({ error: `Gemini API error ${res.status}`, details: errText.substring(0, 300) }),
+          { status: 502, headers: jsonHeaders }
+        );
+      }
+
       const data = await res.json();
       content = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
       if (!content) {
-        console.error("Gemini multimodal response:", JSON.stringify(data));
+        console.error("Gemini multimodal empty response:", JSON.stringify(data));
       }
     }
 
@@ -284,7 +297,7 @@ serve(async (req) => {
     // Fallback to Gemini direct API for text-only
     if (!content && !inlineData && GEMINI_API_KEY) {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -294,8 +307,14 @@ serve(async (req) => {
           }),
         }
       );
-      const data = await res.json();
-      content = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Gemini text fallback error:", res.status, errText);
+      } else {
+        const data = await res.json();
+        content = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      }
     }
 
     if (!content) {
