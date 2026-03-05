@@ -154,19 +154,24 @@ export default function IAConselho() {
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      const text = data?.resultado || data?.text || "";
-      try {
+      const resultado = data?.resultado;
+      if (!resultado) throw new Error("Sem resultado da IA");
+
+      if (typeof resultado === "object") {
+        setResultadoAnalise(resultado as ResultadoAnaliseJSON);
+        toast({ title: `✅ ${(resultado as ResultadoAnaliseJSON).transacoes?.length || 0} transações extraídas!` });
+      } else {
+        const text = String(resultado);
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]) as ResultadoAnaliseJSON;
           setResultadoAnalise(parsed);
           toast({ title: `✅ ${parsed.transacoes?.length || 0} transações extraídas!` });
         } else {
-          throw new Error("JSON não encontrado");
+          toast({ title: "Não foi possível extrair dados estruturados", variant: "destructive" });
         }
-      } catch {
-        toast({ title: "Não foi possível extrair dados estruturados", variant: "destructive" });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao analisar";
