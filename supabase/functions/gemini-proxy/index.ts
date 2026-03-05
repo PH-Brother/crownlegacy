@@ -106,41 +106,44 @@ serve(async (req) => {
       }
 
       inlineData = { mime_type: mimeType, data: fileBase64 };
-      systemPrompt = "Você é um consultor financeiro cristão especialista. Analise este documento com máxima precisão. Responda em português brasileiro com markdown.";
+      systemPrompt = "Você é um contador e consultor financeiro cristão. Analise este documento com MÁXIMA precisão. Responda em português brasileiro com markdown. NÃO invente dados — use apenas o que está no documento.";
       userPrompt = `Analise este documento financeiro (${filename}) e extraia exatamente no formato abaixo:
 
-## 📋 Tipo de Documento
-Identifique: fatura de cartão, extrato, comprovante, etc.
+## 📋 Tipo e Identificação
+- Tipo: (fatura cartão / extrato / comprovante / nota fiscal)
+- Emissor/Banco:
+- Titular:
+- Período:
 
-## 🏢 Emissor
-Nome do banco/empresa e dados do titular se visível.
-
-## 💰 Resumo Financeiro
-- **Valor total da fatura:** R$ X
-- **Pagamento mínimo:** R$ X
+## 💳 Resumo do Documento
+- **Valor total:** R$ X
 - **Vencimento:** DD/MM/AAAA
-- **Limite total:** R$ X
-- **Limite disponível:** R$ X
+- **Limite:** R$ X (se cartão)
+- **Pagamento mínimo:** R$ X (se cartão)
 
-## 🛍️ Detalhamento Completo dos Gastos
-Liste CADA transação encontrada em tabela:
-| Data | Estabelecimento | Valor |
-|------|----------------|-------|
-| (preencher com TODAS as transações) |
+## 🛍️ TODOS os Lançamentos Encontrados
+Liste CADA item/transação separadamente:
+| # | Data | Estabelecimento/Descrição | Valor |
+|---|------|--------------------------|-------|
+(preencher com CADA linha do documento)
 
-## 📊 Gastos por Categoria
-Agrupe e some os gastos por categoria:
-| Categoria | Total | % |
-|-----------|-------|---|
+## 📊 Resumo por Categoria
+Classifique e some os gastos:
+| Categoria | Qtd | Total | % |
+|-----------|-----|-------|---|
+(Alimentação, Transporte, Lazer, Saúde, etc.)
 
-## 💡 3 Insights Financeiros
-Análise objetiva e prática sobre os padrões de gasto.
+## 💡 Top 3 Maiores Gastos
+Liste os 3 itens de maior valor.
 
-## ⚠️ Alertas
-Gastos elevados, concentração de gastos, vencimentos próximos, juros altos.
+## ⚠️ Alertas Financeiros
+- Gastos acima da média
+- Categorias com alto percentual
+- Vencimentos próximos
+- Qualquer irregularidade
 
-## 🙏 Sabedoria Bíblica
-Versículo relevante + aplicação prática à situação.`;
+## 🙏 Palavra de Sabedoria
+Versículo bíblico aplicável + aplicação prática.`;
     } else if (tipo) {
       // Validate tipo
       const allowedTipos = ["analise_financeira", "reflexao_diaria", "analise_fatura", "analise_documento"];
@@ -207,41 +210,44 @@ Versículo relevante + aplicação prática à situação.`;
 
         inlineData = { mime_type: mimeType, data: fileBase64 };
 
-        systemPrompt = "Você é um consultor financeiro cristão especialista. Analise este documento com máxima precisão. Responda em português brasileiro com markdown.";
+        systemPrompt = "Você é um contador e consultor financeiro cristão. Analise este documento com MÁXIMA precisão. Responda em português brasileiro com markdown. NÃO invente dados — use apenas o que está no documento.";
         userPrompt = `Analise este documento financeiro (${filename}) e extraia exatamente no formato abaixo:
 
-## 📋 Tipo de Documento
-Identifique: fatura de cartão, extrato, comprovante, etc.
+## 📋 Tipo e Identificação
+- Tipo: (fatura cartão / extrato / comprovante / nota fiscal)
+- Emissor/Banco:
+- Titular:
+- Período:
 
-## 🏢 Emissor
-Nome do banco/empresa e dados do titular se visível.
-
-## 💰 Resumo Financeiro
-- **Valor total da fatura:** R$ X
-- **Pagamento mínimo:** R$ X
+## 💳 Resumo do Documento
+- **Valor total:** R$ X
 - **Vencimento:** DD/MM/AAAA
-- **Limite total:** R$ X
-- **Limite disponível:** R$ X
+- **Limite:** R$ X (se cartão)
+- **Pagamento mínimo:** R$ X (se cartão)
 
-## 🛍️ Detalhamento Completo dos Gastos
-Liste CADA transação encontrada em tabela:
-| Data | Estabelecimento | Valor |
-|------|----------------|-------|
-| (preencher com TODAS as transações) |
+## 🛍️ TODOS os Lançamentos Encontrados
+Liste CADA item/transação separadamente:
+| # | Data | Estabelecimento/Descrição | Valor |
+|---|------|--------------------------|-------|
+(preencher com CADA linha do documento)
 
-## 📊 Gastos por Categoria
-Agrupe e some os gastos por categoria:
-| Categoria | Total | % |
-|-----------|-------|---|
+## 📊 Resumo por Categoria
+Classifique e some os gastos:
+| Categoria | Qtd | Total | % |
+|-----------|-----|-------|---|
+(Alimentação, Transporte, Lazer, Saúde, etc.)
 
-## 💡 3 Insights Financeiros
-Análise objetiva e prática sobre os padrões de gasto.
+## 💡 Top 3 Maiores Gastos
+Liste os 3 itens de maior valor.
 
-## ⚠️ Alertas
-Gastos elevados, concentração de gastos, vencimentos próximos, juros altos.
+## ⚠️ Alertas Financeiros
+- Gastos acima da média
+- Categorias com alto percentual
+- Vencimentos próximos
+- Qualquer irregularidade
 
-## 🙏 Sabedoria Bíblica
-Versículo relevante + aplicação prática à situação.`;
+## 🙏 Palavra de Sabedoria
+Versículo bíblico aplicável + aplicação prática.`;
       }
     } else {
       return new Response(JSON.stringify({ error: "Prompt or tipo required" }), { status: 400, headers: jsonHeaders });
