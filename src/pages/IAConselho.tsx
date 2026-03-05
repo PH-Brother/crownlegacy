@@ -208,14 +208,17 @@ export default function IAConselho() {
       if (!resultado) throw new Error("Sem resultado da IA");
 
       if (typeof resultado === "object") {
-        setResultadoAnalise(resultado as ResultadoAnaliseJSON);
-        toast({ title: `✅ ${(resultado as ResultadoAnaliseJSON).transacoes?.length || 0} transações extraídas!` });
+        const res = resultado as ResultadoAnaliseJSON;
+        setResultadoAnalise(res);
+        setTransacoesEditaveis(normalizarTransacoes(res.transacoes || [], res.vencimento));
+        toast({ title: `✅ ${res.transacoes?.length || 0} transações extraídas!` });
       } else {
         const text = String(resultado);
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]) as ResultadoAnaliseJSON;
           setResultadoAnalise(parsed);
+          setTransacoesEditaveis(normalizarTransacoes(parsed.transacoes || [], parsed.vencimento));
           toast({ title: `✅ ${parsed.transacoes?.length || 0} transações extraídas!` });
         } else {
           toast({ title: "Não foi possível extrair dados estruturados", variant: "destructive" });
