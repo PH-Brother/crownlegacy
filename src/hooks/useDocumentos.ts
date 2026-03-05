@@ -87,9 +87,9 @@ export function useDocumentos(userId: string, familiaId: string) {
 
   const analisarDocumento = useCallback(
     async (doc: Documento) => {
-      console.log("🔍 Iniciando análise:", doc.id);
-      console.log("📁 Storage path:", doc.storage_path);
-      console.log("📄 Mime type:", doc.tipo);
+      console.log("Iniciando análise:", doc.id);
+      console.log("Storage path:", doc.storage_path);
+      console.log("Mime type:", doc.tipo);
 
       setAnalyzingId(doc.id);
       setDocs((prev) =>
@@ -97,15 +97,39 @@ export function useDocumentos(userId: string, familiaId: string) {
       );
 
       try {
-        // Update status in DB
-        await supabase
-          .from("documentos")
-          .update({ status: "analisando" })
-          .eq("id", doc.id);
+        await supabase.from("documentos").update({ status: "analisando" }).eq("id", doc.id);
 
-        console.log("⚡ Chamando analisarDocumentoGemini...");
-        const resultado = await analisarDocumentoGemini(doc.storage_path, doc.tipo);
-        console.log("✅ Resultado recebido:", resultado?.substring(0, 100));
+        const { data: urlData, error: urlError } = await supabase.storage
+          .from("documentos")
+          .createSignedUrl(doc.storage_path, 120);
+
+        if (urlError || !urlData?.signedUrl) {
+          throw new Error("Arquivo não encontrado");
+        }
+
+        const response = await fetch(urlData.signedUrl);
+        if (!response.ok) {
+          throw new Error("Erro ao baixar arquivo");
+        }
+
+        const blob = await response.blob();
+        const base64 = await blobToBase64(blob);
+        const base64Data = base64.split(",")[1];
+
+        const { data, error } = await supabase.functions.invoke("gemini-proxy", {
+          body: {
+            base64Data,
+            mimeType: blob.type || doc.tipo || "application/pdf",
+            filename: doc.nome_original,
+          },
+        });
+
+        if (error) throw new Error(error.message || "Erro na Edge Function");
+
+        const resultado = data?.resultado;
+        if (!resultado || typeof resultado !== "string") {
+          throw new Error("Sem resultado");
+        }
 
         await supabase
           .from("documentos")
@@ -114,30 +138,24 @@ export function useDocumentos(userId: string, familiaId: string) {
 
         setDocs((prev) =>
           prev.map((d) =>
-            d.id === doc.id
-              ? { ...d, status: "analisado", analise_resultado: resultado }
-              : d
+            d.id === doc.id ? { ...d, status: "analisado", analise_resultado: resultado } : d
           )
         );
 
-        toast({ title: "✅ Análise concluída!" });
+        toast({ title: "Análise concluída! ✅" });
         return resultado;
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : "Erro desconhecido";
-        console.error("❌ Erro na análise:", errorMsg, err);
+        console.error("Erro análise:", err);
 
-        await supabase
-          .from("documentos")
-          .update({ status: "pendente" })
-          .eq("id", doc.id);
+        await supabase.from("documentos").update({ status: "pendente" }).eq("id", doc.id);
 
         setDocs((prev) =>
           prev.map((d) => (d.id === doc.id ? { ...d, status: "pendente" } : d))
         );
 
         toast({
-          title: "Erro na análise",
-          description: errorMsg,
+          title: `Erro: ${errorMsg}`,
           variant: "destructive",
         });
         return null;
