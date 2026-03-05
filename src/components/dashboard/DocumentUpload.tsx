@@ -210,7 +210,18 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
                         <Eye className="h-3 w-3 mr-1" /> Ver
                       </Button>
                     ) : d.status === "analisando" ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex gap-1">
+                          {[0, 150, 300].map((delay) => (
+                            <div
+                              key={delay}
+                              className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
+                              style={{ animationDelay: `${delay}ms` }}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-primary">Analisando...</span>
+                      </div>
                     ) : (
                       <Button
                         size="sm"
@@ -218,7 +229,7 @@ export default function DocumentUpload({ userId, familiaId }: DocumentUploadProp
                         onClick={() => handleAnalyze(d)}
                         disabled={isAnalyzing}
                       >
-                        <Zap className="h-3 w-3 mr-1" /> Analisar
+                        ⚡ Analisar
                       </Button>
                     )}
                   </div>
