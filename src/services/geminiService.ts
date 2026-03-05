@@ -1,54 +1,52 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// MIME types suportados para upload
+const MIME_SUPORTADOS: Record<string, string> = {
+  "pdf": "application/pdf",
+  "jpg": "image/jpeg",
+  "jpeg": "image/jpeg",
+  "png": "image/png",
+  "webp": "image/webp",
+  "heic": "image/heic",
+  "heif": "image/heif",
+};
+
+const resolverMimeType = (
+  fileName: string,
+  mimeTypeOriginal: string
+): string => {
+  // Usar mimeType original se válido
+  if (mimeTypeOriginal && mimeTypeOriginal !== "application/octet-stream") {
+    return mimeTypeOriginal.toLowerCase().trim();
+  }
+  // Fallback: inferir pela extensão do arquivo
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  return MIME_SUPORTADOS[ext] || "application/pdf";
+};
+
 export const analisarDocumentoGemini = async (
   storagePath: string,
   mimeType: string,
   fileName: string
 ): Promise<object> => {
+  const mimeResolvido = resolverMimeType(fileName, mimeType);
+  console.log("[geminiService] MIME resolvido:", mimeResolvido, "| Arquivo:", fileName);
 
-  // PASSO 1: URL assinada
   const { data: urlData, error: urlError } = await supabase
     .storage
     .from("documentos")
-    .createSignedUrl(storagePath, 180);
+    .createSignedUrl(storagePath, 600);
 
   if (urlError || !urlData?.signedUrl) {
-    throw new Error("Arquivo não encontrado no storage: " + urlError?.message);
+    throw new Error("Arquivo nao encontrado no storage: " + urlError?.message);
   }
 
-  // PASSO 2: Download do arquivo
-  const fetchRes = await fetch(urlData.signedUrl);
-  if (!fetchRes.ok) {
-    throw new Error("Erro ao baixar arquivo: " + fetchRes.status);
-  }
-  const blob = await fetchRes.blob();
+  console.log("[geminiService] Enviando signed URL para Edge Function");
 
-  // PASSO 3: Converter para base64
-  const base64Data = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      const b64 = result.split(",")[1];
-      if (!b64) reject(new Error("Falha na conversão base64"));
-      else resolve(b64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-
-  const mimeCorreto = blob.type || mimeType || "application/pdf";
-
-  console.log("[geminiService] Enviando para Edge Function:", {
-    fileName,
-    mimeType: mimeCorreto,
-    base64Length: base64Data.length,
-  });
-
-  // PASSO 4: Chamar Edge Function COM BODY OBRIGATÓRIO
   const { data, error } = await supabase.functions.invoke("gemini-proxy", {
     body: {
-      base64Data: base64Data,
-      mimeType: mimeCorreto,
+      signedUrl: urlData.signedUrl,
+      mimeType: mimeResolvido,
       fileName: fileName,
     },
   });
