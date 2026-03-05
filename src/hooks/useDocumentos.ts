@@ -1,8 +1,16 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { analisarDocumentoGemini } from "@/services/geminiService";
 import { isAllowedMime } from "@/lib/sanitize";
 import { useToast } from "@/hooks/use-toast";
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 const MAX_SIZE = 10 * 1024 * 1024;
 
