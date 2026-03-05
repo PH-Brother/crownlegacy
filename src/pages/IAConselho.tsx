@@ -315,7 +315,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                   <Image className="h-6 w-6 text-primary" />
                   <span className="text-xs text-muted-foreground">Imagem</span>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleUploadDocumento} disabled={analisando} />
+                <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={handleUploadDocumento} disabled={analisando} />
               </label>
               <label className="cursor-pointer">
                 <div className="flex flex-col items-center gap-1 py-4 rounded-xl card-glass hover:border-primary/40 transition-colors">
