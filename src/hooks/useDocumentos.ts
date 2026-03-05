@@ -3,15 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { isAllowedMime } from "@/lib/sanitize";
 import { useToast } from "@/hooks/use-toast";
 
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
 const MAX_SIZE = 10 * 1024 * 1024;
 
 export interface Documento {
@@ -106,25 +97,25 @@ export function useDocumentos(userId: string, familiaId: string) {
 
         const { data: urlData, error: urlError } = await supabase.storage
           .from("documentos")
-          .createSignedUrl(doc.storage_path, 120);
+          .createSignedUrl(doc.storage_path, 600);
 
         if (urlError || !urlData?.signedUrl) {
           throw new Error("Arquivo não encontrado");
         }
 
-        const response = await fetch(urlData.signedUrl);
-        if (!response.ok) {
-          throw new Error("Erro ao baixar arquivo");
-        }
-
-        const blob = await response.blob();
-        const base64 = await blobToBase64(blob);
-        const base64Data = base64.split(",")[1];
+        const ext = doc.nome_original.split(".").pop()?.toLowerCase() || "";
+        const MIME_MAP: Record<string, string> = {
+          pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg",
+          png: "image/png", webp: "image/webp", heic: "image/heic",
+        };
+        const mimeResolvido = (doc.tipo && doc.tipo !== "application/octet-stream")
+          ? doc.tipo.toLowerCase().trim()
+          : MIME_MAP[ext] || "application/pdf";
 
         const { data, error } = await supabase.functions.invoke("gemini-proxy", {
           body: {
-            base64Data,
-            mimeType: blob.type || doc.tipo || "application/pdf",
+            signedUrl: urlData.signedUrl,
+            mimeType: mimeResolvido,
             fileName: doc.nome_original,
           },
         });
@@ -132,7 +123,7 @@ export function useDocumentos(userId: string, familiaId: string) {
         if (error) throw new Error(error.message || "Erro na Edge Function");
 
         const resultado = data?.resultado;
-        if (!resultado || typeof resultado !== "string") {
+        if (!resultado) {
           throw new Error("Sem resultado");
         }
 
