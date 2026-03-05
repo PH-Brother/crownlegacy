@@ -113,6 +113,7 @@ export default function IAConselho() {
 
   const [analisando, setAnalisando] = useState(false);
   const [resultadoAnalise, setResultadoAnalise] = useState<ResultadoAnaliseJSON | null>(null);
+  const [transacoesEditaveis, setTransacoesEditaveis] = useState<TransacaoExtraida[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pergunta, setPergunta] = useState("");
   const [respostaIA, setRespostaIA] = useState("");
@@ -120,6 +121,12 @@ export default function IAConselho() {
   const [analiseMenusal, setAnaliseMensal] = useState("");
   const [gerandoMensal, setGerandoMensal] = useState(false);
   const [lancando, setLancando] = useState(false);
+
+  const handleCategoriaChange = (index: number, novaCategoria: string) => {
+    setTransacoesEditaveis((prev) =>
+      prev.map((t, i) => (i === index ? { ...t, categoria: novaCategoria } : t))
+    );
+  };
 
   const now = new Date();
   const mes = now.getMonth() + 1;
