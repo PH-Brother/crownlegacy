@@ -233,7 +233,7 @@ export default function IAConselho() {
   };
 
   const handleLancarTodas = async () => {
-    if (!resultadoAnalise?.transacoes?.length) return;
+    if (!transacoesEditaveis.length) return;
     setLancando(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -248,25 +248,20 @@ export default function IAConselho() {
         return;
       }
 
-      const transacoesParaInserir = resultadoAnalise.transacoes.map(t => ({
+      const transacoesParaInserir = transacoesEditaveis.map((t) => ({
         usuario_id: session.user.id,
         familia_id: prof.familia_id,
         tipo: "despesa" as const,
         descricao: t.descricao,
-        valor: Math.abs(t.valor),
+        valor: Math.abs(Number(t.valor)),
         categoria: t.categoria || "Outros",
-        data_transacao: (() => {
-          if (!t.data) return new Date().toISOString().split("T")[0];
-          const partes = t.data.split("/");
-          if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
-          return new Date().toISOString().split("T")[0];
-        })(),
+        data_transacao: t.data,
         recorrente: false,
         tags: ["ia-lancado"] as string[],
       }));
 
       const { error } = await supabase.from("transacoes").insert(transacoesParaInserir);
-      if (error) throw error;
+      if (error) throw new Error("Erro ao lançar: " + error.message);
 
       await supabase.rpc("add_gamification_points", {
         p_pontos: 20,
@@ -276,6 +271,7 @@ export default function IAConselho() {
 
       toast({ title: `🎉 ${transacoesParaInserir.length} transações lançadas! +20 pontos` });
       setResultadoAnalise(null);
+      setTransacoesEditaveis([]);
       setPreviewUrl(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao lançar";
