@@ -149,7 +149,7 @@ export default function IAConselho() {
         body: {
           base64Data,
           mimeType: blob.type || file.type,
-          filename: file.name,
+          fileName: file.name,
         },
       });
 
