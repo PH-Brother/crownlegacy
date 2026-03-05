@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -14,6 +15,46 @@ import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
 import { safeStoragePath } from "@/lib/sanitize";
+
+const CATEGORIAS_DROPDOWN = [
+  "Alimentação", "Transporte", "Moradia", "Saúde", "Educação",
+  "Lazer", "Assinaturas", "Roupas", "Dízimo/Oferta", "Investimentos", "Outros",
+];
+
+const PADROES_PARCELA = [
+  /\d{1,2}\/\d{1,2}/,
+  /parc/i,
+  /parcela/i,
+  /\d+\s*de\s*\d+/i,
+];
+
+const isParcela = (descricao: string): boolean => {
+  return PADROES_PARCELA.some((p) => p.test(descricao));
+};
+
+const parsearData = (dataStr: string | null): string => {
+  if (!dataStr) return new Date().toISOString().split("T")[0];
+  const partes = dataStr.split("/");
+  if (partes.length === 3) {
+    const dia = partes[0].padStart(2, "0");
+    const mes = partes[1].padStart(2, "0");
+    const ano = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+    return `${ano}-${mes}-${dia}`;
+  }
+  return new Date().toISOString().split("T")[0];
+};
+
+const normalizarTransacoes = (
+  transacoes: TransacaoExtraida[],
+  vencimentoFatura: string | null
+): TransacaoExtraida[] => {
+  const dataFatura = vencimentoFatura ? parsearData(vencimentoFatura) : null;
+  return transacoes.map((t) => {
+    const ehParcela = isParcela(t.descricao);
+    const dataCorreta = ehParcela && dataFatura ? dataFatura : parsearData(t.data);
+    return { ...t, data: dataCorreta };
+  });
+};
 
 const CORES_CATEGORIA: Record<string, string> = {
   "Alimentação": "#22c55e",
