@@ -285,10 +285,6 @@ export default function Dashboard() {
           <CategoryBars categoriasMap={categoriasMap} />
         )}
 
-        {/* Document Upload */}
-        {!loading && familiaId && user && (
-          <DocumentUpload userId={user.id} familiaId={familiaId} />
-        )}
 
         <ReflexaoDiaria />
 
