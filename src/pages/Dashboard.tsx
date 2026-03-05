@@ -23,7 +23,7 @@ import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import TransacaoCard from "@/components/TransacaoCard";
 import CategoryBars from "@/components/dashboard/CategoryBars";
 import QuickTransactionModal from "@/components/dashboard/QuickTransactionModal";
-import DocumentUpload from "@/components/dashboard/DocumentUpload";
+
 import type { Transacao } from "@/hooks/useTransacoes";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -285,10 +285,6 @@ export default function Dashboard() {
           <CategoryBars categoriasMap={categoriasMap} />
         )}
 
-        {/* Document Upload */}
-        {!loading && familiaId && user && (
-          <DocumentUpload userId={user.id} familiaId={familiaId} />
-        )}
 
         <ReflexaoDiaria />
 
@@ -313,12 +309,12 @@ export default function Dashboard() {
                   <span className="text-amber-400 text-sm italic" style={{fontFamily: 'Lora, serif'}}>Buscando sabedoria...</span>
                 </div>
               ) : analiseIA ? (
-                <div className="bg-muted border border-primary/20 rounded-xl p-4 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="bg-muted border border-primary/20 rounded-xl p-5 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <ReactMarkdown components={{
-                    h3: ({children}) => <h3 className="text-primary font-semibold text-sm mt-4 mb-1" style={{fontFamily: 'Lora, serif'}}>{children}</h3>,
+                    h3: ({children}) => <h3 className="text-primary font-semibold text-lg mt-4 mb-2" style={{fontFamily: 'Lora, serif'}}>{children}</h3>,
                     strong: ({children}) => <strong className="text-primary font-bold">{children}</strong>,
-                    p: ({children}) => <p className="text-foreground text-sm leading-relaxed mb-2" style={{fontFamily: 'Lora, serif'}}>{children}</p>,
-                    li: ({children}) => <li className="text-foreground text-sm leading-relaxed flex gap-2 mb-1"><span className="text-primary flex-shrink-0">•</span><span>{children}</span></li>,
+                    p: ({children}) => <p className="text-foreground text-base leading-loose mb-3" style={{fontFamily: 'Lora, serif'}}>{children}</p>,
+                    li: ({children}) => <li className="text-foreground text-base leading-loose flex gap-2 mb-1"><span className="text-primary flex-shrink-0">•</span><span>{children}</span></li>,
                     ul: ({children}) => <ul className="list-none pl-0 space-y-1 mb-2">{children}</ul>,
                   }}>{analiseIA}</ReactMarkdown>
                 </div>
