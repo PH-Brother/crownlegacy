@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     console.log("arquivo:", b.fileName, b.mimeType, b.base64Data.length);
 
     const r = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + key,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0:generateContent?key=" + key,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
