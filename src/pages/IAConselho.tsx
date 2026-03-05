@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -14,6 +15,46 @@ import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
 import { safeStoragePath } from "@/lib/sanitize";
+
+const CATEGORIAS_DROPDOWN = [
+  "Alimentação", "Transporte", "Moradia", "Saúde", "Educação",
+  "Lazer", "Assinaturas", "Roupas", "Dízimo/Oferta", "Investimentos", "Outros",
+];
+
+const PADROES_PARCELA = [
+  /\d{1,2}\/\d{1,2}/,
+  /parc/i,
+  /parcela/i,
+  /\d+\s*de\s*\d+/i,
+];
+
+const isParcela = (descricao: string): boolean => {
+  return PADROES_PARCELA.some((p) => p.test(descricao));
+};
+
+const parsearData = (dataStr: string | null): string => {
+  if (!dataStr) return new Date().toISOString().split("T")[0];
+  const partes = dataStr.split("/");
+  if (partes.length === 3) {
+    const dia = partes[0].padStart(2, "0");
+    const mes = partes[1].padStart(2, "0");
+    const ano = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+    return `${ano}-${mes}-${dia}`;
+  }
+  return new Date().toISOString().split("T")[0];
+};
+
+const normalizarTransacoes = (
+  transacoes: TransacaoExtraida[],
+  vencimentoFatura: string | null
+): TransacaoExtraida[] => {
+  const dataFatura = vencimentoFatura ? parsearData(vencimentoFatura) : null;
+  return transacoes.map((t) => {
+    const ehParcela = isParcela(t.descricao);
+    const dataCorreta = ehParcela && dataFatura ? dataFatura : parsearData(t.data);
+    return { ...t, data: dataCorreta };
+  });
+};
 
 const CORES_CATEGORIA: Record<string, string> = {
   "Alimentação": "#22c55e",
@@ -72,6 +113,7 @@ export default function IAConselho() {
 
   const [analisando, setAnalisando] = useState(false);
   const [resultadoAnalise, setResultadoAnalise] = useState<ResultadoAnaliseJSON | null>(null);
+  const [transacoesEditaveis, setTransacoesEditaveis] = useState<TransacaoExtraida[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pergunta, setPergunta] = useState("");
   const [respostaIA, setRespostaIA] = useState("");
@@ -79,6 +121,12 @@ export default function IAConselho() {
   const [analiseMenusal, setAnaliseMensal] = useState("");
   const [gerandoMensal, setGerandoMensal] = useState(false);
   const [lancando, setLancando] = useState(false);
+
+  const handleCategoriaChange = (index: number, novaCategoria: string) => {
+    setTransacoesEditaveis((prev) =>
+      prev.map((t, i) => (i === index ? { ...t, categoria: novaCategoria } : t))
+    );
+  };
 
   const now = new Date();
   const mes = now.getMonth() + 1;
@@ -160,14 +208,17 @@ export default function IAConselho() {
       if (!resultado) throw new Error("Sem resultado da IA");
 
       if (typeof resultado === "object") {
-        setResultadoAnalise(resultado as ResultadoAnaliseJSON);
-        toast({ title: `✅ ${(resultado as ResultadoAnaliseJSON).transacoes?.length || 0} transações extraídas!` });
+        const res = resultado as ResultadoAnaliseJSON;
+        setResultadoAnalise(res);
+        setTransacoesEditaveis(normalizarTransacoes(res.transacoes || [], res.vencimento));
+        toast({ title: `✅ ${res.transacoes?.length || 0} transações extraídas!` });
       } else {
         const text = String(resultado);
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]) as ResultadoAnaliseJSON;
           setResultadoAnalise(parsed);
+          setTransacoesEditaveis(normalizarTransacoes(parsed.transacoes || [], parsed.vencimento));
           toast({ title: `✅ ${parsed.transacoes?.length || 0} transações extraídas!` });
         } else {
           toast({ title: "Não foi possível extrair dados estruturados", variant: "destructive" });
@@ -182,7 +233,7 @@ export default function IAConselho() {
   };
 
   const handleLancarTodas = async () => {
-    if (!resultadoAnalise?.transacoes?.length) return;
+    if (!transacoesEditaveis.length) return;
     setLancando(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -197,25 +248,20 @@ export default function IAConselho() {
         return;
       }
 
-      const transacoesParaInserir = resultadoAnalise.transacoes.map(t => ({
+      const transacoesParaInserir = transacoesEditaveis.map((t) => ({
         usuario_id: session.user.id,
         familia_id: prof.familia_id,
         tipo: "despesa" as const,
         descricao: t.descricao,
-        valor: Math.abs(t.valor),
+        valor: Math.abs(Number(t.valor)),
         categoria: t.categoria || "Outros",
-        data_transacao: (() => {
-          if (!t.data) return new Date().toISOString().split("T")[0];
-          const partes = t.data.split("/");
-          if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
-          return new Date().toISOString().split("T")[0];
-        })(),
+        data_transacao: t.data,
         recorrente: false,
         tags: ["ia-lancado"] as string[],
       }));
 
       const { error } = await supabase.from("transacoes").insert(transacoesParaInserir);
-      if (error) throw error;
+      if (error) throw new Error("Erro ao lançar: " + error.message);
 
       await supabase.rpc("add_gamification_points", {
         p_pontos: 20,
@@ -225,6 +271,7 @@ export default function IAConselho() {
 
       toast({ title: `🎉 ${transacoesParaInserir.length} transações lançadas! +20 pontos` });
       setResultadoAnalise(null);
+      setTransacoesEditaveis([]);
       setPreviewUrl(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao lançar";
@@ -362,11 +409,11 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                 </div>
 
                 {/* Transactions list */}
-                {resultadoAnalise.transacoes?.length > 0 && (
+                {transacoesEditaveis.length > 0 && (
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <p className="text-foreground text-sm font-semibold">
-                        {resultadoAnalise.transacoes.length} transações encontradas
+                        {transacoesEditaveis.length} transações encontradas
                       </p>
                       <Button
                         size="sm"
@@ -379,24 +426,42 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                         ) : (
                           <Rocket className="h-3 w-3 mr-1" />
                         )}
-                        Lançar todas ({resultadoAnalise.transacoes.length})
+                        Lançar todas ({transacoesEditaveis.length})
                       </Button>
                     </div>
-                    <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                      {resultadoAnalise.transacoes.map((t, i) => (
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                      {transacoesEditaveis.map((t, i) => (
                         <div
                           key={i}
-                          className="flex justify-between items-center p-2.5 rounded-lg bg-muted/30 border border-border/50"
+                          className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50"
                         >
+                          {isParcela(t.descricao) && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium shrink-0">
+                              parcela
+                            </span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="text-foreground text-sm font-medium truncate">{t.descricao}</p>
-                            <p className="text-muted-foreground text-xs">
-                              {t.data} • {t.categoria}
-                            </p>
+                            <p className="text-muted-foreground text-xs">{t.data}</p>
                           </div>
-                          <p className="text-destructive font-bold text-sm ml-2 shrink-0">
-                            R$ {t.valor?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          <p className="text-destructive font-bold text-sm shrink-0">
+                            R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </p>
+                          <Select
+                            value={t.categoria}
+                            onValueChange={(val) => handleCategoriaChange(i, val)}
+                          >
+                            <SelectTrigger className="w-28 h-7 text-xs border-border/50 bg-muted/50">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIAS_DROPDOWN.map((cat) => (
+                                <SelectItem key={cat} value={cat} className="text-xs">
+                                  {cat}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       ))}
                     </div>
