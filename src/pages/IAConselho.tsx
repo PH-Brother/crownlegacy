@@ -84,6 +84,7 @@ const ICONES_CATEGORIA: Record<string, string> = {
 
 interface TransacaoExtraida {
   data: string;
+  data_lancamento?: string;
   descricao: string;
   valor: number;
   categoria: string;
@@ -96,6 +97,7 @@ interface ResultadoAnaliseJSON {
   valor_total: number;
   vencimento: string;
   periodo: string;
+  data_lancamento?: string;
   transacoes: TransacaoExtraida[];
   resumo_categorias: { categoria: string; total: number; percentual: number }[];
   insights: string[];
