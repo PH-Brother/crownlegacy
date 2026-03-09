@@ -198,7 +198,6 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
           generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 32768,
-            responseMimeType: "application/json",
           },
         }),
       });
