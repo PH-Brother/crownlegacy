@@ -149,65 +149,39 @@ Deno.serve(async (req) => {
       }
 
       const promptTexto = `Voce e um extrator de dados financeiros especialista em documentos brasileiros.
-Analise o documento (pode ser PDF ou imagem fotografada) e extraia APENAS dados VISIVEIS.
-NUNCA invente, estime ou complete dados. Se nao estiver legivel use null.
+Analise o documento (PDF ou imagem fotografada) e extraia APENAS dados VISIVEIS. NUNCA invente dados. Se ilegivel: null.
 
-IDENTIFICACAO DO TIPO DE DOCUMENTO:
-- fatura_cartao: fatura de cartao de credito (Itau, Bradesco, Nubank, Santander, C6, Inter, XP, BTG, Caixa, BB, Sicredi, Sicoob, outros)
+IDENTIFICACAO DO TIPO:
+- fatura_cartao: fatura de cartao de credito de qualquer banco brasileiro (Itau, Bradesco, Nubank, Santander, C6, Inter, XP, BTG, Caixa, BB, Sicredi, Sicoob e outros)
 - extrato_bancario: extrato de conta corrente ou poupanca
-- comprovante: comprovante de pagamento PIX, TED, DOC, boleto, transferencia, recibo de loja, cupom fiscal
-- nota_fiscal: nota fiscal eletronica (NF-e) ou cupom fiscal de estabelecimento
+- comprovante: PIX, TED, DOC, boleto, recibo, cupom fiscal
+- nota_fiscal: NF-e ou cupom fiscal de estabelecimento
 
-REGRAS POR TIPO DE DOCUMENTO:
+REGRAS FATURA DE CARTAO:
+ESCOPO: Extrair APENAS lancamentos da secao atual. Nomes comuns da secao: "Lancamentos", "Compras", "Gastos do periodo", "Lancamentos nacionais". IGNORAR COMPLETAMENTE: secao "Proximas faturas", "Parcelamentos futuros", "Compras parceladas proximas faturas" — sao informativas e causariam duplicidade.
 
-[FATURA DE CARTAO]
-- Extrair APENAS transacoes da secao Lancamentos atuais ou Lancamentos compras e saques
-- IGNORAR secao Compras parceladas proximas faturas (informativa, causaria duplicidade)
-- Datas DD/MM sem ano: usar ano do periodo da fatura. Se mes da transacao maior que mes da fatura, ano e o anterior
-- Parcelamento Itau/Bradesco: padrao NOMEDD/MM colado (ex: LOJA 03/06 = parcela 3 de 6). Usar vencimento como data_transacao
-- Parcelamento Nubank/outros: verificar descricao "Parcela X de Y" e usar mes da fatura como data
-- Cartoes adicionais: incluir nome do titular entre parenteses na descricao
-- valor_total = Total dos lancamentos atuais da fatura
+REGRA DE MES — CRITICA: Cartao de credito cobra no mes SEGUINTE a compra. Usar SEMPRE a data de vencimento como referencia do mes de lancamento de TODAS as transacoes da fatura. Exemplo: vencimento 15/02/2026 → data_lancamento = "02/2026" para TODAS as transacoes, independente da data da compra.
 
-[EXTRATO BANCARIO]
-- Extrair TODAS as transacoes visiveis com data, descricao e valor
-- Debitos = valor negativo, Creditos = valor positivo
-- Incluir: PIX recebido, PIX enviado, TED, DOC, tarifas, juros, rendimentos
-- valor_total = saldo final do periodo se visivel
+REGRA DE DATA INDIVIDUAL: Campo "data" = data real da compra (DD/MM/AAAA) para historico. Datas DD/MM sem ano: usar ano do periodo da fatura. Se mes da transacao > mes da fatura: ano e o anterior.
 
-[COMPROVANTE DE PAGAMENTO / RECIBO]
-- Extrair o valor principal da transacao
-- data = data do comprovante ou transacao
-- descricao = nome do destinatario ou estabelecimento
-- Tipo de operacao: PIX, TED, DOC, boleto, debito, credito, dinheiro
-- Para PIX: incluir chave PIX ou CPF/CNPJ do destinatario na descricao se visivel
-- valor_total = valor da transacao
-- transacoes = array com 1 item (o comprovante em si)
+REGRA DE PARCELAMENTO: Itau/Bradesco: padrao NOMEDD/MM colado. Exemplo: AMAZON 03/06 = parcela 3 de 6. data_lancamento = mes do vencimento da fatura atual. parcela = "3/6". Nubank/C6/Inter/Santander: texto "Parcela X de Y" na descricao. data_lancamento = mes do vencimento da fatura atual. parcela = "X/Y". Para TODOS os bancos: preservar numero da parcela no campo "parcela" no formato "X/Y".
 
-[NOTA FISCAL / CUPOM FISCAL]
-- Extrair cada item comprado como transacao separada se visivel
-- Se nao tiver itens detalhados, criar 1 transacao com o total
-- data = data de emissao
-- emissor = nome do estabelecimento
-- valor_total = valor total da nota
+CARTOES ADICIONAIS: incluir nome do titular entre parenteses no campo descricao. Exemplo: "UBER (ANA SILVA)"
 
-REGRA DE VALORES:
-- Converter sempre para number. Ex: "R$ 1.250,90" = 1250.90
-- Remover R$, pontos de milhar, trocar virgula por ponto
-- Valores de debito/despesa = positivos (o sistema trata como despesa)
-- Valores de credito/receita = negativos apenas se for extrato
+REGRAS EXTRATO BANCARIO: Extrair TODAS as transacoes visiveis. Tipos: PIX enviado, PIX recebido, TED, DOC, tarifas, juros, rendimentos, saques, depositos. Debitos/saidas = valor positivo. Creditos/entradas = valor negativo. data_lancamento = MM/AAAA da propria data da transacao.
 
-REGRA DE IMAGEM (quando o documento e uma foto):
-- Processar mesmo que a imagem esteja inclinada ou com iluminacao imperfeita
-- Extrair todos os dados visiveis com melhor esforco
-- Se algum dado nao estiver legivel, usar null — NUNCA inventar
-- Alertar no campo alerta se a qualidade da imagem prejudicou a leitura
+REGRAS COMPROVANTE / RECIBO: Gerar array transacoes com 1 item apenas. descricao = nome do destinatario ou estabelecimento. Para PIX: incluir chave PIX ou CPF/CNPJ do destinatario na descricao se visivel. data_lancamento = MM/AAAA da data do comprovante. tipo_operacao = pix | ted | doc | boleto | debito | dinheiro
 
-CATEGORIAS DISPONIVEIS (escolher a mais adequada):
-Alimentacao | Transporte | Moradia | Saude | Educacao | Lazer | Assinaturas | Vestuario | Investimentos | Receita | Outros
+REGRAS NOTA FISCAL / CUPOM: Se tiver itens detalhados: extrair cada item como transacao separada. Se nao tiver itens: 1 transacao com valor total. emissor = nome do estabelecimento. data_lancamento = MM/AAAA da data de emissao.
 
-Retorne SOMENTE JSON valido no formato:
-{"tipo_documento":"fatura_cartao|extrato_bancario|comprovante|nota_fiscal","emissor":"nome do banco ou estabelecimento","titular":"nome principal ou null","valor_total":0.00,"vencimento":"DD/MM/AAAA ou null","periodo":"MM/AAAA ou null","transacoes":[{"data":"DD/MM/AAAA","descricao":"descricao completa","valor":0.00,"categoria":"Alimentacao|Transporte|Moradia|Saude|Educacao|Lazer|Assinaturas|Vestuario|Investimentos|Receita|Outros","parcela":"X/Y ou null","tipo_operacao":"compra|pix|ted|doc|boleto|saque|tarifa|credito|outros"}],"resumo_categorias":[{"categoria":"nome","total":0.00,"percentual":0}],"insights":["i1","i2","i3"],"alerta":"aviso sobre qualidade da imagem ou dados incompletos ou null","versiculo":"texto ou null","versiculo_ref":"ref ou null"}`;
+REGRA DE VALORES: Converter SEMPRE para number (nunca string). "R$ 1.250,90" = 1250.90. Remover R$, remover pontos de milhar, trocar virgula por ponto. Despesas/debitos = positivo. Receitas/creditos em extrato = negativo.
+
+REGRA DE IMAGEM (JPEG/PNG/WEBP/HEIC): Processar mesmo que inclinada, com iluminacao imperfeita ou parcialmente cortada. Melhor esforco para extrair todos os dados visiveis. Dados ilegiveis ou cortados = null. NUNCA inventar. Preencher campo "alerta" se qualidade da imagem limitou a extracao de dados.
+
+CATEGORIAS DISPONIVEIS: Alimentacao | Transporte | Moradia | Saude | Educacao | Lazer | Assinaturas | Vestuario | Investimentos | Receita | Outros
+
+Retorne SOMENTE JSON valido, sem texto antes ou depois:
+{"tipo_documento":"fatura_cartao|extrato_bancario|comprovante|nota_fiscal","emissor":"banco ou estabelecimento","titular":"nome principal ou null","valor_total":0.00,"vencimento":"DD/MM/AAAA ou null","periodo":"MM/AAAA ou null","data_lancamento":"MM/AAAA","transacoes":[{"data":"DD/MM/AAAA","data_lancamento":"MM/AAAA","descricao":"descricao completa","valor":0.00,"categoria":"Alimentacao|Transporte|Moradia|Saude|Educacao|Lazer|Assinaturas|Vestuario|Investimentos|Receita|Outros","parcela":"X/Y ou null","tipo_operacao":"compra|pix|ted|doc|boleto|saque|tarifa|credito|outros"}],"resumo_categorias":[{"categoria":"nome","total":0.00,"percentual":0}],"insights":["insight1","insight2","insight3"],"alerta":"texto descritivo ou null","versiculo":"texto ou null","versiculo_ref":"referencia ou null"}`;
 
       const geminiRes = await fetch(GEMINI_BASE, {
         method: "POST",
@@ -224,7 +198,6 @@ Retorne SOMENTE JSON valido no formato:
           generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 32768,
-            responseMimeType: "application/json",
           },
         }),
       });
@@ -289,12 +262,9 @@ Retorne SOMENTE JSON valido no formato:
         }
       }
 
-      console.log(
-        "Tipo:",
-        resultado?.tipo_documento,
-        "| Transacoes:",
-        resultado?.transacoes?.length || 0
-      );
+      console.log("data_lancamento extraido:", resultado?.data_lancamento);
+      console.log("total transacoes:", resultado?.transacoes?.length || 0);
+      console.log("Tipo:", resultado?.tipo_documento);
       return new Response(JSON.stringify({ resultado }), {
         headers: { ...cors, "Content-Type": "application/json" },
       });
