@@ -31,7 +31,7 @@ export default function TransacaoCard({ transacao, onDelete, onEdit }: Props) {
           {transacao.descricao || transacao.categoria}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {transacao.categoria} • {new Date(transacao.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
+          {transacao.categoria} • {formatarData(transacao.data_transacao)}
         </p>
       </div>
       <div className="flex items-center gap-2">
