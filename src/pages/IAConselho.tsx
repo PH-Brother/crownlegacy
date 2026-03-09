@@ -290,7 +290,7 @@ export default function IAConselho() {
           descricao: t.descricao,
           valor: Math.abs(Number(t.valor)),
           categoria: t.categoria || "Outros",
-          data_transacao: dataParaBanco,
+          data_transacao: dataFinal,
           recorrente: false,
           tags: ["ia-lancado"] as string[],
         };
