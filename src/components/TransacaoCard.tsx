@@ -1,4 +1,5 @@
 import { formatarMoeda } from "@/lib/utils";
+import { formatarData } from "@/utils/formatters";
 import type { Transacao } from "@/hooks/useTransacoes";
 
 const EMOJIS_CAT: Record<string, string> = {
