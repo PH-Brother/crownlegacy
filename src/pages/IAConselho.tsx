@@ -15,6 +15,7 @@ import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
 import { safeStoragePath } from "@/lib/sanitize";
+import { mesParaDate } from "@/services/geminiService";
 
 const CATEGORIAS_DROPDOWN = [
   "Alimentação", "Transporte", "Moradia", "Saúde", "Educação",
