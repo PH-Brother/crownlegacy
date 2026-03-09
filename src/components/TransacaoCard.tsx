@@ -1,4 +1,5 @@
 import { formatarMoeda } from "@/lib/utils";
+import { formatarData } from "@/utils/formatters";
 import type { Transacao } from "@/hooks/useTransacoes";
 
 const EMOJIS_CAT: Record<string, string> = {
@@ -30,7 +31,7 @@ export default function TransacaoCard({ transacao, onDelete, onEdit }: Props) {
           {transacao.descricao || transacao.categoria}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {transacao.categoria} • {new Date(transacao.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
+          {transacao.categoria} • {formatarData(transacao.data_transacao)}
         </p>
       </div>
       <div className="flex items-center gap-2">

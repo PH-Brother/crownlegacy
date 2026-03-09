@@ -1,18 +1,46 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTransacoes, type Transacao } from "@/hooks/useTransacoes";
 import { formatarMoeda } from "@/lib/utils";
+import { formatarData } from "@/utils/formatters";
+import { supabase } from "@/integrations/supabase/client";
 import TransacaoCard from "@/components/TransacaoCard";
 import BottomNav from "@/components/BottomNav";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+const CATEGORIAS = [
+  "Alimentação", "Transporte", "Moradia", "Saúde", "Educação",
+  "Lazer", "Assinaturas", "Roupas", "Dízimo/Oferta", "Investimentos", "Outros",
+];
+
+// Convert DD/MM/AAAA or AAAA-MM-DD → AAAA-MM-DD for input[type=date]
+const toInputDate = (d: string): string => {
+  if (!d) return "";
+  if (d.includes("/")) {
+    const p = d.split("/");
+    if (p.length === 3) return `${p[2]}-${p[1].padStart(2, "0")}-${p[0].padStart(2, "0")}`;
+  }
+  return d;
+};
+
+interface EditFormData {
+  data_transacao: string;
+  descricao: string;
+  valor: string;
+  categoria: string;
+  tipo: string;
+}
 
 export default function Transactions() {
   const { user } = useAuth();
@@ -26,6 +54,15 @@ export default function Transactions() {
   const [ano, setAno] = useState(now.getFullYear());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
+
+  // Edit modal state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTransacao, setEditTransacao] = useState<Transacao | null>(null);
+  const [editForm, setEditForm] = useState<EditFormData>({
+    data_transacao: "", descricao: "", valor: "", categoria: "", tipo: "",
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
@@ -47,7 +84,6 @@ export default function Transactions() {
     try {
       await excluirTransacao(deleteId);
       toast({ title: "🗑️ Transação excluída" });
-      // Refresh list
       if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
@@ -57,8 +93,55 @@ export default function Transactions() {
   };
 
   const handleEditar = (t: Transacao) => {
-    // Navigate to edit page or show edit modal - for now navigate
-    navigate(`/nova-transacao?edit=${t.id}`);
+    setEditTransacao(t);
+    setEditForm({
+      data_transacao: toInputDate(t.data_transacao),
+      descricao: t.descricao || "",
+      valor: String(t.valor),
+      categoria: t.categoria,
+      tipo: t.tipo,
+    });
+    setEditErrors({});
+    setEditOpen(true);
+  };
+
+  const handleSalvar = async () => {
+    if (!editTransacao || !user) return;
+
+    // Validate
+    const errors: Record<string, string> = {};
+    if (!editForm.data_transacao) errors.data_transacao = "Data é obrigatória";
+    if (!editForm.descricao.trim()) errors.descricao = "Descrição é obrigatória";
+    if (!editForm.valor || Number(editForm.valor) <= 0) errors.valor = "Valor deve ser maior que zero";
+    if (!editForm.categoria) errors.categoria = "Categoria é obrigatória";
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      return;
+    }
+
+    setEditLoading(true);
+    const { error } = await supabase
+      .from("transacoes")
+      .update({
+        data_transacao: editForm.data_transacao,
+        descricao: editForm.descricao.trim(),
+        valor: Number(editForm.valor),
+        categoria: editForm.categoria,
+        tipo: editForm.tipo,
+      })
+      .eq("id", editTransacao.id)
+      .eq("usuario_id", user.id);
+    setEditLoading(false);
+
+    if (error) {
+      toast({ title: "Erro ao atualizar", variant: "destructive" });
+      return;
+    }
+    toast({ title: "✅ Transação atualizada" });
+    setEditOpen(false);
+    setEditTransacao(null);
+    if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
   };
 
   const filtered = filtroTipo === "todos" ? transacoes : transacoes.filter(t => t.tipo === filtroTipo);
@@ -114,7 +197,7 @@ export default function Transactions() {
           Object.entries(grupos).map(([data, items]) => (
             <div key={data}>
               <p className="text-xs font-semibold text-muted-foreground mb-2">
-                {new Date(data + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "short" })}
+                {formatarData(data)} — {new Date(data + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "long" })}
               </p>
               <div className="space-y-2">
                 {items.map((t) => (
@@ -130,6 +213,7 @@ export default function Transactions() {
           ))
         )}
 
+        {/* Delete confirmation */}
         <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
           <AlertDialogContent className="bg-card border-border">
             <AlertDialogHeader>
@@ -142,6 +226,87 @@ export default function Transactions() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Edit modal */}
+        <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditTransacao(null); } }}>
+          <DialogContent className="bg-card border-border max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Editar Transação</DialogTitle>
+              <DialogDescription>Altere os campos e salve.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Data</Label>
+                <Input
+                  type="date"
+                  value={editForm.data_transacao}
+                  onChange={(e) => { setEditForm(f => ({ ...f, data_transacao: e.target.value })); setEditErrors(er => ({ ...er, data_transacao: "" })); }}
+                />
+                {editErrors.data_transacao && <p className="text-xs text-destructive">{editErrors.data_transacao}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Descrição</Label>
+                <Input
+                  value={editForm.descricao}
+                  onChange={(e) => { setEditForm(f => ({ ...f, descricao: e.target.value })); setEditErrors(er => ({ ...er, descricao: "" })); }}
+                  placeholder="Descrição da transação"
+                />
+                {editErrors.descricao && <p className="text-xs text-destructive">{editErrors.descricao}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Valor (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editForm.valor}
+                  onChange={(e) => { setEditForm(f => ({ ...f, valor: e.target.value })); setEditErrors(er => ({ ...er, valor: "" })); }}
+                />
+                {editErrors.valor && <p className="text-xs text-destructive">{editErrors.valor}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Categoria</Label>
+                <Select value={editForm.categoria} onValueChange={(val) => { setEditForm(f => ({ ...f, categoria: val })); setEditErrors(er => ({ ...er, categoria: "" })); }}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {editErrors.categoria && <p className="text-xs text-destructive">{editErrors.categoria}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tipo</Label>
+                <Select value={editForm.tipo} onValueChange={(val) => setEditForm(f => ({ ...f, tipo: val }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="despesa">Despesa</SelectItem>
+                    <SelectItem value="receita">Receita</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => { setEditOpen(false); setEditTransacao(null); }}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSalvar} disabled={editLoading} className="gradient-gold text-primary-foreground font-bold">
+                {editLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <BottomNav />
     </div>

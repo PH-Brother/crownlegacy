@@ -46,16 +46,7 @@ const resolverMimeType = (
   return "application/pdf";
 };
 
-// Converte "MM/AAAA" → "AAAA-MM-01" para insert no banco
-export const mesParaDate = (mesAno: string | null): string | null => {
-  if (!mesAno) return null;
-  const partes = mesAno.split("/");
-  if (partes.length !== 2) return null;
-  const mes = partes[0].padStart(2, "0");
-  const ano = partes[1];
-  if (mes.length !== 2 || ano.length !== 4) return null;
-  return `${ano}-${mes}-01`;
-};
+// mesParaDate moved to src/utils/formatters.ts
 
 export const analisarDocumentoGemini = async (
   storagePath: string,

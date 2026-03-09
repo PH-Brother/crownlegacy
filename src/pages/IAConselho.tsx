@@ -15,7 +15,7 @@ import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
 import { safeStoragePath } from "@/lib/sanitize";
-import { mesParaDate } from "@/services/geminiService";
+import { mesParaDate } from "@/utils/formatters";
 
 const CATEGORIAS_DROPDOWN = [
   "Alimentação", "Transporte", "Moradia", "Saúde", "Educação",
@@ -250,17 +250,38 @@ export default function IAConselho() {
         return;
       }
 
-      const transacoesParaInserir = transacoesEditaveis.map((t) => {
-        const dataLancamento =
-          t.data_lancamento ||
-          resultadoAnalise?.data_lancamento ||
-          resultadoAnalise?.periodo ||
-          null;
-        const dataParaBanco = mesParaDate(dataLancamento) || t.data;
+      const resolverDataInsert = (
+        transacao: { data_lancamento?: string | null; data?: string | null },
+        resultadoIA: { data_lancamento?: string | null; vencimento?: string | null }
+      ): string => {
+        const dl = transacao.data_lancamento ?? resultadoIA.data_lancamento;
+        const porLancamento = mesParaDate(dl);
+        if (porLancamento) return porLancamento;
 
-        console.log("Lancando transacao:", t.descricao,
-          "| data_lancamento:", dataLancamento,
-          "| data_banco:", dataParaBanco);
+        const v = resultadoIA.vencimento;
+        if (v) {
+          const p = v.split("/");
+          if (p.length === 3) return `${p[2]}-${p[1].padStart(2, "0")}-01`;
+        }
+
+        const d = transacao.data;
+        if (d && d.includes("/")) {
+          const p = d.split("/");
+          if (p.length === 3) return `${p[2]}-${p[1].padStart(2, "0")}-${p[0].padStart(2, "0")}`;
+        }
+
+        return new Date().toISOString().split("T")[0];
+      };
+
+      const transacoesParaInserir = transacoesEditaveis.map((t) => {
+        const dataFinal = resolverDataInsert(t, {
+          data_lancamento: resultadoAnalise?.data_lancamento || null,
+          vencimento: resultadoAnalise?.vencimento || null,
+        });
+
+        console.log("Insert:", t.descricao,
+          "| dl:", t.data_lancamento,
+          "| data_banco:", dataFinal);
 
         return {
           usuario_id: session.user.id,
@@ -269,7 +290,7 @@ export default function IAConselho() {
           descricao: t.descricao,
           valor: Math.abs(Number(t.valor)),
           categoria: t.categoria || "Outros",
-          data_transacao: dataParaBanco,
+          data_transacao: dataFinal,
           recorrente: false,
           tags: ["ia-lancado"] as string[],
         };
