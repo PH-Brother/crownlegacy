@@ -250,17 +250,30 @@ export default function IAConselho() {
         return;
       }
 
-      const transacoesParaInserir = transacoesEditaveis.map((t) => ({
-        usuario_id: session.user.id,
-        familia_id: prof.familia_id,
-        tipo: "despesa" as const,
-        descricao: t.descricao,
-        valor: Math.abs(Number(t.valor)),
-        categoria: t.categoria || "Outros",
-        data_transacao: t.data,
-        recorrente: false,
-        tags: ["ia-lancado"] as string[],
-      }));
+      const transacoesParaInserir = transacoesEditaveis.map((t) => {
+        const dataLancamento =
+          t.data_lancamento ||
+          resultadoAnalise?.data_lancamento ||
+          resultadoAnalise?.periodo ||
+          null;
+        const dataParaBanco = mesParaDate(dataLancamento) || t.data;
+
+        console.log("Lancando transacao:", t.descricao,
+          "| data_lancamento:", dataLancamento,
+          "| data_banco:", dataParaBanco);
+
+        return {
+          usuario_id: session.user.id,
+          familia_id: prof.familia_id,
+          tipo: "despesa" as const,
+          descricao: t.descricao,
+          valor: Math.abs(Number(t.valor)),
+          categoria: t.categoria || "Outros",
+          data_transacao: dataParaBanco,
+          recorrente: false,
+          tags: ["ia-lancado"] as string[],
+        };
+      });
 
       const { error } = await supabase.from("transacoes").insert(transacoesParaInserir);
       if (error) throw new Error("Erro ao lançar: " + error.message);

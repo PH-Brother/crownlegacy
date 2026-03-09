@@ -262,12 +262,9 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
         }
       }
 
-      console.log(
-        "Tipo:",
-        resultado?.tipo_documento,
-        "| Transacoes:",
-        resultado?.transacoes?.length || 0
-      );
+      console.log("data_lancamento extraido:", resultado?.data_lancamento);
+      console.log("total transacoes:", resultado?.transacoes?.length || 0);
+      console.log("Tipo:", resultado?.tipo_documento);
       return new Response(JSON.stringify({ resultado }), {
         headers: { ...cors, "Content-Type": "application/json" },
       });
