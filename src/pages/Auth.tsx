@@ -10,7 +10,10 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") !== "signup";
+  });
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
   const [nome, setNome] = useState("");
