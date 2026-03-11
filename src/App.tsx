@@ -69,6 +69,7 @@ const App = () => (
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/checkin" element={<Checkin />} />
               <Route path="/assinatura" element={<Assinatura />} />
+              <Route path="/planos" element={<Planos />} />
               <Route path="/ia-conselho" element={<IAConselho />} />
               <Route path="/metas" element={<Metas />} />
             </Route>
