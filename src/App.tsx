@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import UploadPage from "./pages/Upload";
 import Checkin from "./pages/Checkin";
 import Assinatura from "./pages/Assinatura";
+import Planos from "./pages/Planos";
 import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
 import ResetPassword from "./pages/ResetPassword";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/checkin" element={<Checkin />} />
               <Route path="/assinatura" element={<Assinatura />} />
+              <Route path="/planos" element={<Planos />} />
               <Route path="/ia-conselho" element={<IAConselho />} />
               <Route path="/metas" element={<Metas />} />
             </Route>

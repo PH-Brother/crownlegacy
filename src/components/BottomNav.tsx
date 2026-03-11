@@ -1,11 +1,11 @@
-import { Home, Plus, Zap, Target, User } from "lucide-react";
+import { Home, Plus, Zap, Crown, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const items = [
   { path: "/dashboard", icon: Home, label: "Início" },
   { path: "/nova-transacao", icon: Plus, label: "Lançar" },
   { path: "/ia-conselho", icon: Zap, label: "IA" },
-  { path: "/metas", icon: Target, label: "Metas" },
+  { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
 
