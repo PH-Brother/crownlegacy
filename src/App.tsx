@@ -27,6 +27,8 @@ import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
 import Assets from "./pages/Assets";
 import Insights from "./pages/Insights";
+import Goals from "./pages/Goals";
+import FamilyWealth from "./pages/FamilyWealth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -76,6 +78,8 @@ const App = () => (
               <Route path="/metas" element={<Metas />} />
               <Route path="/assets" element={<Assets />} />
               <Route path="/insights" element={<Insights />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/family-wealth" element={<FamilyWealth />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
