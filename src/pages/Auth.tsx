@@ -112,7 +112,7 @@ export default function Auth() {
         }} />
       
 
-      <div className="relative z-10 flex w-full max-w-[400px] flex-col items-center">
+      <div className="relative z-10 flex w-full max-w-[400px] flex-col items-center my-0 mx-0 py-0 px-0 ml-0 mt-0 mb-0 mr-0 gap-0 border-0 border-none shadow-none">
         {/* Logo */}
         <img
 
