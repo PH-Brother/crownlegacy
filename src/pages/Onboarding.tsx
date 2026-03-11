@@ -4,13 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Crown, Home, KeyRound, Check, Loader2 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { Crown, KeyRound, Check, Loader2 } from "lucide-react";
 
 function maskPhone(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -48,12 +46,10 @@ export default function Onboarding() {
       navigate("/auth", { replace: true });
       return;
     }
-    // Pre-fill name from metadata
     const metaName = user.user_metadata?.nome_completo;
     if (metaName) setNome(metaName);
   }, [user, authLoading, navigate]);
 
-  // Redirect if user already has family
   useEffect(() => {
     if (!user || authLoading) return;
     const check = async () => {
@@ -106,7 +102,6 @@ export default function Onboarding() {
       toast({ title: "Nome da família deve ter entre 2 e 50 caracteres", variant: "destructive" });
       return;
     }
-
     setLoading(true);
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -152,7 +147,6 @@ export default function Onboarding() {
       toast({ title: "Código deve ter 8 caracteres", variant: "destructive" });
       return;
     }
-
     setLoading(true);
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -212,276 +206,370 @@ export default function Onboarding() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <img src={logo} alt="Legacy Kingdom" className="w-20 h-20 rounded-2xl animate-shield-pulse" />
+      <div
+        className="fixed inset-0 flex items-center justify-center overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--primary-dark)) 100%)"
+        }}>
+        <img
+          alt="Crown & Legacy Logo"
+          className="w-[120px] h-[120px] rounded-3xl animate-[fadeInScale_400ms_ease-out_both] object-cover"
+          src="/lovable-uploads/ba7baad6-0a60-4d06-9921-d9d30e381ca0.png" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div
+      className="fixed inset-0 flex flex-col overflow-auto"
+      style={{
+        background: "linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--primary-dark)) 100%)"
+      }}>
+      {/* Vignette */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)" }} />
+
       {/* Progress bar */}
-      <div className="px-4 pt-4">
-        <div className="mx-auto max-w-[430px]">
+      <div className="relative z-10 px-4 pt-4">
+        <div className="mx-auto max-w-[360px]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">Etapa {step} de 3</span>
-            <img src={logo} alt="Legacy Kingdom" className="w-8 h-8 rounded-lg" />
+            <span className="text-xs" style={{ color: "hsl(var(--foreground) / 0.6)" }}>Etapa {step} de 3</span>
+            <img
+              alt="Crown & Legacy Logo"
+              className="w-8 h-8 rounded-lg object-cover"
+              src="/lovable-uploads/ba7baad6-0a60-4d06-9921-d9d30e381ca0.png" />
           </div>
-          <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "rgba(212,175,55,0.2)" }}>
+          <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${progressValue}%`,
-                background: "linear-gradient(135deg, #D4AF37, #B8860B)",
+                background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
               }}
             />
           </div>
         </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-4 py-8">
-        <div className="w-full max-w-[430px]">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-6">
+        <div className="w-full max-w-[360px]">
           {/* STEP 1 */}
           {step === 1 && (
-            <div key="step1" className={`space-y-6 ${animationClass}`}>
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-primary font-display">Bem-vindo ao seu Reino</h1>
-                <p className="text-sm text-muted-foreground mt-1">Vamos começar conhecendo você</p>
+            <div key="step1" className={`${animationClass}`}>
+              <div className="text-center mb-5">
+                <h1
+                  className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-1.5 animate-[fadeInUp_300ms_ease-out_80ms_both]"
+                  style={{ color: "hsl(var(--accent-light))" }}>
+                  Bem-vindo ao Reino
+                </h1>
+                <p
+                  className="text-[13px] sm:text-sm animate-[fadeInUp_300ms_ease-out_160ms_both]"
+                  style={{ color: "hsl(var(--foreground) / 0.85)" }}>
+                  Vamos começar conhecendo você
+                </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-foreground">Nome completo *</Label>
-                  <Input
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    placeholder="Seu nome completo"
-                    className="min-h-[48px] input-premium"
-                    disabled={loading}
-                    maxLength={100}
-                  />
-                  {nome.length > 0 && nome.trim().length < 2 && (
-                    <p className="text-xs text-destructive">Mínimo 2 caracteres</p>
-                  )}
+              <div
+                className="w-full rounded-xl p-5 sm:p-6 lg:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.3)] animate-[fadeInUp_300ms_ease-out_240ms_both]"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  border: "1px solid hsl(var(--accent) / 0.2)"
+                }}>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>Nome completo *</Label>
+                    <Input
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Seu nome completo"
+                      className="h-10 text-[13px] px-3.5 border-accent/20 bg-white/[0.08]"
+                      style={{ color: "hsl(var(--foreground))" }}
+                      disabled={loading}
+                      maxLength={100}
+                    />
+                    {nome.length > 0 && nome.trim().length < 2 && (
+                      <p className="text-xs text-destructive">Mínimo 2 caracteres</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>Telefone</Label>
+                    <Input
+                      value={telefone}
+                      onChange={(e) => setTelefone(maskPhone(e.target.value))}
+                      placeholder="(00) 00000-0000"
+                      className="h-10 text-[13px] px-3.5 border-accent/20 bg-white/[0.08]"
+                      style={{ color: "hsl(var(--foreground))" }}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>Data de nascimento</Label>
+                    <Input
+                      type="date"
+                      value={dataNascimento}
+                      onChange={(e) => setDataNascimento(e.target.value)}
+                      className="h-10 text-[13px] px-3.5 border-accent/20 bg-white/[0.08]"
+                      style={{ color: "hsl(var(--foreground))" }}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>Seu papel na família</Label>
+                    <Select value={role} onValueChange={setRole} disabled={loading}>
+                      <SelectTrigger className="h-10 text-[13px] px-3.5 border-accent/20 bg-white/[0.08]" style={{ color: "hsl(var(--foreground))" }}>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pai">Pai</SelectItem>
+                        <SelectItem value="mae">Mãe</SelectItem>
+                        <SelectItem value="responsavel">Responsável</SelectItem>
+                        <SelectItem value="filho">Filho</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-foreground">Telefone</Label>
-                  <Input
-                    value={telefone}
-                    onChange={(e) => setTelefone(maskPhone(e.target.value))}
-                    placeholder="(00) 00000-0000"
-                    className="min-h-[48px] input-premium"
-                    disabled={loading}
-                  />
-                </div>
+                <button
+                  onClick={handleStep1}
+                  disabled={loading || nome.trim().length < 2}
+                  className="w-full rounded-lg h-10 text-[13px] font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 mt-4"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
+                    color: "hsl(var(--accent-foreground))",
+                    boxShadow: "0 4px 16px hsl(var(--accent) / 0.3)"
+                  }}>
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Próximo →"}
+                </button>
 
-                <div className="space-y-2">
-                  <Label className="text-foreground">Data de nascimento</Label>
-                  <Input
-                    type="date"
-                    value={dataNascimento}
-                    onChange={(e) => setDataNascimento(e.target.value)}
-                    className="min-h-[48px] input-premium"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-foreground">Seu papel na família</Label>
-                  <Select value={role} onValueChange={setRole} disabled={loading}>
-                    <SelectTrigger className="min-h-[48px] input-premium">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pai">Pai</SelectItem>
-                      <SelectItem value="mae">Mãe</SelectItem>
-                      <SelectItem value="responsavel">Responsável</SelectItem>
-                      <SelectItem value="filho">Filho</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="text-center text-xs italic mt-3" style={{ color: "hsl(var(--accent))" }}>
+                  Provérbios 21:5 — "Os planos do diligente levam à abundância"
+                </p>
               </div>
-
-              <Button
-                onClick={handleStep1}
-                className="w-full min-h-[48px] btn-premium text-base"
-                disabled={loading || nome.trim().length < 2}
-              >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Próximo →"}
-              </Button>
-
-              <p className="text-center text-xs italic" style={{ color: "#D4AF37" }}>
-                Provérbios 21:5 — "Os planos do diligente levam à abundância"
-              </p>
             </div>
           )}
 
           {/* STEP 2 */}
           {step === 2 && (
-            <div key="step2" className={`space-y-6 ${animationClass}`}>
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-primary font-display">Funde seu Reino</h1>
-                <p className="text-sm text-muted-foreground mt-1">Gerencie as finanças em família</p>
+            <div key="step2" className={`${animationClass}`}>
+              <div className="text-center mb-5">
+                <h1
+                  className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-1.5 animate-[fadeInUp_300ms_ease-out_80ms_both]"
+                  style={{ color: "hsl(var(--accent-light))" }}>
+                  Funde seu Reino
+                </h1>
+                <p
+                  className="text-[13px] sm:text-sm animate-[fadeInUp_300ms_ease-out_160ms_both]"
+                  style={{ color: "hsl(var(--foreground) / 0.85)" }}>
+                  Gerencie as finanças em família
+                </p>
               </div>
 
-              {familyMode === "choose" && (
-                <div className="space-y-4">
-                  {/* Create family card */}
-                  <div
-                    className="card-premium p-5 cursor-pointer hover:border-primary transition-colors"
-                    style={{ borderColor: "rgba(212,175,55,0.3)" }}
-                    onClick={() => setFamilyMode("create")}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <Crown className="h-6 w-6 text-primary" />
-                      <h3 className="text-lg font-bold text-foreground">Criar minha família</h3>
+              <div className="animate-[fadeInUp_300ms_ease-out_240ms_both]">
+                {familyMode === "choose" && (
+                  <div className="space-y-3">
+                    <div
+                      className="rounded-xl p-4 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.05)",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid hsl(var(--accent) / 0.3)"
+                      }}
+                      onClick={() => setFamilyMode("create")}>
+                      <div className="flex items-center gap-3 mb-1.5">
+                        <Crown className="h-5 w-5" style={{ color: "hsl(var(--accent-light))" }} />
+                        <h3 className="text-sm font-bold" style={{ color: "hsl(var(--foreground))" }}>Criar minha família</h3>
+                      </div>
+                      <p className="text-xs" style={{ color: "hsl(var(--foreground) / 0.6)" }}>Comece do zero e convide seus familiares</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">Comece do zero e convide seus familiares</p>
-                  </div>
 
-                  {/* Join family card */}
-                  <div
-                    className="card-premium p-5 cursor-pointer hover:border-primary transition-colors"
-                    onClick={() => setFamilyMode("join")}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <KeyRound className="h-6 w-6 text-primary" />
-                      <h3 className="text-lg font-bold text-foreground">Entrar em uma família</h3>
+                    <div
+                      className="rounded-xl p-4 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.05)",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid hsl(var(--accent) / 0.2)"
+                      }}
+                      onClick={() => setFamilyMode("join")}>
+                      <div className="flex items-center gap-3 mb-1.5">
+                        <KeyRound className="h-5 w-5" style={{ color: "hsl(var(--accent-light))" }} />
+                        <h3 className="text-sm font-bold" style={{ color: "hsl(var(--foreground))" }}>Entrar em uma família</h3>
+                      </div>
+                      <p className="text-xs" style={{ color: "hsl(var(--foreground) / 0.6)" }}>Tenho um código de convite</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">Tenho um código de convite</p>
+
+                    <button
+                      className="w-full text-xs mt-3 transition-colors duration-200 hover:underline"
+                      style={{ color: "hsl(var(--foreground) / 0.5)" }}
+                      onClick={() => goToStep(1)}>
+                      ← Voltar
+                    </button>
                   </div>
+                )}
 
-                  <Button
-                    variant="ghost"
-                    className="w-full text-muted-foreground"
-                    onClick={() => goToStep(1)}
-                  >
-                    ← Voltar
-                  </Button>
-                </div>
-              )}
-
-              {familyMode === "create" && (
-                <div className="space-y-4">
-                  <div className="card-premium p-5" style={{ borderColor: "rgba(212,175,55,0.3)" }}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <Crown className="h-6 w-6 text-primary" />
-                      <h3 className="text-lg font-bold text-foreground">Criar minha família</h3>
+                {familyMode === "create" && (
+                  <div className="space-y-3">
+                    <div
+                      className="rounded-xl p-5 sm:p-6 lg:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.05)",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid hsl(var(--accent) / 0.3)"
+                      }}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <Crown className="h-5 w-5" style={{ color: "hsl(var(--accent-light))" }} />
+                        <h3 className="text-sm font-bold" style={{ color: "hsl(var(--foreground))" }}>Criar minha família</h3>
+                      </div>
+                      <input
+                        placeholder="Nome da família (ex: Família Silva)"
+                        value={nomeFamilia}
+                        onChange={(e) => setNomeFamilia(e.target.value.slice(0, 50))}
+                        disabled={loading}
+                        maxLength={50}
+                        className="w-full rounded-lg px-3.5 py-2.5 text-[13px] transition-all duration-200 outline-none placeholder:opacity-40"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid hsl(var(--accent) / 0.2)",
+                          color: "hsl(var(--foreground))"
+                        }} />
+                      {nomeFamilia.trim().length > 0 && nomeFamilia.trim().length < 2 && (
+                        <p className="text-xs text-destructive mt-1">Mínimo 2 caracteres</p>
+                      )}
                     </div>
-                    <Input
-                      placeholder="Nome da família (ex: Família Silva)"
-                      value={nomeFamilia}
-                      onChange={(e) => setNomeFamilia(e.target.value.slice(0, 50))}
-                      className="min-h-[48px] input-premium"
-                      disabled={loading}
-                      maxLength={50}
-                    />
-                    {nomeFamilia.trim().length > 0 && nomeFamilia.trim().length < 2 && (
-                      <p className="text-xs text-destructive mt-1">Mínimo 2 caracteres</p>
-                    )}
+                    <button
+                      onClick={handleCreateFamily}
+                      disabled={loading || nomeFamilia.trim().length < 2}
+                      className="w-full rounded-lg h-10 text-[13px] font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
+                        color: "hsl(var(--accent-foreground))",
+                        boxShadow: "0 4px 16px hsl(var(--accent) / 0.3)"
+                      }}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🏠 Criar Família"}
+                    </button>
+                    <button
+                      className="w-full text-xs mt-1 transition-colors duration-200 hover:underline"
+                      style={{ color: "hsl(var(--foreground) / 0.5)" }}
+                      onClick={() => setFamilyMode("choose")}>
+                      ← Voltar
+                    </button>
                   </div>
-                  <Button
-                    onClick={handleCreateFamily}
-                    className="w-full min-h-[48px] btn-premium text-base"
-                    disabled={loading || nomeFamilia.trim().length < 2}
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🏠 Criar Família"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full text-muted-foreground"
-                    onClick={() => setFamilyMode("choose")}
-                  >
-                    ← Voltar
-                  </Button>
-                </div>
-              )}
+                )}
 
-              {familyMode === "join" && (
-                <div className="space-y-4">
-                  <div className="card-premium p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <KeyRound className="h-6 w-6 text-primary" />
-                      <h3 className="text-lg font-bold text-foreground">Entrar em uma família</h3>
+                {familyMode === "join" && (
+                  <div className="space-y-3">
+                    <div
+                      className="rounded-xl p-5 sm:p-6 lg:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.05)",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid hsl(var(--accent) / 0.2)"
+                      }}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <KeyRound className="h-5 w-5" style={{ color: "hsl(var(--accent-light))" }} />
+                        <h3 className="text-sm font-bold" style={{ color: "hsl(var(--foreground))" }}>Entrar em uma família</h3>
+                      </div>
+                      <input
+                        placeholder="Código de 8 caracteres"
+                        value={codigoConvite}
+                        onChange={(e) => setCodigoConvite(e.target.value.toUpperCase().slice(0, 8))}
+                        disabled={loading}
+                        maxLength={8}
+                        className="w-full rounded-lg px-3.5 py-2.5 text-[13px] tracking-widest text-center font-mono transition-all duration-200 outline-none placeholder:opacity-40"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid hsl(var(--accent) / 0.2)",
+                          color: "hsl(var(--foreground))"
+                        }} />
                     </div>
-                    <Input
-                      placeholder="Código de 8 caracteres"
-                      value={codigoConvite}
-                      onChange={(e) => setCodigoConvite(e.target.value.toUpperCase().slice(0, 8))}
-                      className="min-h-[48px] input-premium tracking-widest text-center font-mono text-lg"
-                      disabled={loading}
-                      maxLength={8}
-                    />
+                    <button
+                      onClick={handleJoinFamily}
+                      disabled={loading || codigoConvite.trim().length !== 8}
+                      className="w-full rounded-lg h-10 text-[13px] font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
+                        color: "hsl(var(--accent-foreground))",
+                        boxShadow: "0 4px 16px hsl(var(--accent) / 0.3)"
+                      }}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🔑 Entrar na Família"}
+                    </button>
+                    <button
+                      className="w-full text-xs mt-1 transition-colors duration-200 hover:underline"
+                      style={{ color: "hsl(var(--foreground) / 0.5)" }}
+                      onClick={() => setFamilyMode("choose")}>
+                      ← Voltar
+                    </button>
                   </div>
-                  <Button
-                    onClick={handleJoinFamily}
-                    className="w-full min-h-[48px] btn-premium text-base"
-                    disabled={loading || codigoConvite.trim().length !== 8}
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🔑 Entrar na Família"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full text-muted-foreground"
-                    onClick={() => setFamilyMode("choose")}
-                  >
-                    ← Voltar
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
           {/* STEP 3 */}
           {step === 3 && (
-            <div key="step3" className={`space-y-8 text-center ${animationClass}`}>
-              <div>
-                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full animate-shield-pulse"
-                  style={{ background: "rgba(212,175,55,0.15)", border: "2px solid rgba(212,175,55,0.4)" }}>
-                  <Crown className="h-10 w-10 text-primary" />
+            <div key="step3" className={`text-center ${animationClass}`}>
+              <div className="mb-5">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full animate-[fadeInScale_400ms_ease-out_both]"
+                  style={{ background: "hsl(var(--accent) / 0.15)", border: "2px solid hsl(var(--accent) / 0.4)" }}>
+                  <Crown className="h-8 w-8" style={{ color: "hsl(var(--accent-light))" }} />
                 </div>
-                <h1 className="text-2xl font-bold text-primary font-display">Seu Reino foi Fundado! 👑</h1>
-                <p className="text-sm text-muted-foreground mt-2">14 dias gratuitos ativados</p>
+                <h1
+                  className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-1.5 animate-[fadeInUp_300ms_ease-out_80ms_both]"
+                  style={{ color: "hsl(var(--accent-light))" }}>
+                  Seu Reino foi Fundado! 👑
+                </h1>
+                <p
+                  className="text-[13px] sm:text-sm animate-[fadeInUp_300ms_ease-out_160ms_both]"
+                  style={{ color: "hsl(var(--foreground) / 0.85)" }}>
+                  14 dias gratuitos ativados
+                </p>
               </div>
 
               {/* Trial badge */}
-              <div className="inline-flex items-center px-5 py-2 rounded-[20px] mx-auto"
+              <div className="inline-flex items-center px-4 py-1.5 rounded-[20px] mx-auto animate-[fadeInUp_300ms_ease-out_240ms_both]"
                 style={{
-                  border: "1px solid rgba(212,175,55,0.4)",
+                  border: "1px solid hsl(var(--accent) / 0.4)",
                   background: "transparent",
-                  color: "#D4AF37",
+                  color: "hsl(var(--accent-light))",
                 }}>
-                <span className="text-sm font-semibold">TRIAL ATIVO · até {formatTrialDate()}</span>
+                <span className="text-xs font-semibold">TRIAL ATIVO · até {formatTrialDate()}</span>
               </div>
 
               {/* Features list */}
-              <div className="space-y-3 text-left max-w-[320px] mx-auto">
+              <div className="space-y-2.5 text-left max-w-[300px] mx-auto mt-5 animate-[fadeInUp_300ms_ease-out_320ms_both]">
                 {[
                   "Análise inteligente de gastos com IA",
                   "Metas financeiras em família",
                   "Reflexões e sabedoria bíblica diária",
                   "Gamificação e conquistas familiares",
                 ].map((feature) => (
-                  <div key={feature} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-foreground">{feature}</span>
+                  <div key={feature} className="flex items-start gap-2.5">
+                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: "hsl(var(--accent-light))" }} />
+                    <span className="text-[13px]" style={{ color: "hsl(var(--foreground) / 0.85)" }}>{feature}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-3">
-                <Button
-                  onClick={() => navigate("/dashboard", { replace: true })}
-                  className="w-full min-h-[48px] btn-premium text-base"
-                >
-                  ✨ Explorar o App
-                </Button>
+              <div className="space-y-2.5 mt-5">
                 <button
                   onClick={() => navigate("/dashboard", { replace: true })}
-                  className="text-sm font-medium"
-                  style={{ color: "#D4AF37" }}
-                >
+                  className="w-full rounded-lg h-10 text-[13px] font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
+                    color: "hsl(var(--accent-foreground))",
+                    boxShadow: "0 4px 16px hsl(var(--accent) / 0.3)"
+                  }}>
+                  ✨ Explorar o App
+                </button>
+                <button
+                  onClick={() => navigate("/dashboard", { replace: true })}
+                  className="text-xs font-medium transition-colors duration-200 hover:underline"
+                  style={{ color: "hsl(var(--accent-light))" }}>
                   Assinar agora — US$ 9,90/mês
                 </button>
               </div>
