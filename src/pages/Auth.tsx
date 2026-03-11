@@ -117,7 +117,7 @@ export default function Auth() {
         <img
 
           alt="Crown & Legacy Logo"
-          className="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] lg:w-[240px] lg:h-[240px] mb-6 sm:mb-8 animate-[fadeInScale_400ms_ease-out_both] border-0 object-cover border-none rounded-2xl" src="/lovable-uploads/ba7baad6-0a60-4d06-9921-d9d30e381ca0.png" />
+          className="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] lg:w-[240px] lg:h-[240px] mb-6 sm:mb-8 animate-[fadeInScale_400ms_ease-out_both] border-0 object-cover border-none rounded-3xl" src="/lovable-uploads/ba7baad6-0a60-4d06-9921-d9d30e381ca0.png" />
         
 
         {/* Title */}
