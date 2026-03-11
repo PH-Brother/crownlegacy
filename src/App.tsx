@@ -31,6 +31,7 @@ import Insights from "./pages/Insights";
 import Goals from "./pages/Goals";
 import FamilyWealth from "./pages/FamilyWealth";
 import ResetPassword from "./pages/ResetPassword";
+import WealthScore from "./pages/WealthScore";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/home" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/wealth-score" element={<WealthScore />} />
             <Route path="/onboarding-family" element={<OnboardingFamily />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/join-family" element={<JoinWithCode />} />
