@@ -2,19 +2,19 @@ import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logo from "@/assets/logo.png";
 
 const navItems = [
   { path: "/dashboard", icon: Home, label: "Início" },
   { path: "/assets", icon: Building2, label: "Ativos" },
   { path: "/nova-transacao", icon: Zap, label: "Lançar" },
-  { path: "/ia-conselho", icon: Bot, label: "IA & Análise" },
-  { path: "/insights", icon: Sparkles, label: "Insights" },
+  { path: "/ia-conselho", icon: Bot, label: "Dicas de Sabedoria" },
+  { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
   { path: "/goals", icon: Target, label: "Metas Patrimônio" },
-  { path: "/family-wealth", icon: Users, label: "Família" },
+  { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
   { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
@@ -24,6 +24,7 @@ export default function DesktopSidebar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile, familia, buscarPerfil, buscarFamilia } = useProfile();
+  const { unreadInsightsCount, pendingInvitesCount } = useNotifications();
 
   useEffect(() => {
     if (user?.id) {
@@ -47,32 +48,45 @@ export default function DesktopSidebar() {
 
   const plano = familia?.plano || "trial";
 
+  const getBadge = (key?: "insights" | "invites") => {
+    if (key === "insights") return unreadInsightsCount;
+    if (key === "invites") return pendingInvitesCount;
+    return 0;
+  };
+
   return (
-    <aside className="hidden sm:flex fixed left-0 top-0 bottom-0 w-60 flex-col bg-sidebar border-r border-sidebar-border z-40">
+    <aside className="hidden sm:flex fixed left-0 top-0 bottom-0 w-60 flex-col bg-sidebar z-40">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
-        <img src={logo} alt="Legacy Kingdom" className="w-9 h-9 rounded-xl" />
-        <span className="text-sidebar-foreground font-semibold text-base tracking-tight">
-          Legacy Kingdom 👑
-        </span>
+        <Crown className="h-7 w-7 text-sidebar-primary shrink-0" />
+        <div className="min-w-0">
+          <span className="text-sidebar-primary font-bold text-sm tracking-tight block">Crown & Legacy</span>
+          <span className="text-sidebar-foreground/50 text-[10px] tracking-wider uppercase">Wealth Intelligence</span>
+        </div>
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 flex flex-col gap-1 px-3 py-4">
-        {navItems.map(({ path, icon: Icon, label }) => {
+      <nav className="flex-1 flex flex-col gap-0.5 px-3 py-4 overflow-y-auto">
+        {navItems.map(({ path, icon: Icon, label, badgeKey }) => {
           const active = pathname === path;
+          const badge = getBadge(badgeKey);
           return (
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
                 active
-                  ? "bg-primary/10 text-primary border-l-[3px] border-primary"
-                  : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground border-l-[3px] border-transparent"
+                  ? "bg-sidebar-accent text-sidebar-primary border-l-[3px] border-sidebar-primary"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground border-l-[3px] border-transparent"
               }`}
             >
               <Icon className="h-5 w-5 shrink-0" />
-              <span>{label}</span>
+              <span className="truncate">{label}</span>
+              {badge > 0 && (
+                <span className="ml-auto h-5 min-w-[20px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                  {badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -83,7 +97,7 @@ export default function DesktopSidebar() {
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
             <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+            <AvatarFallback className="bg-sidebar-primary/20 text-sidebar-primary text-xs font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -93,7 +107,7 @@ export default function DesktopSidebar() {
             </p>
             <Badge
               variant="outline"
-              className="text-[10px] px-1.5 py-0 border-primary/40 text-primary uppercase"
+              className="text-[10px] px-1.5 py-0 border-sidebar-primary/40 text-sidebar-primary uppercase"
             >
               {plano}
             </Badge>
@@ -101,7 +115,7 @@ export default function DesktopSidebar() {
         </div>
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-2 text-muted-foreground hover:text-destructive text-xs transition-colors w-full px-1"
+          className="flex items-center gap-2 text-sidebar-foreground/50 hover:text-sidebar-primary text-xs transition-colors w-full px-1"
         >
           <LogOut className="h-3.5 w-3.5" />
           Sair

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Building2, AlertCircle, RefreshCw } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
@@ -19,14 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import BottomNav from "@/components/BottomNav";
-import DesktopSidebar from "@/components/DesktopSidebar";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Imóveis": "hsl(43,56%,52%)",
-  "Investimentos": "hsl(142,71%,45%)",
+  "Imóveis": "hsl(144,48%,19%)",
+  "Investimentos": "hsl(160,84%,39%)",
   "Veículos": "hsl(200,80%,55%)",
-  "Criptomoedas": "hsl(280,70%,55%)",
+  "Criptomoedas": "hsl(43,65%,52%)",
   "Conta Bancária": "hsl(25,95%,55%)",
   "Negócio": "hsl(340,70%,55%)",
   "Previdência": "hsl(170,70%,45%)",
@@ -46,7 +44,7 @@ const TYPES = [
 const CATEGORIES = ["Imóveis", "Investimentos", "Veículos", "Criptomoedas", "Conta Bancária", "Negócio", "Previdência", "Outros"];
 const LIQUIDITY = [
   { value: "high", label: "Alta", color: "text-success" },
-  { value: "medium", label: "Média", color: "text-yellow-500" },
+  { value: "medium", label: "Média", color: "text-accent" },
   { value: "low", label: "Baixa", color: "text-destructive" },
 ];
 
@@ -68,7 +66,6 @@ export default function Assets() {
   const { familiaId } = useFamiliaId();
   const { assets, loading, error, totalAssets, refetch, createNetWorthSnapshot } = useNetWorth();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -106,19 +103,12 @@ export default function Assets() {
     setSaving(true);
     try {
       const payload = {
-        name: form.name,
-        type: form.type,
-        category: form.category,
-        value: Number(form.value),
-        currency: form.currency,
-        institution: form.institution || null,
-        liquidity: form.liquidity,
-        notes: form.notes || null,
-        owner_id: user.id,
-        family_id: familiaId || null,
-        is_active: true,
+        name: form.name, type: form.type, category: form.category,
+        value: Number(form.value), currency: form.currency,
+        institution: form.institution || null, liquidity: form.liquidity,
+        notes: form.notes || null, owner_id: user.id,
+        family_id: familiaId || null, is_active: true,
       };
-
       if (editingAsset) {
         const { error: err } = await supabase.from("assets").update(payload).eq("id", editingAsset.id).eq("owner_id", user.id);
         if (err) throw err;
@@ -126,7 +116,6 @@ export default function Assets() {
         const { error: err } = await supabase.from("assets").insert(payload);
         if (err) throw err;
       }
-
       toast({ title: "✅ Ativo salvo com sucesso" });
       setModalOpen(false);
       refetch();
@@ -141,7 +130,6 @@ export default function Assets() {
   const handleDelete = async () => {
     if (!deleteId || !user?.id) return;
     try {
-      // Check if linked to wealth_goal
       const { data: linked } = await supabase.from("wealth_goals").select("id").eq("linked_asset_id", deleteId).limit(1);
       if (linked && linked.length > 0) {
         toast({ title: "Este ativo está vinculado a uma meta. Remova a vinculação antes de deletar.", variant: "destructive" });
@@ -160,7 +148,6 @@ export default function Assets() {
     }
   };
 
-  // Donut chart data
   const chartData = CATEGORIES.map((cat) => ({
     name: cat,
     value: assets.filter((a) => a.category === cat).reduce((s, a) => s + Number(a.value), 0),
@@ -169,124 +156,117 @@ export default function Assets() {
   const filteredAssets = activeTab === "Todos" ? assets : assets.filter((a) => a.category === activeTab);
 
   return (
-    <div className="min-h-screen bg-background">
-      <DesktopSidebar />
-      <div className="sm:ml-60">
-        <div className="mx-auto max-w-[600px] px-4 py-4 pb-24 space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-display font-bold text-foreground">Meus Ativos</h1>
-              <p className="text-sm text-muted-foreground">Total: {formatCurrency(totalAssets)}</p>
-            </div>
-            <Button onClick={openAdd} className="btn-premium gap-1 min-h-[44px]">
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <Card className="border-destructive/30 bg-destructive/10">
-              <CardContent className="p-4 flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                <p className="text-sm text-destructive flex-1">Erro ao carregar ativos</p>
-                <Button size="sm" variant="outline" onClick={refetch}><RefreshCw className="h-3 w-3" /></Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Donut Chart */}
-          {loading ? (
-            <Skeleton className="h-[250px] w-full rounded-2xl" />
-          ) : chartData.length > 0 ? (
-            <Card className="card-premium">
-              <CardContent className="p-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alocação por Categoria</p>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} onClick={(d) => setActiveTab(d.name)}>
-                      {chartData.map((entry) => (
-                        <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "hsl(220,14%,46%)"} cursor="pointer" />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {chartData.map((d) => (
-                    <button key={d.name} onClick={() => setActiveTab(d.name)} className="flex items-center gap-1.5 text-xs hover:opacity-80">
-                      <div className="h-2.5 w-2.5 rounded-full" style={{ background: CATEGORY_COLORS[d.name] }} />
-                      <span className="text-muted-foreground">{d.name}</span>
-                      <span className="font-medium text-foreground">{formatCurrency(d.value)}</span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="card-premium">
-              <CardContent className="p-8 text-center">
-                <Building2 className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground mb-3">Adicione seus primeiros ativos</p>
-                <Button onClick={openAdd} className="btn-premium gap-1"><Plus className="h-4 w-4" /> Adicionar ativo</Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tabs */}
-          {assets.length > 0 && (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full overflow-x-auto flex justify-start bg-muted/50 h-auto p-1">
-                <TabsTrigger value="Todos" className="text-xs">Todos</TabsTrigger>
-                {CATEGORIES.map((c) => (
-                  <TabsTrigger key={c} value={c} className="text-xs whitespace-nowrap">{c}</TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          )}
-
-          {/* Asset List */}
-          {loading ? (
-            <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
-          ) : filteredAssets.length === 0 && assets.length > 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nenhum ativo nesta categoria</p>
-          ) : (
-            <div className="space-y-2">
-              {filteredAssets.map((a) => {
-                const liq = LIQUIDITY.find((l) => l.value === a.liquidity);
-                return (
-                  <Card key={a.id} className="card-premium hover:border-primary/30 transition-colors">
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl flex items-center justify-center text-lg" style={{ background: `${CATEGORY_COLORS[a.category] || "hsl(220,14%,46%)"}20` }}>
-                        <Building2 className="h-5 w-5" style={{ color: CATEGORY_COLORS[a.category] }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{a.name}</p>
-                        <div className="flex items-center gap-2">
-                          {a.institution && <p className="text-xs text-muted-foreground truncate">{a.institution}</p>}
-                          {liq && <Badge variant="outline" className={`text-[9px] px-1 py-0 ${liq.color}`}>{liq.label}</Badge>}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-foreground">{formatCurrency(Number(a.value))}</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(a)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
-                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                        </button>
-                        <button onClick={() => setDeleteId(a.id)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors">
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+    <div className="mx-auto max-w-[600px] px-4 py-4 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-display font-bold text-foreground">Meus Ativos</h1>
+          <p className="text-sm text-muted-foreground">Total: <span className="font-mono font-semibold text-accent">{formatCurrency(totalAssets)}</span></p>
         </div>
+        <Button onClick={openAdd} className="btn-premium gap-1 min-h-[44px]">
+          <Plus className="h-4 w-4" /> Adicionar
+        </Button>
       </div>
-      <BottomNav />
+
+      {error && (
+        <Card className="border-destructive/30 bg-destructive/10">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <p className="text-sm text-destructive flex-1">Erro ao carregar ativos</p>
+            <Button size="sm" variant="outline" onClick={refetch}><RefreshCw className="h-3 w-3" /></Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Donut Chart */}
+      {loading ? (
+        <Skeleton className="h-[250px] w-full rounded-2xl" />
+      ) : chartData.length > 0 ? (
+        <Card className="card-premium">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alocação por Categoria</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} onClick={(d) => setActiveTab(d.name)}>
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] || "hsl(220,14%,46%)"} cursor="pointer" />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {chartData.map((d) => (
+                <button key={d.name} onClick={() => setActiveTab(d.name)} className="flex items-center gap-1.5 text-xs hover:opacity-80">
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ background: CATEGORY_COLORS[d.name] }} />
+                  <span className="text-muted-foreground">{d.name}</span>
+                  <span className="font-medium font-mono text-foreground">{formatCurrency(d.value)}</span>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="card-premium">
+          <CardContent className="p-8 text-center">
+            <Building2 className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground mb-3">Adicione seus primeiros ativos</p>
+            <Button onClick={openAdd} className="btn-premium gap-1"><Plus className="h-4 w-4" /> Adicionar ativo</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tabs */}
+      {assets.length > 0 && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full overflow-x-auto flex justify-start bg-muted/50 h-auto p-1">
+            <TabsTrigger value="Todos" className="text-xs">Todos</TabsTrigger>
+            {CATEGORIES.map((c) => (
+              <TabsTrigger key={c} value={c} className="text-xs whitespace-nowrap">{c}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
+      {/* Asset List */}
+      {loading ? (
+        <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
+      ) : filteredAssets.length === 0 && assets.length > 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">Nenhum ativo nesta categoria</p>
+      ) : (
+        <div className="space-y-2">
+          {filteredAssets.map((a) => {
+            const liq = LIQUIDITY.find((l) => l.value === a.liquidity);
+            return (
+              <Card key={a.id} className="card-premium hover:border-primary/30 transition-colors">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center text-lg" style={{ background: `${CATEGORY_COLORS[a.category] || "hsl(220,14%,46%)"}20` }}>
+                    <Building2 className="h-5 w-5" style={{ color: CATEGORY_COLORS[a.category] }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{a.name}</p>
+                    <div className="flex items-center gap-2">
+                      {a.institution && <p className="text-xs text-muted-foreground truncate">{a.institution}</p>}
+                      {liq && <Badge variant="outline" className={`text-[9px] px-1 py-0 ${liq.color}`}>{liq.label}</Badge>}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold font-mono text-foreground">{formatCurrency(Number(a.value))}</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => openEdit(a)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                    <button onClick={() => setDeleteId(a.id)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors">
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
