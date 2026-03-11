@@ -1,4 +1,4 @@
-import { Home, Building2, Plus, Zap, Sparkles, User } from "lucide-react";
+import { Home, Building2, Plus, Zap, Target, Users, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const items = [
