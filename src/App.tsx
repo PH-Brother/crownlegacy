@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
+import ValuePreview from "./pages/ValuePreview";
 import Auth from "./pages/Auth";
 import OnboardingFamily from "./pages/OnboardingFamily";
 import Onboarding from "./pages/Onboarding";
