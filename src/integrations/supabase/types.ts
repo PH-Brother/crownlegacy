@@ -14,6 +14,239 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_behavior_insights: {
+        Row: {
+          family_id: string | null
+          generated_at: string | null
+          id: string
+          insight: string
+          is_read: boolean | null
+          severity: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          family_id?: string | null
+          generated_at?: string | null
+          id?: string
+          insight: string
+          is_read?: boolean | null
+          severity?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          family_id?: string | null
+          generated_at?: string | null
+          id?: string
+          insight?: string
+          is_read?: boolean | null
+          severity?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      asset_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      asset_history: {
+        Row: {
+          asset_id: string
+          id: string
+          owner_id: string
+          recorded_at: string | null
+          value: number
+        }
+        Insert: {
+          asset_id: string
+          id?: string
+          owner_id: string
+          recorded_at?: string | null
+          value: number
+        }
+        Update: {
+          asset_id?: string
+          id?: string
+          owner_id?: string
+          recorded_at?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_history_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assets: {
+        Row: {
+          category: string
+          created_at: string | null
+          currency: string | null
+          family_id: string | null
+          id: string
+          institution: string | null
+          is_active: boolean | null
+          liquidity: string | null
+          name: string
+          notes: string | null
+          owner_id: string
+          type: string
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          currency?: string | null
+          family_id?: string | null
+          id?: string
+          institution?: string | null
+          is_active?: boolean | null
+          liquidity?: string | null
+          name: string
+          notes?: string | null
+          owner_id: string
+          type: string
+          updated_at?: string | null
+          value?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          currency?: string | null
+          family_id?: string | null
+          id?: string
+          institution?: string | null
+          is_active?: boolean | null
+          liquidity?: string | null
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          type?: string
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
+      assinaturas: {
+        Row: {
+          cancelar_ao_fim: boolean | null
+          created_at: string | null
+          familia_id: string | null
+          id: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          plano: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancelar_ao_fim?: boolean | null
+          created_at?: string | null
+          familia_id?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          plano?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancelar_ao_fim?: boolean | null
+          created_at?: string | null
+          familia_id?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          plano?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      behavior_profiles: {
+        Row: {
+          created_at: string | null
+          discipline_score: number | null
+          family_id: string | null
+          id: string
+          last_analyzed_at: string | null
+          risk_profile: string | null
+          saving_pattern: string | null
+          spending_pattern: string | null
+          updated_at: string | null
+          user_id: string
+          wealth_growth_rate: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          discipline_score?: number | null
+          family_id?: string | null
+          id?: string
+          last_analyzed_at?: string | null
+          risk_profile?: string | null
+          saving_pattern?: string | null
+          spending_pattern?: string | null
+          updated_at?: string | null
+          user_id: string
+          wealth_growth_rate?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          discipline_score?: number | null
+          family_id?: string | null
+          id?: string
+          last_analyzed_at?: string | null
+          risk_profile?: string | null
+          saving_pattern?: string | null
+          spending_pattern?: string | null
+          updated_at?: string | null
+          user_id?: string
+          wealth_growth_rate?: number | null
+        }
+        Relationships: []
+      }
       documentos: {
         Row: {
           analise_resultado: string | null
@@ -130,6 +363,54 @@ export type Database = {
           limite_usuarios?: number | null
           nome?: string
           plano?: string | null
+        }
+        Relationships: []
+      }
+      financial_scores: {
+        Row: {
+          calculated_at: string | null
+          family_id: string | null
+          id: string
+          level: string | null
+          pillar_debt_ratio: number | null
+          pillar_goals: number | null
+          pillar_liquidity: number | null
+          pillar_providence: number | null
+          pillar_saving: number | null
+          pillar_wealth_growth: number | null
+          recommendations: Json | null
+          score_total: number
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string | null
+          family_id?: string | null
+          id?: string
+          level?: string | null
+          pillar_debt_ratio?: number | null
+          pillar_goals?: number | null
+          pillar_liquidity?: number | null
+          pillar_providence?: number | null
+          pillar_saving?: number | null
+          pillar_wealth_growth?: number | null
+          recommendations?: Json | null
+          score_total?: number
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string | null
+          family_id?: string | null
+          id?: string
+          level?: string | null
+          pillar_debt_ratio?: number | null
+          pillar_goals?: number | null
+          pillar_liquidity?: number | null
+          pillar_providence?: number | null
+          pillar_saving?: number | null
+          pillar_wealth_growth?: number | null
+          recommendations?: Json | null
+          score_total?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -268,6 +549,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      net_worth_snapshots: {
+        Row: {
+          created_at: string | null
+          family_id: string | null
+          id: string
+          net_worth: number | null
+          snapshot_data: Json | null
+          snapshot_date: string
+          total_assets: number
+          total_liabilities: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          family_id?: string | null
+          id?: string
+          net_worth?: number | null
+          snapshot_data?: Json | null
+          snapshot_date: string
+          total_assets?: number
+          total_liabilities?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          family_id?: string | null
+          id?: string
+          net_worth?: number | null
+          snapshot_data?: Json | null
+          snapshot_date?: string
+          total_assets?: number
+          total_liabilities?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -459,6 +776,65 @@ export type Database = {
             columns: ["usuario_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_goals: {
+        Row: {
+          created_at: string | null
+          current_value: number | null
+          description: string | null
+          family_id: string | null
+          id: string
+          linked_asset_id: string | null
+          motivational_verse: string | null
+          priority: number | null
+          status: string | null
+          target_date: string | null
+          target_value: number
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          family_id?: string | null
+          id?: string
+          linked_asset_id?: string | null
+          motivational_verse?: string | null
+          priority?: number | null
+          status?: string | null
+          target_date?: string | null
+          target_value: number
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          family_id?: string | null
+          id?: string
+          linked_asset_id?: string | null
+          motivational_verse?: string | null
+          priority?: number | null
+          status?: string | null
+          target_date?: string | null
+          target_value?: number
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_goals_linked_asset_id_fkey"
+            columns: ["linked_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
             referencedColumns: ["id"]
           },
         ]
