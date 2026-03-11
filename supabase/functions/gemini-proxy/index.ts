@@ -377,7 +377,85 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
       return new Response(JSON.stringify({ resultado: texto }), {
         headers: { ...cors, "Content-Type": "application/json" },
       });
-    } else {
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // BRANCH 6: Behavioral Insights
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    else if (body.tipo === "behavioral_insights") {
+      console.log("Branch: behavioral_insights");
+      const contexto = body.contexto || {};
+      const systemPrompt = "Voce e um especialista em financas comportamentais e patrimonio familiar. " +
+        "Analise o perfil financeiro do usuario e gere 3-5 insights acionaveis.\n\n" +
+        "DADOS DO USUARIO:\n" +
+        "Perfil de risco: " + (contexto.risk_profile || "moderate") + "\n" +
+        "Padrao de gastos: " + (contexto.spending_pattern || "desconhecido") + "\n" +
+        "Padrao de poupanca: " + (contexto.saving_pattern || "desconhecido") + "\n" +
+        "Score de disciplina: " + (contexto.discipline_score || 0) + "/100\n" +
+        "Taxa de crescimento: " + (contexto.wealth_growth_rate || 0) + "\n" +
+        "Patrimonio liquido: R$ " + (contexto.net_worth || 0) + "\n" +
+        "Score financeiro: " + (contexto.financial_score || 0) + "/1000\n\n" +
+        "Gere insights em JSON com este formato:\n" +
+        '[{"type":"spending_pattern|wealth_growth|risk_warning|discipline|biblical_guidance",' +
+        '"severity":"info|warning|critical|positive",' +
+        '"insight":"Texto do insight (max 200 caracteres)"}]\n\n' +
+        "Seja especifico, acionavel e motivador. Maximo 5 insights. Minimo 3. " +
+        "Retorne SOMENTE o array JSON, sem texto antes ou depois.";
+
+      const geminiRes = await fetch(GEMINI_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: systemPrompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+        }),
+      });
+
+      if (!geminiRes.ok) {
+        const err = await geminiRes.text();
+        return new Response(
+          JSON.stringify({ error: "Gemini error " + geminiRes.status, details: err.substring(0, 200) }),
+          { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
+        );
+      }
+
+      const parsed = JSON.parse(await geminiRes.text());
+      const texto = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      let insights;
+      const s1 = texto.split("```json").join("");
+      const s2 = s1.split("```").join("");
+      const s3 = s2.trim();
+
+      try {
+        insights = JSON.parse(s3);
+      } catch (_e1) {
+        const inicio = s3.indexOf("[");
+        const fim = s3.lastIndexOf("]");
+        if (inicio !== -1 && fim > inicio) {
+          try {
+            insights = JSON.parse(s3.substring(inicio, fim + 1));
+          } catch (_e2) {
+            return new Response(
+              JSON.stringify({ error: "JSON invalido nos insights", raw: s3.substring(0, 300) }),
+              { status: 422, headers: { ...cors, "Content-Type": "application/json" } }
+            );
+          }
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Formato invalido", raw: s3.substring(0, 300) }),
+            { status: 422, headers: { ...cors, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      console.log("Insights gerados:", Array.isArray(insights) ? insights.length : 0);
+      return new Response(JSON.stringify({ resultado: insights }), {
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+
+    else {
       return new Response(
         JSON.stringify({
           error: "Parametros invalidos. Envie signedUrl+mimeType, prompt, ou tipo.",

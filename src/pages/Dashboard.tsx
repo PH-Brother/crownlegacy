@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, Shield, Sparkles, TrendingUp, TrendingDown, Plus, BarChart3, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Crown, Shield, Sparkles, TrendingUp, TrendingDown, Plus, BarChart3, RefreshCw, AlertCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useFamiliaId } from "@/hooks/useFamiliaId";
@@ -20,6 +20,8 @@ import PaywallBanner from "@/components/PaywallBanner";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import NetWorthChart, { NetWorthChartSkeleton } from "@/components/dashboard/NetWorthChart";
+import InsightCard from "@/components/InsightCard";
+import { useAIInsights } from "@/hooks/useAIInsights";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,7 +53,8 @@ export default function Dashboard() {
   const [scoreLoading, setScoreLoading] = useState(true);
   const [showChart, setShowChart] = useState(false);
   const [showPilares, setShowPilares] = useState(false);
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
+
+  const { insights, loading: insightsLoading, isGenerating, generateNewInsights, markAsRead } = useAIInsights();
 
   const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
   const loading = loadingFamilia || loadingDash || loadingNW;
@@ -71,21 +74,8 @@ export default function Dashboard() {
     }
   }, [loadingNW, assets, nwTransacoes, snapshots, calculateScore]);
 
-  // Fetch latest AI insight
-  useEffect(() => {
-    if (!user?.id) return;
-    const today = new Date().toISOString().split("T")[0];
-    supabase
-      .from("ai_behavior_insights")
-      .select("insight")
-      .eq("user_id", user.id)
-      .gte("generated_at", today)
-      .order("generated_at", { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data?.[0]) setAiInsight(data[0].insight);
-      });
-  }, [user?.id]);
+  // Insights fetched via useAIInsights hook
+  const firstUnread = insights.find((i) => !i.is_read) || insights[0] || null;
 
   // Cashflow for current month
   const cashflow = (() => {
@@ -284,16 +274,50 @@ export default function Dashboard() {
           {/* SECTION 3 — AI Insight */}
           <Card className="card-glass-gold">
             <CardContent className="p-4">
-              {loadingNW ? (
+              {insightsLoading ? (
                 <Skeleton className="h-12 w-full" />
+              ) : firstUnread ? (
+                <div className="space-y-3">
+                  <InsightCard insight={firstUnread} onMarkAsRead={markAsRead} />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs gap-1 border-primary/20"
+                      onClick={generateNewInsights}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Gerar novo
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs text-primary"
+                      onClick={() => navigate("/insights")}
+                    >
+                      Ver todos
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-start gap-3">
                   <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Insight do Dia</p>
-                    <p className="text-sm text-foreground leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-                      {aiInsight || "Analise seus dados para receber insights personalizados da IA."}
+                    <p className="text-sm text-foreground leading-relaxed mb-2" style={{ fontFamily: "Lora, serif" }}>
+                      Gere seu primeiro insight com a IA.
                     </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs gap-1 border-primary/20"
+                      onClick={generateNewInsights}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Gerar insights
+                    </Button>
                   </div>
                 </div>
               )}
