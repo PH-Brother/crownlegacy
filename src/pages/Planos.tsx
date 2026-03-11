@@ -232,7 +232,7 @@ export default function Planos() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Premium Anual</CardTitle>
-                <Badge className="bg-green-600 text-white text-xs">Economize 33%</Badge>
+                <Badge className="bg-accent text-accent-foreground text-xs">Economize 33%</Badge>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 R$ 100,00<span className="text-sm font-normal text-muted-foreground">/ano</span>
