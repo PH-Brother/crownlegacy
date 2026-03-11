@@ -60,6 +60,7 @@ const App = () => (
             <Route path="/home" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/wealth-score" element={<WealthScore />} />
             <Route path="/onboarding-family" element={<OnboardingFamily />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/join-family" element={<JoinWithCode />} />
