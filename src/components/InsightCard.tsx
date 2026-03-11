@@ -4,26 +4,26 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/utils/formatters";
 import type { AIBehaviorInsight } from "@/services/insightGenerator";
 
-const TYPE_CONFIG: Record<string, { icon: typeof Receipt; label: string }> = {
+const TYPE_CONFIG: Record<string, {icon: typeof Receipt;label: string;}> = {
   spending_pattern: { icon: Receipt, label: "Padrão de Gastos" },
   wealth_growth: { icon: TrendingUp, label: "Crescimento" },
   risk_warning: { icon: AlertCircle, label: "Risco" },
   discipline: { icon: Target, label: "Disciplina" },
-  biblical_guidance: { icon: BookOpen, label: "Orientação Bíblica" },
+  biblical_guidance: { icon: BookOpen, label: "Orientação Bíblica" }
 };
 
 const SEVERITY_STYLES: Record<string, string> = {
   info: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   warning: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   critical: "bg-destructive/20 text-destructive border-destructive/30",
-  positive: "bg-success/20 text-success border-success/30",
+  positive: "bg-success/20 text-success border-success/30"
 };
 
 const SEVERITY_LABELS: Record<string, string> = {
   info: "Info",
   warning: "Atenção",
   critical: "Crítico",
-  positive: "Positivo",
+  positive: "Positivo"
 };
 
 interface InsightCardProps {
@@ -43,8 +43,8 @@ export default function InsightCard({ insight, onMarkAsRead, onDelete, expanded,
   return (
     <Card
       className="card-premium hover:border-primary/30 transition-all duration-200 cursor-pointer group"
-      onClick={onClick}
-    >
+      onClick={onClick}>
+      
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-primary/10 shrink-0">
@@ -57,33 +57,33 @@ export default function InsightCard({ insight, onMarkAsRead, onDelete, expanded,
                 {SEVERITY_LABELS[insight.severity]}
               </Badge>
             </div>
-            <p className="text-sm text-foreground leading-relaxed">{text}</p>
-            {insight.generated_at && (
-              <p className="text-[10px] text-muted-foreground mt-1.5">{formatDate(insight.generated_at)}</p>
-            )}
+            <p className="text-sm text-foreground leading-relaxed font-sans">{text}</p>
+            {insight.generated_at &&
+            <p className="text-[10px] text-muted-foreground mt-1.5">{formatDate(insight.generated_at)}</p>
+            }
           </div>
           <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
-            {onMarkAsRead && !insight.is_read && insight.id && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onMarkAsRead(insight.id!); }}
-                className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
-                title="Marcar como lido"
-              >
+            {onMarkAsRead && !insight.is_read && insight.id &&
+            <button
+              onClick={(e) => {e.stopPropagation();onMarkAsRead(insight.id!);}}
+              className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+              title="Marcar como lido">
+              
                 <Check className="h-3.5 w-3.5 text-success" />
               </button>
-            )}
-            {onDelete && insight.id && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(insight.id!); }}
-                className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-destructive/10 transition-colors"
-                title="Excluir"
-              >
+            }
+            {onDelete && insight.id &&
+            <button
+              onClick={(e) => {e.stopPropagation();onDelete(insight.id!);}}
+              className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-destructive/10 transition-colors"
+              title="Excluir">
+              
                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
               </button>
-            )}
+            }
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
