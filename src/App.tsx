@@ -27,6 +27,8 @@ import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
 import Assets from "./pages/Assets";
 import Insights from "./pages/Insights";
+import Goals from "./pages/Goals";
+import FamilyWealth from "./pages/FamilyWealth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
