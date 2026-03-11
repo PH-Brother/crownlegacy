@@ -373,10 +373,13 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          {/* SECTION 6 — Gamification */}
+          {/* SECTION 6 — Next Goal */}
+          <NextGoalCard />
+
+          {/* SECTION 7 — Gamification */}
           <GamificacaoBar pontos={pontos} nivel={nivel} />
 
-          {/* SECTION 7 — Daily Reflection */}
+          {/* SECTION 8 — Daily Reflection */}
           <ReflexaoDiaria />
         </div>
       </div>
