@@ -53,7 +53,8 @@ export default function Dashboard() {
   const [scoreLoading, setScoreLoading] = useState(true);
   const [showChart, setShowChart] = useState(false);
   const [showPilares, setShowPilares] = useState(false);
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
+
+  const { insights, loading: insightsLoading, isGenerating, generateNewInsights, markAsRead } = useAIInsights();
 
   const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
   const loading = loadingFamilia || loadingDash || loadingNW;
