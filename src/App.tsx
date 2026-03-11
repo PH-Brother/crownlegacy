@@ -25,6 +25,7 @@ import Assinatura from "./pages/Assinatura";
 import Planos from "./pages/Planos";
 import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
+import Assets from "./pages/Assets";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/planos" element={<Planos />} />
               <Route path="/ia-conselho" element={<IAConselho />} />
               <Route path="/metas" element={<Metas />} />
+              <Route path="/assets" element={<Assets />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

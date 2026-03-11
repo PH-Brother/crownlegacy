@@ -1,8 +1,9 @@
-import { Home, Plus, Zap, Crown, User } from "lucide-react";
+import { Home, Building2, Plus, Zap, Crown, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const items = [
   { path: "/dashboard", icon: Home, label: "Início" },
+  { path: "/assets", icon: Building2, label: "Ativos" },
   { path: "/nova-transacao", icon: Plus, label: "Lançar" },
   { path: "/ia-conselho", icon: Zap, label: "IA" },
   { path: "/planos", icon: Crown, label: "Planos" },
