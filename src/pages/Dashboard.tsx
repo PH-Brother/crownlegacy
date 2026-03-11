@@ -1,32 +1,27 @@
-import { useState, useCallback, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import logo from "@/assets/logo.png";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Zap, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Plus } from "lucide-react";
-import { useTheme } from "@/hooks/useTheme";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+import { Crown, Shield, Sparkles, TrendingUp, TrendingDown, Plus, BarChart3, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useFamiliaId } from "@/hooks/useFamiliaId";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { useGamificacao } from "@/hooks/useGamificacao";
-import { formatarMoeda } from "@/lib/utils";
-import { gerarAnaliseFinanceira } from "@/lib/gemini";
+import { useNetWorth } from "@/hooks/useNetWorth";
+import { useFinancialScore, getScoreColor, getScoreLabel } from "@/hooks/useFinancialScore";
+import { useTheme } from "@/hooks/useTheme";
+import { formatCurrency, formatPercentage, calculateVariation } from "@/utils/formatters";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import BottomNav from "@/components/BottomNav";
+import DesktopSidebar from "@/components/DesktopSidebar";
 import PaywallBanner from "@/components/PaywallBanner";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
-import TransacaoCard from "@/components/TransacaoCard";
-import CategoryBars from "@/components/dashboard/CategoryBars";
-import QuickTransactionModal from "@/components/dashboard/QuickTransactionModal";
-
-import type { Transacao } from "@/hooks/useTransacoes";
-
-const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+import NetWorthChart, { NetWorthChartSkeleton } from "@/components/dashboard/NetWorthChart";
+import logo from "@/assets/logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 function getSaudacao(): string {
   const h = new Date().getHours();
@@ -35,28 +30,9 @@ function getSaudacao(): string {
   return "Boa noite";
 }
 
-function calcularDiasTrial(dataFimTrial: string | null): number | null {
-  if (!dataFimTrial) return null;
-  const diff = new Date(dataFimTrial).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-}
-
-function GoldenSkeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-2xl animate-pulse ${className}`}
-      style={{
-        background: "linear-gradient(135deg, rgba(212,175,55,0.08), rgba(212,175,55,0.15))",
-        border: "1px solid rgba(212,175,55,0.12)",
-      }}
-    />
-  );
-}
-
 export default function Dashboard() {
   const { user } = useAuth();
   const { profile, buscarPerfil } = useProfile();
-  const { adicionarPontos } = useGamificacao();
   const { familiaId, isLoading: loadingFamilia } = useFamiliaId();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -64,303 +40,321 @@ export default function Dashboard() {
   const [themeRotating, setThemeRotating] = useState(false);
 
   const now = new Date();
-  const [mes, setMes] = useState(now.getMonth() + 1);
-  const [ano, setAno] = useState(now.getFullYear());
-  const [analiseIA, setAnaliseIA] = useState("");
-  const [analisando, setAnalisando] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [quickType, setQuickType] = useState<"receita" | "despesa" | null>(null);
+  const [mes] = useState(now.getMonth() + 1);
+  const [ano] = useState(now.getFullYear());
 
-  const {
-    receitas, despesas, saldo, transacoes, metas, pontos, nivel,
-    isLoading: loadingData, error, refetch,
-  } = useDashboardData(familiaId, user?.id ?? null, mes, ano);
+  const { pontos, nivel, isLoading: loadingDash, error: dashError, refetch: refetchDash } = useDashboardData(familiaId, user?.id ?? null, mes, ano);
+  const { assets, snapshots, transacoes: nwTransacoes, loading: loadingNW, error: nwError, netWorth, refetch: refetchNW } = useNetWorth();
+  const { calculateScore } = useFinancialScore();
 
-  const loading = loadingFamilia || loadingData;
+  const [scoreData, setScoreData] = useState<{ score: number; level: string; pilares: { liquidity: number; debt_ratio: number; saving: number; wealth_growth: number } } | null>(null);
+  const [scoreLoading, setScoreLoading] = useState(true);
+  const [showChart, setShowChart] = useState(false);
+  const [showPilares, setShowPilares] = useState(false);
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+
   const primeiroNome = profile?.nome_completo?.split(" ")[0] || "Usuário";
+  const loading = loadingFamilia || loadingDash || loadingNW;
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
   }, [user, buscarPerfil]);
 
-  const [familiaInfo, setFamiliaInfo] = useState<{ plano: string | null; data_fim_trial: string | null; nome: string } | null>(null);
+  // Calculate score when data is ready
   useEffect(() => {
-    if (!familiaId) return;
-    const fetchFam = async () => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data } = await supabase
-        .from("familias").select("plano, data_fim_trial, nome").eq("id", familiaId).maybeSingle();
-      if (data) setFamiliaInfo(data);
-    };
-    fetchFam();
-  }, [familiaId]);
+    if (!loadingNW && assets) {
+      setScoreLoading(true);
+      calculateScore(assets, nwTransacoes, snapshots)
+        .then((result) => setScoreData(result))
+        .catch(() => {})
+        .finally(() => setScoreLoading(false));
+    }
+  }, [loadingNW, assets, nwTransacoes, snapshots, calculateScore]);
 
-  // Category data for bars
-  const categoriasMap: Record<string, number> = {};
-  transacoes.filter(t => t.tipo === "despesa").forEach(t => {
-    categoriasMap[t.categoria] = (categoriasMap[t.categoria] || 0) + Number(t.valor);
-  });
-
-  const trialDias = familiaInfo?.plano === "trial" ? calcularDiasTrial(familiaInfo.data_fim_trial) : null;
-
-  const handleIA = useCallback(async () => {
-    if (!user || !profile) return;
-    setAnalisando(true);
-    try {
-      const resultado = await gerarAnaliseFinanceira({
-        receitas, despesas, saldo,
-        categorias: categoriasMap, mes: `${MESES[mes - 1]} ${ano}`,
+  // Fetch latest AI insight
+  useEffect(() => {
+    if (!user?.id) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase
+      .from("ai_behavior_insights")
+      .select("insight")
+      .eq("user_id", user.id)
+      .gte("generated_at", today)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data?.[0]) setAiInsight(data[0].insight);
       });
-      setAnaliseIA(resultado);
-      await adicionarPontos(user.id, 15, "analise_ia", "Consultou IA financeira");
-      toast({ title: "⚡ +15 pontos por usar IA!" });
-    } catch {
-      toast({ title: "Erro ao gerar análise", variant: "destructive" });
-    } finally {
-      setAnalisando(false);
-    }
-  }, [user, profile, receitas, despesas, saldo, mes, ano, adicionarPontos, toast, categoriasMap]);
+  }, [user?.id]);
 
-  const mudarMes = (dir: number) => {
-    let m = mes + dir, a = ano;
-    if (m > 12) { m = 1; a++; }
-    if (m < 1) { m = 12; a--; }
-    setMes(m); setAno(a);
-  };
+  // Cashflow for current month
+  const cashflow = (() => {
+    const currentMonth = new Date();
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const filtered = nwTransacoes.filter((t) => {
+      const d = new Date(t.data_transacao);
+      return d.getFullYear() === y && d.getMonth() === m;
+    });
+    const receitas = filtered.filter((t) => t.tipo === "receita").reduce((s, t) => s + Number(t.valor), 0);
+    const despesas = filtered.filter((t) => t.tipo === "despesa").reduce((s, t) => s + Number(t.valor), 0);
+    return { receitas, despesas, saldo: receitas - despesas };
+  })();
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { error } = await supabase.from("transacoes").delete().eq("id", deleteId);
-      if (error) throw error;
-      toast({ title: "🗑️ Transação excluída" });
-      refetch();
-    } catch {
-      toast({ title: "Erro ao excluir", variant: "destructive" });
-    } finally {
-      setDeleteId(null);
-    }
-  };
+  // Net worth variation (30 days)
+  const nwVariation = (() => {
+    if (snapshots.length < 2) return null;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const oldSnapshot = snapshots.find((s) => new Date(s.snapshot_date) <= thirtyDaysAgo) || snapshots[0];
+    const oldNW = oldSnapshot.net_worth ?? oldSnapshot.total_assets;
+    return calculateVariation(netWorth, oldNW);
+  })();
 
-  const handleEditar = (t: Transacao) => {
-    navigate(`/nova-transacao?edit=${t.id}`);
-  };
+  const handleRefetch = useCallback(() => {
+    refetchNW();
+    refetchDash();
+  }, [refetchNW, refetchDash]);
 
-  const ultimas5 = transacoes.slice(0, 5);
+  const errorMsg = dashError || nwError;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <PaywallBanner />
-      <div className="mx-auto max-w-[430px] px-4 py-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/perfil")} className="h-11 w-11 rounded-full gradient-gold flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
-            ) : primeiroNome[0]?.toUpperCase()}
-          </button>
-          <div className="flex-1">
-            <p className="font-display font-semibold text-foreground text-sm">{getSaudacao()}, {primeiroNome}!</p>
-            <p className="text-xs text-muted-foreground">{familiaInfo?.nome || ""}</p>
-          </div>
-          {familiaInfo && (
-            <div className="px-2 py-1 rounded-lg text-[10px] font-bold tracking-wide"
-              style={{ border: "1px solid rgba(212,175,55,0.3)", color: familiaInfo.plano === "trial" ? "#F4E17A" : "#D4AF37", background: "rgba(212,175,55,0.08)" }}>
-              {familiaInfo.plano === "trial" && trialDias !== null ? `TRIAL · ${trialDias}d` : "PREMIUM"}
+    <div className="min-h-screen bg-background">
+      <DesktopSidebar />
+      <div className="sm:ml-60">
+        <PaywallBanner />
+        <div className="mx-auto max-w-[520px] px-4 py-4 pb-24 space-y-4">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/perfil")} className="h-11 w-11 rounded-full gradient-gold flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+              ) : primeiroNome[0]?.toUpperCase()}
+            </button>
+            <div className="flex-1">
+              <p className="font-display font-semibold text-foreground text-sm">{getSaudacao()}, {primeiroNome}!</p>
+              <p className="text-xs text-muted-foreground">Wealth Intelligence</p>
             </div>
-          )}
-          <button
-            onClick={() => { setThemeRotating(true); toggleTheme(); setTimeout(() => setThemeRotating(false), 400); }}
-            className="h-9 w-9 rounded-full flex items-center justify-center border border-border hover:bg-muted transition-colors"
-            title="Mudar tema"
-            style={{ transition: "transform 0.3s ease", transform: themeRotating ? "rotate(360deg)" : "rotate(0deg)" }}
-          >
-            <span className="text-base">{theme === "obsidian" ? "☀️" : "🌑"}</span>
-          </button>
-          <img src={logo} alt="Legacy Kingdom" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
-        </div>
-
-        <GamificacaoBar pontos={pontos} nivel={nivel} />
-
-        {/* Trial Warning */}
-        {familiaInfo?.plano === "trial" && trialDias !== null && trialDias < 7 && (
-          <Card className={`${trialDias < 3 ? "border-destructive/50 bg-destructive/10" : "border-yellow-500/30 bg-yellow-500/10"}`}>
-            <CardContent className="p-3 flex items-center gap-3">
-              <AlertTriangle className={`h-5 w-5 shrink-0 ${trialDias < 3 ? "text-destructive" : "text-yellow-400"}`} />
-              <div className="flex-1">
-                <p className={`text-xs font-semibold ${trialDias < 3 ? "text-destructive" : "text-yellow-400"}`}>
-                  {trialDias === 0 ? "Trial expirado!" : `Trial expira em ${trialDias} dia${trialDias > 1 ? "s" : ""}`}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Assine para continuar usando</p>
-              </div>
-              <Button size="sm" className="gradient-gold text-primary-foreground text-xs h-7" onClick={() => navigate("/assinatura")}>Assinar</Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Month nav */}
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => mudarMes(-1)}><ChevronLeft className="h-5 w-5" /></Button>
-          <span className="font-display font-semibold text-foreground">{MESES[mes - 1]} {ano}</span>
-          <Button variant="ghost" size="icon" onClick={() => mudarMes(1)}><ChevronRight className="h-5 w-5" /></Button>
-        </div>
-
-        {/* Totals */}
-        {loading ? (
-          <div className="grid grid-cols-3 gap-2">
-            {[1,2,3].map(i => <GoldenSkeleton key={i} className="h-20" />)}
-          </div>
-        ) : error ? (
-          <Card className="card-premium">
-            <CardContent className="p-4 text-center space-y-2">
-              <p className="text-sm text-destructive">Erro ao carregar dados</p>
-              <Button size="sm" variant="outline" onClick={refetch} className="gap-2">
-                <RefreshCw className="h-4 w-4" /> Tentar novamente
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            <Card className="card-premium">
-              <CardContent className="p-3 text-center">
-                <TrendingUp className="h-4 w-4 mx-auto mb-1 text-success" />
-                <p className="text-[10px] text-muted-foreground">Entradas</p>
-                <p className="text-sm font-bold text-success tracking-tight">{formatarMoeda(receitas)}</p>
-              </CardContent>
-            </Card>
-            <Card className="card-premium">
-              <CardContent className="p-3 text-center">
-                <TrendingDown className="h-4 w-4 mx-auto mb-1 text-destructive" />
-                <p className="text-[10px] text-muted-foreground">Saídas</p>
-                <p className="text-sm font-bold text-destructive tracking-tight">{formatarMoeda(despesas)}</p>
-              </CardContent>
-            </Card>
-            <Card className="card-premium">
-              <CardContent className="p-3 text-center">
-                <span className="text-sm mb-1 block">{saldo >= 0 ? "💰" : "⚠️"}</span>
-                <p className="text-[10px] text-muted-foreground">Saldo</p>
-                <p className={`text-sm font-bold tracking-tight ${saldo >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {formatarMoeda(saldo)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Quick Action Buttons */}
-        {!loading && !error && familiaId && user && (
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={() => setQuickType("receita")}
-              className="min-h-[48px] text-sm font-bold rounded-xl"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 4px 16px rgba(34,197,94,0.25)" }}
+            <button
+              onClick={() => { setThemeRotating(true); toggleTheme(); setTimeout(() => setThemeRotating(false), 400); }}
+              className="h-9 w-9 rounded-full flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              style={{ transition: "transform 0.3s ease", transform: themeRotating ? "rotate(360deg)" : "rotate(0deg)" }}
             >
-              <Plus className="h-4 w-4 mr-1" /> Nova Receita
-            </Button>
-            <Button
-              onClick={() => setQuickType("despesa")}
-              className="min-h-[48px] text-sm font-bold rounded-xl"
-              style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#fff", boxShadow: "0 4px 16px rgba(239,68,68,0.25)" }}
-            >
-              <Plus className="h-4 w-4 mr-1" /> Nova Despesa
-            </Button>
+              <span className="text-base">{theme === "obsidian" ? "☀️" : "🌑"}</span>
+            </button>
+            <img src={logo} alt="Crown & Legacy" className="w-10 h-10 rounded-lg drop-shadow-[0_0_10px_hsl(var(--primary)/0.4)]" />
           </div>
-        )}
 
-        {/* Quick Transaction Modal */}
-        {quickType && familiaId && user && (
-          <QuickTransactionModal
-            open={!!quickType}
-            onOpenChange={(o) => { if (!o) setQuickType(null); }}
-            tipo={quickType}
-            familiaId={familiaId}
-            userId={user.id}
-            onSuccess={refetch}
-          />
-        )}
-
-        {/* Category Bars (replaces pie chart) */}
-        {!loading && Object.keys(categoriasMap).length > 0 && (
-          <CategoryBars categoriasMap={categoriasMap} />
-        )}
-
-
-        <ReflexaoDiaria />
-
-        {/* IA */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button className="w-full min-h-[48px] btn-premium font-bold" disabled={analisando} onClick={handleIA}>
-              <span className="mr-2">✨</span>
-              {analisando ? "Buscando sabedoria..." : "✨ Invocar Dicas de Sabedoria"}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="bg-card border-primary/20">
-            <SheetHeader><SheetTitle className="text-primary font-bold" style={{fontFamily: 'Lora, serif'}}>📖 Dicas de Sabedoria</SheetTitle></SheetHeader>
-            <div className="mt-4 max-h-[60vh] overflow-y-auto">
-              {analisando ? (
-                <div className="flex items-center gap-3 py-4">
-                  <div className="flex gap-1">
-                    {[0, 150, 300].map((delay) => (
-                      <div key={delay} className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{animationDelay: `${delay}ms`}} />
-                    ))}
-                  </div>
-                  <span className="text-amber-400 text-sm italic" style={{fontFamily: 'Lora, serif'}}>Buscando sabedoria...</span>
+          {/* Error State */}
+          {errorMsg && (
+            <Card className="border-destructive/30 bg-destructive/10">
+              <CardContent className="p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-destructive font-medium">Erro ao carregar dados</p>
+                  <p className="text-xs text-muted-foreground">{errorMsg}</p>
                 </div>
-              ) : analiseIA ? (
-              <div className="bg-muted border border-primary/20 rounded-xl p-5 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <ReactMarkdown components={{
-                    h3: ({children}) => <h3 className="text-primary font-semibold text-lg mt-4 mb-2" style={{fontFamily: 'Lora, serif'}}>{children}</h3>,
-                    strong: ({children}) => <strong className="text-primary font-bold">{children}</strong>,
-                    p: ({children}) => <p className="text-foreground text-base leading-loose mb-3" style={{fontFamily: 'Lora, serif'}}>{children}</p>,
-                    li: ({children}) => <li className="text-foreground text-base leading-loose flex gap-2 mb-1"><span className="text-primary flex-shrink-0">•</span><span>{children}</span></li>,
-                    ul: ({children}) => <ul className="list-none pl-0 space-y-1 mb-2">{children}</ul>,
-                  }}>{analiseIA}</ReactMarkdown>
+                <Button size="sm" variant="outline" onClick={handleRefetch} className="gap-1">
+                  <RefreshCw className="h-3 w-3" /> Tentar
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* SECTION 1 — Net Worth Hero */}
+          <Card className="card-premium overflow-hidden">
+            <CardContent className="p-5">
+              {loadingNW ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-3 w-36" />
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm italic">Toque no botão para receber sabedoria financeira.</p>
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="h-5 w-5 text-primary" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patrimônio Líquido</span>
+                  </div>
+                  <p className={`text-2xl sm:text-3xl font-display font-bold tracking-tight ${netWorth >= 0 ? "text-foreground" : "text-destructive"}`}>
+                    {formatCurrency(netWorth)}
+                  </p>
+                  {nwVariation && (
+                    <p className={`text-xs mt-1 font-medium ${nwVariation.isPositive ? "text-success" : "text-destructive"}`}>
+                      {nwVariation.isPositive ? "+" : ""}{formatCurrency(nwVariation.value)} ({formatPercentage(nwVariation.percentage)}) vs 30 dias
+                    </p>
+                  )}
+                  {assets.length === 0 && (
+                    <Button variant="link" className="text-primary text-xs p-0 h-auto mt-2" onClick={() => navigate("/assets")}>
+                      + Adicionar ativos
+                    </Button>
+                  )}
+                  {snapshots.length > 1 && (
+                    <button
+                      onClick={() => setShowChart(!showChart)}
+                      className="flex items-center gap-1 text-xs text-primary mt-3 hover:underline"
+                    >
+                      {showChart ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      {showChart ? "Ocultar histórico" : "Ver histórico 3 meses"}
+                    </button>
+                  )}
+                  {showChart && <div className="mt-3"><NetWorthChart data={snapshots} height={200} /></div>}
+                </>
               )}
-            </div>
-          </SheetContent>
-        </Sheet>
+            </CardContent>
+          </Card>
 
-        {/* Recent transactions */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-foreground">Últimas transações</h2>
-            <Button variant="link" className="text-primary text-xs p-0 h-auto" onClick={() => navigate("/transacoes")}>Ver todas</Button>
-          </div>
+          {/* SECTION 2 — Financial Score */}
+          <Card className="card-premium">
+            <CardContent className="p-5">
+              {scoreLoading ? (
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ) : scoreData ? (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-16 w-16 shrink-0">
+                      <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
+                        <path
+                          d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="hsl(var(--muted))"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke={getScoreColor(scoreData.level)}
+                          strokeWidth="3"
+                          strokeDasharray={`${(scoreData.score / 1000) * 100}, 100`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Shield className="h-5 w-5" style={{ color: getScoreColor(scoreData.level) }} />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Score Financeiro</span>
+                      </div>
+                      <p className="text-xl font-display font-bold" style={{ color: getScoreColor(scoreData.level) }}>
+                        {scoreData.score}<span className="text-sm text-muted-foreground font-normal">/1000</span>
+                      </p>
+                      <p className="text-xs font-bold uppercase tracking-widest" style={{ color: getScoreColor(scoreData.level) }}>
+                        {getScoreLabel(scoreData.level)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowPilares(!showPilares)}
+                    className="flex items-center gap-1 text-xs text-primary mt-3 hover:underline"
+                  >
+                    {showPilares ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    {showPilares ? "Ocultar pilares" : "Ver pilares"}
+                  </button>
+                  {showPilares && (
+                    <div className="mt-3 space-y-2">
+                      {[
+                        { label: "Liquidez", value: scoreData.pilares.liquidity },
+                        { label: "Endividamento", value: scoreData.pilares.debt_ratio },
+                        { label: "Poupança", value: scoreData.pilares.saving },
+                        { label: "Crescimento", value: scoreData.pilares.wealth_growth },
+                      ].map((p) => (
+                        <div key={p.label}>
+                          <div className="flex justify-between text-xs mb-0.5">
+                            <span className="text-muted-foreground">{p.label}</span>
+                            <span className="font-medium text-foreground">{p.value}/250</span>
+                          </div>
+                          <Progress value={(p.value / 250) * 100} className="h-1.5 [&>div]:bg-primary" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          {/* SECTION 3 — AI Insight */}
+          <Card className="card-glass-gold">
+            <CardContent className="p-4">
+              {loadingNW ? (
+                <Skeleton className="h-12 w-full" />
+              ) : (
+                <div className="flex items-start gap-3">
+                  <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Insight do Dia</p>
+                    <p className="text-sm text-foreground leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
+                      {aiInsight || "Analise seus dados para receber insights personalizados da IA."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SECTION 4 — Cashflow */}
           {loading ? (
-            <div className="space-y-2">{[1,2,3].map(i => <GoldenSkeleton key={i} className="h-16" />)}</div>
-          ) : ultimas5.length === 0 ? (
-            <div className="text-center py-8">
-              <span className="text-4xl block mb-2">📊</span>
-              <p className="text-sm text-muted-foreground">Nenhuma transação neste mês</p>
-              <Button variant="link" className="text-primary mt-1" onClick={() => navigate("/nova-transacao")}>Adicionar primeira transação</Button>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
             </div>
           ) : (
-            <div className="space-y-2">
-              {ultimas5.map((t) => (
-                <TransacaoCard key={t.id} transacao={t} onEdit={handleEditar} onDelete={(id) => setDeleteId(id)} />
-              ))}
+            <div className="grid grid-cols-3 gap-2">
+              <Card className="card-premium cursor-pointer hover:border-success/30 transition-colors" onClick={() => navigate("/transacoes")}>
+                <CardContent className="p-3 text-center">
+                  <TrendingUp className="h-4 w-4 mx-auto mb-1 text-success" />
+                  <p className="text-[10px] text-muted-foreground">Receitas</p>
+                  <p className="text-sm font-bold text-success tracking-tight">{formatCurrency(cashflow.receitas)}</p>
+                </CardContent>
+              </Card>
+              <Card className="card-premium cursor-pointer hover:border-destructive/30 transition-colors" onClick={() => navigate("/transacoes")}>
+                <CardContent className="p-3 text-center">
+                  <TrendingDown className="h-4 w-4 mx-auto mb-1 text-destructive" />
+                  <p className="text-[10px] text-muted-foreground">Despesas</p>
+                  <p className="text-sm font-bold text-destructive tracking-tight">{formatCurrency(cashflow.despesas)}</p>
+                </CardContent>
+              </Card>
+              <Card className="card-premium cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate("/transacoes")}>
+                <CardContent className="p-3 text-center">
+                  <span className="text-sm mb-1 block">{cashflow.saldo >= 0 ? "💰" : "⚠️"}</span>
+                  <p className="text-[10px] text-muted-foreground">Saldo</p>
+                  <p className={`text-sm font-bold tracking-tight ${cashflow.saldo >= 0 ? "text-primary" : "text-destructive"}`}>
+                    {formatCurrency(cashflow.saldo)}
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           )}
-        </div>
 
-        {/* Delete dialog */}
-        <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-          <AlertDialogContent className="bg-card border-border">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
-              <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive">Excluir</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          {/* SECTION 5 — Quick Actions */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" className="h-12 text-sm gap-2 border-primary/20 hover:bg-primary/5" onClick={() => navigate("/assets")}>
+              <Plus className="h-4 w-4 text-primary" /> Adicionar ativo
+            </Button>
+            <Button variant="outline" className="h-12 text-sm gap-2 border-primary/20 hover:bg-primary/5" onClick={() => navigate("/nova-transacao")}>
+              <Plus className="h-4 w-4 text-primary" /> Registrar transação
+            </Button>
+            <Button variant="outline" className="h-12 text-sm gap-2 border-primary/20 hover:bg-primary/5" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+              <TrendingUp className="h-4 w-4 text-primary" /> Ver score
+            </Button>
+            <Button variant="outline" className="h-12 text-sm gap-2 border-primary/20 hover:bg-primary/5" onClick={() => navigate("/relatorios")}>
+              <BarChart3 className="h-4 w-4 text-primary" /> Relatório
+            </Button>
+          </div>
+
+          {/* SECTION 6 — Gamification */}
+          <GamificacaoBar pontos={pontos} nivel={nivel} />
+
+          {/* SECTION 7 — Daily Reflection */}
+          <ReflexaoDiaria />
+        </div>
       </div>
       <BottomNav />
     </div>
