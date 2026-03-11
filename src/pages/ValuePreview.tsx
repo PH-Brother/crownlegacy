@@ -31,7 +31,7 @@ export default function ValuePreview() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center overflow-y-auto px-4 sm:px-5 lg:px-6"
+      className="min-h-screen flex flex-col items-center justify-center overflow-y-auto px-4 sm:px-5 lg:px-6 pb-8"
       style={{
         background: "linear-gradient(135deg, #0f2818 0%, #1a472a 50%, #0f2818 100%)",
       }}
@@ -56,14 +56,14 @@ export default function ValuePreview() {
         {/* Title */}
         <h1
           className="font-display font-bold text-center leading-tight tracking-[2px] mb-2 animate-[fadeInUp_300ms_ease-out_100ms_both]"
-          style={{ color: "#F0D58A", fontSize: "clamp(32px, 5vw, 48px)" }}
+          style={{ color: "#F0D58A", fontSize: "clamp(36px, 5vw, 52px)" }}
         >
           Crown &amp; Legacy
         </h1>
 
         {/* Tagline */}
         <p
-          className="text-sm sm:text-[15px] lg:text-base text-center mb-2 animate-[fadeInUp_300ms_ease-out_200ms_both]"
+          className="text-base sm:text-[17px] lg:text-lg text-center mb-2 animate-[fadeInUp_300ms_ease-out_200ms_both]"
           style={{ color: "#E8E8E8" }}
         >
           Protect. Grow. Wealth.
@@ -71,7 +71,7 @@ export default function ValuePreview() {
 
         {/* Subtitle */}
         <p
-          className="text-[10px] sm:text-[11px] lg:text-xs font-medium uppercase tracking-[3px] text-center mb-8 sm:mb-10 lg:mb-12 animate-[fadeInUp_300ms_ease-out_300ms_both]"
+          className="text-[11px] sm:text-xs lg:text-[13px] font-medium uppercase tracking-[3px] text-center mb-8 sm:mb-10 lg:mb-12 animate-[fadeInUp_300ms_ease-out_300ms_both]"
           style={{ color: "#E8E8E8" }}
         >
           WEALTH INTELLIGENCE PLATFORM
@@ -94,7 +94,7 @@ export default function ValuePreview() {
             >
               <card.icon size={32} style={{ color: "#F0D58A" }} className="mb-3" />
               <span
-                className="text-[13px] font-medium mb-2"
+                className="text-sm font-medium mb-2"
                 style={{ color: "#E8E8E8" }}
               >
                 {card.label}
@@ -108,13 +108,13 @@ export default function ValuePreview() {
                 </span>
               ) : (
                 <p
-                  className="text-sm leading-relaxed mb-2"
+                  className="text-base leading-relaxed mb-2"
                   style={{ color: "#E8E8E8" }}
                 >
                   {(card as any).text}
                 </p>
               )}
-              <span className="text-xs" style={{ color: "#9ca3af" }}>
+              <span className="text-[13px]" style={{ color: "#A0AEC0" }}>
                 {card.desc}
               </span>
             </div>

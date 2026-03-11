@@ -218,7 +218,6 @@ export default function Onboarding() {
   };
 
   const handleFinish = () => {
-    // Check if user has familia_id, if not redirect to family setup
     navigate("/onboarding-family", { replace: true });
   };
 
@@ -250,7 +249,7 @@ export default function Onboarding() {
 
   return (
     <div
-      className="fixed inset-0 flex flex-col items-center justify-center overflow-y-auto px-4 sm:px-6"
+      className="fixed inset-0 flex flex-col items-center justify-center overflow-y-auto px-4 sm:px-6 pb-8"
       style={{ background: "linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--primary-dark)) 100%)" }}
     >
       {/* Vignette */}
@@ -299,14 +298,14 @@ export default function Onboarding() {
               size={48}
             />
             <h1
-              className="font-display text-[28px] sm:text-[36px] lg:text-[40px] font-bold leading-tight tracking-[2px] mb-2 animate-[fadeInUp_300ms_ease-out_100ms_both]"
+              className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-2 animate-[fadeInUp_300ms_ease-out_100ms_both]"
               style={{ color: "hsl(var(--accent-light))" }}
             >
               Bem-vindo ao Crown &amp; Legacy
             </h1>
             <p
-              className="text-sm mb-8 animate-[fadeInUp_300ms_ease-out_200ms_both]"
-              style={{ color: "hsl(var(--foreground) / 0.85)" }}
+              className="text-base mb-8 animate-[fadeInUp_300ms_ease-out_200ms_both]"
+              style={{ color: "#E8E8E8" }}
             >
               Vamos configurar sua conta em 4 passos simples
             </p>
@@ -329,7 +328,7 @@ export default function Onboarding() {
           <div className="flex flex-col items-center w-full animate-[fadeInUp_300ms_ease-out_both]">
             <User className="mb-6" style={{ color: "hsl(var(--accent-light))" }} size={48} />
             <h1
-              className="font-display text-[28px] sm:text-[36px] lg:text-[40px] font-bold leading-tight tracking-[2px] mb-6 text-center"
+              className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-6 text-center"
               style={{ color: "hsl(var(--accent-light))" }}
             >
               Complete seu Perfil
@@ -338,7 +337,7 @@ export default function Onboarding() {
             <div className="flex flex-col gap-4 w-full">
               {/* Nome */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                <label className="text-sm font-medium" style={{ color: "#E8E8E8" }}>
                   Nome Completo *
                 </label>
                 <input
@@ -348,21 +347,21 @@ export default function Onboarding() {
                   placeholder="João da Silva"
                   maxLength={100}
                   disabled={loading}
-                  className="w-full rounded-lg px-3.5 py-2.5 text-[13px] transition-all duration-200 outline-none placeholder:opacity-40"
+                  className="w-full rounded-lg px-3.5 py-2.5 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
                   style={{
                     background: "rgba(255,255,255,0.08)",
                     border: "1px solid hsl(var(--accent) / 0.2)",
-                    color: "hsl(var(--foreground))",
+                    color: "#ffffff",
                   }}
                 />
                 {nome.length > 0 && nome.trim().length < 3 && (
-                  <p className="text-xs" style={{ color: "hsl(var(--destructive))" }}>Mínimo 3 caracteres</p>
+                  <p className="text-[13px]" style={{ color: "hsl(var(--destructive))" }}>Mínimo 3 caracteres</p>
                 )}
               </div>
 
               {/* Data de Nascimento */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                <label className="text-sm font-medium" style={{ color: "#E8E8E8" }}>
                   Data de Nascimento
                 </label>
                 <input
@@ -370,15 +369,15 @@ export default function Onboarding() {
                   value={dataNascimento}
                   onChange={(e) => setDataNascimento(e.target.value)}
                   disabled={loading}
-                  className="w-full rounded-lg px-3.5 py-2.5 text-[13px] transition-all duration-200 outline-none placeholder:opacity-40"
+                  className="w-full rounded-lg px-3.5 py-2.5 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
                   style={{
                     background: "rgba(255,255,255,0.08)",
                     border: "1px solid hsl(var(--accent) / 0.2)",
-                    color: "hsl(var(--foreground))",
+                    color: "#ffffff",
                   }}
                 />
                 {dataNascimento && validateDateOfBirth(dataNascimento) && (
-                  <p className="text-xs" style={{ color: "hsl(var(--destructive))" }}>
+                  <p className="text-[13px]" style={{ color: "hsl(var(--destructive))" }}>
                     {validateDateOfBirth(dataNascimento)}
                   </p>
                 )}
@@ -386,7 +385,7 @@ export default function Onboarding() {
 
               {/* Foto de Perfil */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                <label className="text-sm font-medium" style={{ color: "#E8E8E8" }}>
                   Foto de Perfil
                 </label>
                 <div className="flex items-center gap-4">
@@ -396,7 +395,7 @@ export default function Onboarding() {
                     className="relative h-16 w-16 rounded-full flex items-center justify-center text-xl font-bold overflow-hidden group transition-transform hover:scale-105 shrink-0"
                     style={{
                       background: displayUrl ? undefined : avatarBg,
-                      color: "hsl(var(--foreground))",
+                      color: "#ffffff",
                     }}
                   >
                     {displayUrl ? (
@@ -413,7 +412,7 @@ export default function Onboarding() {
                       </div>
                     )}
                   </button>
-                  <p className="text-xs" style={{ color: "hsl(var(--foreground) / 0.5)" }}>
+                  <p className="text-[13px]" style={{ color: "#A0AEC0" }}>
                     JPG, PNG ou WebP. Máx 5MB.
                   </p>
                 </div>
@@ -461,12 +460,12 @@ export default function Onboarding() {
           <div className="flex flex-col items-center w-full animate-[fadeInUp_300ms_ease-out_both]">
             <Target className="mb-6" style={{ color: "hsl(var(--accent-light))" }} size={48} />
             <h1
-              className="font-display text-[28px] sm:text-[36px] lg:text-[40px] font-bold leading-tight tracking-[2px] mb-2 text-center"
+              className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-2 text-center"
               style={{ color: "hsl(var(--accent-light))" }}
             >
               Seus Objetivos Financeiros
             </h1>
-            <p className="text-sm mb-6 text-center" style={{ color: "hsl(var(--foreground) / 0.85)" }}>
+            <p className="text-base mb-6 text-center" style={{ color: "#E8E8E8" }}>
               Selecione pelo menos um objetivo
             </p>
 
@@ -497,7 +496,7 @@ export default function Onboarding() {
                         </svg>
                       )}
                     </div>
-                    <span className="text-sm" style={{ color: "hsl(var(--foreground) / 0.9)" }}>
+                    <span className="text-base" style={{ color: "#E8E8E8" }}>
                       {goal.label}
                     </span>
                   </button>
@@ -543,14 +542,14 @@ export default function Onboarding() {
               size={48}
             />
             <h1
-              className="font-display text-[28px] sm:text-[36px] lg:text-[40px] font-bold leading-tight tracking-[2px] mb-2 animate-[fadeInUp_300ms_ease-out_100ms_both]"
+              className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold leading-tight tracking-[2px] mb-2 animate-[fadeInUp_300ms_ease-out_100ms_both]"
               style={{ color: "hsl(var(--success))" }}
             >
               Tudo Pronto!
             </h1>
             <p
-              className="text-sm mb-6 animate-[fadeInUp_300ms_ease-out_200ms_both]"
-              style={{ color: "hsl(var(--foreground) / 0.85)" }}
+              className="text-base mb-6 animate-[fadeInUp_300ms_ease-out_200ms_both]"
+              style={{ color: "#E8E8E8" }}
             >
               Sua conta foi configurada com sucesso
             </p>
@@ -561,14 +560,14 @@ export default function Onboarding() {
               style={{ background: "rgba(255, 255, 255, 0.05)" }}
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.5)" }}>Nome:</span>
-                <span className="text-sm" style={{ color: "hsl(var(--foreground) / 0.9)" }}>
+                <span className="text-[13px] font-medium" style={{ color: "#A0AEC0" }}>Nome:</span>
+                <span className="text-base" style={{ color: "#E8E8E8" }}>
                   {nome.trim() || "Não informado"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.5)" }}>Objetivos:</span>
-                <span className="text-sm" style={{ color: "hsl(var(--foreground) / 0.9)" }}>
+                <span className="text-[13px] font-medium" style={{ color: "#A0AEC0" }}>Objetivos:</span>
+                <span className="text-base" style={{ color: "#E8E8E8" }}>
                   {selectedGoals.size > 0 ? `${selectedGoals.size} selecionado(s)` : "Nenhum selecionado"}
                 </span>
               </div>
