@@ -31,6 +31,7 @@ import Insights from "./pages/Insights";
 import Goals from "./pages/Goals";
 import FamilyWealth from "./pages/FamilyWealth";
 import ResetPassword from "./pages/ResetPassword";
+import WealthScore from "./pages/WealthScore";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
