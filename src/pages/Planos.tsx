@@ -173,7 +173,7 @@ export default function Planos() {
               {RECURSOS_FREE.map((r) => (
                 <div key={r.label} className="flex items-center gap-2 text-sm">
                   {r.included ? (
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-primary flex-shrink-0" />
                   ) : (
                     <X className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
                   )}
