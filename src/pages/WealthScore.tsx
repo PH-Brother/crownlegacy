@@ -82,15 +82,10 @@ export default function WealthScore() {
   const [searchParams] = useSearchParams();
 
   const friendResult = searchParams.get("result");
-  const friendScore =
-    friendResult !== null
-      ? Math.max(0, Math.min(100, parseInt(friendResult, 10) || 0))
-      : null;
+  const friendScore = friendResult !== null ? Math.max(0, Math.min(100, parseInt(friendResult, 10) || 0)) : null;
 
   const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    Array(QUESTIONS.length).fill(null)
-  );
+  const [answers, setAnswers] = useState<(number | null)[]>(Array(QUESTIONS.length).fill(null));
   const [score, setScore] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [showChallenge, setShowChallenge] = useState(friendScore !== null);
@@ -125,10 +120,7 @@ export default function WealthScore() {
     setScore(s);
     setShowResult(true);
     try {
-      localStorage.setItem(
-        "wealthScoreResult",
-        JSON.stringify({ score: s, answers, timestamp: Date.now() })
-      );
+      localStorage.setItem("wealthScoreResult", JSON.stringify({ score: s, answers, timestamp: Date.now() }));
     } catch {
       /* ignore */
     }
@@ -139,9 +131,7 @@ export default function WealthScore() {
     else calculateScore();
   };
 
-  const handleShare = async (
-    platform: "twitter" | "linkedin" | "copy" | "web"
-  ) => {
+  const handleShare = async (platform: "twitter" | "linkedin" | "copy" | "web") => {
     const link = `${SHARE_URL()}?result=${score}`;
     const text = `I scored ${score} on the Wealth Intelligence Score by Crown & Legacy! Test yours:`;
 
@@ -153,15 +143,9 @@ export default function WealthScore() {
         toast.error("Failed to copy link");
       }
     } else if (platform === "twitter") {
-      window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + link)}`,
-        "_blank"
-      );
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + link)}`, "_blank");
     } else if (platform === "linkedin") {
-      window.open(
-        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`,
-        "_blank"
-      );
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`, "_blank");
     } else if (platform === "web" && navigator.share) {
       try {
         await navigator.share({ title: "Wealth Intelligence Score", text, url: link });
@@ -181,8 +165,7 @@ export default function WealthScore() {
 
   const cat = score !== null ? getCategory(score) : null;
   const friendCat = friendScore !== null ? getCategory(friendScore) : null;
-  const progress =
-    showResult ? 100 : ((currentQ + (answers[currentQ] !== null ? 1 : 0)) / QUESTIONS.length) * 100;
+  const progress = showResult ? 100 : ((currentQ + (answers[currentQ] !== null ? 1 : 0)) / QUESTIONS.length) * 100;
 
   /* ─── Challenge screen ─── */
   if (showChallenge && friendScore !== null && !showResult) {
@@ -203,10 +186,7 @@ export default function WealthScore() {
             </span>
             ! Can you beat it?
           </p>
-          <div
-            className="font-mono text-[56px] font-bold mb-2"
-            style={{ color: friendCat!.color }}
-          >
+          <div className="font-mono text-[56px] font-bold mb-2" style={{ color: friendCat!.color }}>
             {friendScore}
           </div>
           <p className="text-base mb-8" style={{ color: friendCat!.color }}>
@@ -241,11 +221,7 @@ export default function WealthScore() {
     return (
       <Shell progress={100}>
         <div className="flex flex-col items-center animate-[fadeInUp_300ms_ease-out_both]">
-          <Trophy
-            size={48}
-            style={{ color: cat.color }}
-            className="mb-4 animate-[fadeInScale_300ms_ease-out_both]"
-          />
+          <Trophy size={48} style={{ color: cat.color }} className="mb-4 animate-[fadeInScale_300ms_ease-out_both]" />
 
           <h2
             className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold text-center mb-6"
@@ -270,10 +246,7 @@ export default function WealthScore() {
             </p>
           )}
 
-          <p
-            className="text-base text-center leading-relaxed mb-8 max-w-[400px]"
-            style={{ color: "#E8E8E8" }}
-          >
+          <p className="text-base text-center leading-relaxed mb-8 max-w-[400px]" style={{ color: "#E8E8E8" }}>
             {getExplanation(score)}
           </p>
 
@@ -400,10 +373,7 @@ export default function WealthScore() {
         </button>
       )}
 
-      <div
-        key={currentQ}
-        className="animate-[slideInRight_300ms_ease-out_both]"
-      >
+      <div key={currentQ} className="animate-[slideInRight_300ms_ease-out_both]">
         <p className="text-[13px] mb-4" style={{ color: "#A0AEC0" }}>
           Question {currentQ + 1} of {QUESTIONS.length}
         </p>
@@ -420,9 +390,7 @@ export default function WealthScore() {
                 key={i}
                 className="flex items-center gap-3 p-3 px-4 rounded-lg cursor-pointer transition-all duration-200"
                 style={{
-                  background: selected
-                    ? "rgba(240, 213, 138, 0.2)"
-                    : "rgba(255, 255, 255, 0.05)",
+                  background: selected ? "rgba(240, 213, 138, 0.2)" : "rgba(255, 255, 255, 0.05)",
                   border: `1px solid ${selected ? "#F0D58A" : "rgba(240, 213, 138, 0.2)"}`,
                 }}
               >
@@ -438,12 +406,7 @@ export default function WealthScore() {
                   className="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0"
                   style={{ borderColor: selected ? "#F0D58A" : "rgba(240, 213, 138, 0.4)" }}
                 >
-                  {selected && (
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: "#F0D58A" }}
-                    />
-                  )}
+                  {selected && <span className="w-2 h-2 rounded-full" style={{ background: "#F0D58A" }} />}
                 </span>
                 <span className="text-base" style={{ color: "#E8E8E8" }}>
                   {opt.label}
@@ -485,35 +448,25 @@ export default function WealthScore() {
 }
 
 /* ─── Shell wrapper ─── */
-function Shell({
-  children,
-  progress,
-}: {
-  children: React.ReactNode;
-  progress: number;
-}) {
+/* ─── Shell wrapper ─── */
+function Shell({ children, progress }: { children: React.ReactNode; progress: number }) {
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 sm:px-6 pb-8"
+      className="fixed inset-0 flex flex-col items-center overflow-y-auto px-4 sm:px-6"
       style={{
-        background:
-          "linear-gradient(135deg, #0f2818 0%, #1a472a 50%, #0f2818 100%)",
+        background: "linear-gradient(135deg, #0f2818 0%, #1a472a 50%, #0f2818 100%)",
       }}
     >
       {/* Vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background:
-            "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)",
+          background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)",
         }}
       />
 
       {/* Progress bar */}
-      <div
-        className="fixed top-0 left-0 right-0 h-[3px] z-10"
-        style={{ background: "rgba(240, 213, 138, 0.2)" }}
-      >
+      <div className="fixed top-0 left-0 right-0 h-[3px] z-10" style={{ background: "rgba(240, 213, 138, 0.2)" }}>
         <div
           className="h-full transition-all duration-300 ease-in-out"
           style={{
@@ -523,7 +476,7 @@ function Shell({
         />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center w-full max-w-[600px] py-12">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-[600px] py-8 sm:py-12 min-h-screen">
         {/* Logo */}
         <img
           src="/images/logo-CL-Verde-dourado-Gold-claro.png"
@@ -558,6 +511,9 @@ function Shell({
         >
           {children}
         </div>
+
+        {/* Spacer for scroll */}
+        <div className="h-8" />
       </div>
     </div>
   );
