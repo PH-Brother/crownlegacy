@@ -171,7 +171,7 @@ export default function Auth() {
             <button
               type="button"
               onClick={() => setIsLogin(false)}
-              className="flex-1 pb-3 text-sm font-medium transition-all duration-200 border-b-2 text-primary-foreground"
+              className="flex-1 pb-3 text-sm font-medium transition-all duration-200 border-b-2 text-secondary"
               style={{
                 color: !isLogin ? "hsl(var(--accent-light))" : "hsl(var(--muted-foreground))",
                 borderColor: !isLogin ? "hsl(var(--accent-light))" : "transparent",
