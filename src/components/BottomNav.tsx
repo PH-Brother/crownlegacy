@@ -6,7 +6,8 @@ const items = [
   { path: "/assets", icon: Building2, label: "Ativos" },
   { path: "/nova-transacao", icon: Plus, label: "Lançar" },
   { path: "/ia-conselho", icon: Zap, label: "IA" },
-  { path: "/insights", icon: Sparkles, label: "Insights" },
+  { path: "/goals", icon: Target, label: "Metas" },
+  { path: "/family-wealth", icon: Users, label: "Família" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
 

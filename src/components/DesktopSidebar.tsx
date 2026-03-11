@@ -13,7 +13,8 @@ const navItems = [
   { path: "/nova-transacao", icon: Zap, label: "Lançar" },
   { path: "/ia-conselho", icon: Bot, label: "IA & Análise" },
   { path: "/insights", icon: Sparkles, label: "Insights" },
-  { path: "/metas", icon: Target, label: "Metas" },
+  { path: "/goals", icon: Target, label: "Metas Patrimônio" },
+  { path: "/family-wealth", icon: Users, label: "Família" },
   { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];

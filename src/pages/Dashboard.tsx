@@ -22,8 +22,56 @@ import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import NetWorthChart, { NetWorthChartSkeleton } from "@/components/dashboard/NetWorthChart";
 import InsightCard from "@/components/InsightCard";
 import { useAIInsights } from "@/hooks/useAIInsights";
+import { useWealthGoals } from "@/hooks/useWealthGoals";
+import { calculateDaysRemaining, calculateGoalProgress, getGoalProgressColor } from "@/utils/goalHelpers";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
+
+function NextGoalCard() {
+  const navigate = useNavigate();
+  const { goals, loading } = useWealthGoals();
+  const activeGoals = goals.filter((g) => g.status === "active").sort((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime());
+  const next = activeGoals[0] || null;
+
+  if (loading) return <Skeleton className="h-20 rounded-2xl" />;
+
+  if (!next) {
+    return (
+      <Card className="card-premium">
+        <CardContent className="p-4 text-center">
+          <p className="text-sm text-muted-foreground">Crie sua primeira meta de patrimônio</p>
+          <Button size="sm" className="mt-2 gradient-gold text-primary-foreground" onClick={() => navigate("/goals")}>
+            <Target className="h-4 w-4 mr-1" /> Criar meta
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const days = calculateDaysRemaining(next.target_date);
+  const percent = calculateGoalProgress(next.current_value, next.target_value);
+  const color = getGoalProgressColor(percent);
+
+  return (
+    <Card className="card-premium cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate("/goals")}>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Próxima Meta</span>
+          <span className="text-xs font-medium" style={{ color }}>{days > 0 ? `${days} dias` : "Vencida"}</span>
+        </div>
+        <p className="text-sm font-bold text-foreground">{next.title}</p>
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">{formatCurrency(next.current_value)}</span>
+            <span className="font-bold" style={{ color }}>{percent.toFixed(0)}%</span>
+            <span className="text-muted-foreground">{formatCurrency(next.target_value)}</span>
+          </div>
+          <Progress value={percent} className="h-1.5 [&>div]:bg-primary" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function getSaudacao(): string {
   const h = new Date().getHours();
