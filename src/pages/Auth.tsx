@@ -1,10 +1,5 @@
 import { useState } from "react";
-import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +10,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [isLogin, setIsLogin] = useState(true);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
   const [nome, setNome] = useState("");
@@ -25,15 +21,12 @@ export default function Auth() {
   const [showCadPass, setShowCadPass] = useState(false);
 
   const navigateAfterAuth = async (userId: string) => {
-    // Small delay for trigger to complete on signup
     await new Promise(resolve => setTimeout(resolve, 800));
-
     const { data: profile } = await supabase
       .from("profiles")
       .select("familia_id")
       .eq("id", userId)
       .maybeSingle();
-
     if (profile?.familia_id) {
       navigate("/dashboard", { replace: true });
     } else {
@@ -105,76 +98,257 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-[380px] space-y-8">
-        <div className="text-center">
-          <img src={logo} alt="Legacy Kingdom" className="w-20 h-20 mx-auto rounded-2xl mb-4 drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
-          <h1 className="text-2xl font-bold text-primary">Legacy Kingdom</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestão financeira com sabedoria bíblica</p>
-        </div>
+    <div
+      className="fixed inset-0 flex items-center justify-center overflow-hidden px-4 sm:px-6"
+      style={{
+        background: "linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--primary-dark)) 100%)",
+      }}
+    >
+      {/* Vignette overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)",
+        }}
+      />
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-secondary">
-            <TabsTrigger value="login">Entrar</TabsTrigger>
-            <TabsTrigger value="cadastro">Criar Conta</TabsTrigger>
-          </TabsList>
+      <div className="relative z-10 flex w-full max-w-[400px] flex-col items-center">
+        {/* Logo */}
+        <img
+          src="/images/logo-CL-Verde-dourado-Gold-claro.png"
+          alt="Crown & Legacy Logo"
+          className="w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] lg:w-[240px] lg:h-[240px] object-contain mb-6 sm:mb-8 animate-[fadeInScale_400ms_ease-out_both]"
+        />
 
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" placeholder="seu@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="min-h-[48px] input-premium" disabled={loading} />
+        {/* Title */}
+        <h1
+          className="font-display text-[32px] sm:text-[40px] lg:text-[48px] font-bold text-center leading-tight tracking-[2px] mb-2 animate-[fadeInUp_400ms_ease-out_100ms_both]"
+          style={{ color: "hsl(var(--accent-light))" }}
+        >
+          Crown &amp; Legacy
+        </h1>
+
+        {/* Tagline */}
+        <p
+          className="text-sm sm:text-base text-center mb-4 animate-[fadeInUp_400ms_ease-out_200ms_both]"
+          style={{ color: "hsl(var(--foreground) / 0.85)" }}
+        >
+          Protect. Grow. Wealth.
+        </p>
+
+        {/* Subtitle */}
+        <p
+          className="text-[10px] sm:text-xs font-medium uppercase tracking-[3px] text-center mb-8 sm:mb-12 animate-[fadeInUp_400ms_ease-out_300ms_both]"
+          style={{ color: "hsl(var(--foreground) / 0.6)" }}
+        >
+          WEALTH INTELLIGENCE PLATFORM
+        </p>
+
+        {/* Card */}
+        <div
+          className="w-full rounded-xl p-6 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] animate-[fadeInUp_400ms_ease-out_400ms_both]"
+          style={{
+            background: "rgba(255, 255, 255, 0.05)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: "1px solid hsl(var(--accent) / 0.2)",
+          }}
+        >
+          {/* Tabs */}
+          <div className="flex gap-4 mb-8">
+            <button
+              type="button"
+              onClick={() => setIsLogin(true)}
+              className="flex-1 pb-3 text-sm font-medium transition-all duration-200 border-b-2"
+              style={{
+                color: isLogin ? "hsl(var(--accent-light))" : "hsl(var(--muted-foreground))",
+                borderColor: isLogin ? "hsl(var(--accent-light))" : "transparent",
+                fontWeight: isLogin ? 600 : 500,
+              }}
+            >
+              Entrar
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsLogin(false)}
+              className="flex-1 pb-3 text-sm font-medium transition-all duration-200 border-b-2"
+              style={{
+                color: !isLogin ? "hsl(var(--accent-light))" : "hsl(var(--muted-foreground))",
+                borderColor: !isLogin ? "hsl(var(--accent-light))" : "transparent",
+                fontWeight: !isLogin ? 600 : 500,
+              }}
+            >
+              Criar Conta
+            </button>
+          </div>
+
+          {/* Login form */}
+          {isLogin && (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="login-email" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                  Email
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-lg px-4 py-3 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid hsl(var(--accent) / 0.2)",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
               </div>
-              <div className="space-y-2">
-                <Label>Senha</Label>
+              <div className="space-y-1.5">
+                <label htmlFor="login-senha" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                  Senha
+                </label>
                 <div className="relative">
-                  <Input type={showLoginPass ? "text" : "password"} placeholder="••••••" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} className="min-h-[48px] pr-12 input-premium" disabled={loading} />
-                  <button type="button" onClick={() => setShowLoginPass(!showLoginPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <input
+                    id="login-senha"
+                    type={showLoginPass ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={loginSenha}
+                    onChange={(e) => setLoginSenha(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-lg px-4 py-3 pr-12 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid hsl(var(--accent) / 0.2)",
+                      color: "hsl(var(--foreground))",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPass(!showLoginPass)}
+                    aria-label="Alternar visibilidade de senha"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     {showLoginPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              <div className="flex justify-end">
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg py-3 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+                style={{
+                  background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
+                  color: "hsl(var(--accent-foreground))",
+                  boxShadow: "0 4px 16px hsl(var(--accent) / 0.3)",
+                }}
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Entrar"}
+              </button>
+
+              <div className="text-center mt-4">
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-primary text-sm hover:text-primary/80 transition-colors underline-offset-2 hover:underline"
                   disabled={loading}
+                  className="text-xs transition-colors duration-200 hover:underline"
+                  style={{ color: "hsl(var(--success))" }}
                 >
                   Esqueci minha senha
                 </button>
               </div>
-              <Button type="submit" className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base" disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "✨ Entrar"}
-              </Button>
             </form>
-          </TabsContent>
+          )}
 
-          <TabsContent value="cadastro">
-            <form onSubmit={handleCadastro} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Nome completo</Label>
-                <Input placeholder="Seu nome" value={nome} onChange={(e) => setNome(e.target.value)} className="min-h-[48px] input-premium" disabled={loading} />
+          {/* Signup form */}
+          {!isLogin && (
+            <form onSubmit={handleCadastro} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="cad-nome" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                  Nome completo
+                </label>
+                <input
+                  id="cad-nome"
+                  type="text"
+                  placeholder="Seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-lg px-4 py-3 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid hsl(var(--accent) / 0.2)",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
               </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" placeholder="seu@email.com" value={cadEmail} onChange={(e) => setCadEmail(e.target.value)} className="min-h-[48px] input-premium" disabled={loading} />
+              <div className="space-y-1.5">
+                <label htmlFor="cad-email" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                  Email
+                </label>
+                <input
+                  id="cad-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={cadEmail}
+                  onChange={(e) => setCadEmail(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-lg px-4 py-3 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid hsl(var(--accent) / 0.2)",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
               </div>
-              <div className="space-y-2">
-                <Label>Senha</Label>
+              <div className="space-y-1.5">
+                <label htmlFor="cad-senha" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                  Senha
+                </label>
                 <div className="relative">
-                  <Input type={showCadPass ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={cadSenha} onChange={(e) => setCadSenha(e.target.value)} className="min-h-[48px] pr-12 input-premium" disabled={loading} />
-                  <button type="button" onClick={() => setShowCadPass(!showCadPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <input
+                    id="cad-senha"
+                    type={showCadPass ? "text" : "password"}
+                    placeholder="Mínimo 6 caracteres"
+                    value={cadSenha}
+                    onChange={(e) => setCadSenha(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-lg px-4 py-3 pr-12 text-sm transition-all duration-200 outline-none placeholder:opacity-40"
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid hsl(var(--accent) / 0.2)",
+                      color: "hsl(var(--foreground))",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCadPass(!showCadPass)}
+                    aria-label="Alternar visibilidade de senha"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     {showCadPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base" disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🚀 Criar Conta Grátis"}
-              </Button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg py-3 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+                style={{
+                  background: "linear-gradient(135deg, hsl(var(--accent-light)), hsl(var(--accent)))",
+                  color: "hsl(var(--accent-foreground))",
+                  boxShadow: "0 4px 16px hsl(var(--accent) / 0.3)",
+                }}
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Criar Conta"}
+              </button>
             </form>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );
