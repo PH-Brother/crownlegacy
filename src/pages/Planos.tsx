@@ -248,7 +248,7 @@ export default function Planos() {
               ))}
               <Button
                 variant="outline"
-                className="w-full mt-4 border-green-600 text-green-600 hover:bg-green-600/10"
+                className="w-full mt-4 border-primary/50 text-primary hover:bg-primary/10"
                 onClick={() => iniciarCheckout(PRICE_ANUAL)}
                 disabled={isPremium || checkoutLoading}
               >
