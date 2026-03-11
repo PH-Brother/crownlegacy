@@ -20,6 +20,8 @@ import PaywallBanner from "@/components/PaywallBanner";
 import GamificacaoBar from "@/components/GamificacaoBar";
 import ReflexaoDiaria from "@/components/ReflexaoDiaria";
 import NetWorthChart, { NetWorthChartSkeleton } from "@/components/dashboard/NetWorthChart";
+import InsightCard from "@/components/InsightCard";
+import { useAIInsights } from "@/hooks/useAIInsights";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
