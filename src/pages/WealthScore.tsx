@@ -191,12 +191,12 @@ export default function WealthScore() {
         <div className="flex flex-col items-center animate-[fadeInUp_300ms_ease-out_both]">
           <Zap size={48} style={{ color: "#F0D58A" }} className="mb-4" />
           <h2
-            className="font-display text-[28px] sm:text-[36px] lg:text-[40px] font-bold text-center mb-2"
+            className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold text-center mb-2"
             style={{ color: "#F0D58A" }}
           >
             Your Friend's Challenge
           </h2>
-          <p className="text-sm text-center mb-6" style={{ color: "#E8E8E8" }}>
+          <p className="text-base text-center mb-6" style={{ color: "#E8E8E8" }}>
             Your friend scored{" "}
             <span className="font-mono font-bold" style={{ color: friendCat!.color }}>
               {friendScore}
@@ -209,7 +209,7 @@ export default function WealthScore() {
           >
             {friendScore}
           </div>
-          <p className="text-sm mb-8" style={{ color: friendCat!.color }}>
+          <p className="text-base mb-8" style={{ color: friendCat!.color }}>
             {friendCat!.label}
           </p>
           <button
@@ -248,7 +248,7 @@ export default function WealthScore() {
           />
 
           <h2
-            className="font-display text-[28px] sm:text-[36px] lg:text-[40px] font-bold text-center mb-6"
+            className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold text-center mb-6"
             style={{ color: "#F0D58A" }}
           >
             Your Wealth Intelligence Score
@@ -265,13 +265,13 @@ export default function WealthScore() {
           </p>
 
           {comparison && (
-            <p className="text-sm text-center font-medium mb-4" style={{ color: "#F0D58A" }}>
+            <p className="text-base text-center font-medium mb-4" style={{ color: "#F0D58A" }}>
               {comparison}
             </p>
           )}
 
           <p
-            className="text-sm text-center leading-relaxed mb-8 max-w-[400px]"
+            className="text-base text-center leading-relaxed mb-8 max-w-[400px]"
             style={{ color: "#E8E8E8" }}
           >
             {getExplanation(score)}
@@ -291,16 +291,16 @@ export default function WealthScore() {
               className="w-20 h-20 rounded-2xl object-cover mb-4"
               loading="lazy"
             />
-            <p className="text-sm font-medium mb-1" style={{ color: "#E8E8E8" }}>
+            <p className="text-base font-medium mb-1" style={{ color: "#E8E8E8" }}>
               My Wealth Score
             </p>
             <div className="font-mono text-5xl font-bold mb-1" style={{ color: "#F0D58A" }}>
               {score}
             </div>
-            <p className="text-xs mb-4" style={{ color: "#9ca3af" }}>
+            <p className="text-[13px] mb-4" style={{ color: "#A0AEC0" }}>
               {cat.label}
             </p>
-            <p className="text-[11px]" style={{ color: "#9ca3af" }}>
+            <p className="text-xs" style={{ color: "#A0AEC0" }}>
               Crown & Legacy · Wealth Intelligence Platform
             </p>
           </div>
@@ -372,8 +372,8 @@ export default function WealthScore() {
             </button>
             <button
               onClick={startQuiz}
-              className="text-xs mt-2 transition-colors hover:underline"
-              style={{ color: "#9ca3af" }}
+              className="text-[13px] mt-2 transition-colors hover:underline"
+              style={{ color: "#A0AEC0" }}
             >
               Take Again
             </button>
@@ -404,11 +404,11 @@ export default function WealthScore() {
         key={currentQ}
         className="animate-[slideInRight_300ms_ease-out_both]"
       >
-        <p className="text-xs mb-4" style={{ color: "#9ca3af" }}>
+        <p className="text-[13px] mb-4" style={{ color: "#A0AEC0" }}>
           Question {currentQ + 1} of {QUESTIONS.length}
         </p>
 
-        <h3 className="text-base font-medium mb-6" style={{ color: "#E8E8E8" }}>
+        <h3 className="text-lg font-medium mb-6" style={{ color: "#E8E8E8" }}>
           {q.question}
         </h3>
 
@@ -445,7 +445,7 @@ export default function WealthScore() {
                     />
                   )}
                 </span>
-                <span className="text-sm" style={{ color: "#E8E8E8" }}>
+                <span className="text-base" style={{ color: "#E8E8E8" }}>
                   {opt.label}
                 </span>
               </label>
@@ -494,7 +494,7 @@ function Shell({
 }) {
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 sm:px-6"
+      className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 sm:px-6 pb-8"
       style={{
         background:
           "linear-gradient(135deg, #0f2818 0%, #1a472a 50%, #0f2818 100%)",
@@ -533,14 +533,14 @@ function Shell({
         />
 
         <h1
-          className="font-display text-[28px] sm:text-[36px] lg:text-[44px] font-bold text-center tracking-[2px] mb-1 animate-[fadeInUp_300ms_ease-out_100ms_both]"
+          className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold text-center tracking-[2px] mb-1 animate-[fadeInUp_300ms_ease-out_100ms_both]"
           style={{ color: "#F0D58A" }}
         >
           Wealth Intelligence Score
         </h1>
 
         <p
-          className="text-sm text-center mb-8 animate-[fadeInUp_300ms_ease-out_200ms_both]"
+          className="text-base text-center mb-8 animate-[fadeInUp_300ms_ease-out_200ms_both]"
           style={{ color: "#E8E8E8" }}
         >
           Discover Your Financial Health
