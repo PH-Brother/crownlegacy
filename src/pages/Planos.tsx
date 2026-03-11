@@ -242,7 +242,7 @@ export default function Planos() {
             <CardContent className="space-y-3">
               {RECURSOS_PREMIUM.map((r) => (
                 <div key={r.label} className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-primary flex-shrink-0" />
                   <span className="text-foreground">{r.label}</span>
                 </div>
               ))}
