@@ -366,6 +366,41 @@ export type Database = {
         }
         Relationships: []
       }
+      family_invites: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          familia_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          familia_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          familia_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_invites_familia_id_fkey"
+            columns: ["familia_id"]
+            isOneToOne: false
+            referencedRelation: "familias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_scores: {
         Row: {
           calculated_at: string | null
