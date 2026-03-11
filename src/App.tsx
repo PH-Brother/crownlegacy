@@ -25,6 +25,7 @@ import Assinatura from "./pages/Assinatura";
 import Planos from "./pages/Planos";
 import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
+import Assets from "./pages/Assets";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
