@@ -1,0 +1,86 @@
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { priceId, userId, userEmail, familiaId } = await req.json();
+
+    if (!priceId || typeof priceId !== "string") {
+      return new Response(
+        JSON.stringify({ error: "priceId inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!userId || !userEmail) {
+      return new Response(
+        JSON.stringify({ error: "userId e userEmail são obrigatórios" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      return new Response(
+        JSON.stringify({ error: "STRIPE_SECRET_KEY não configurada" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const appUrl = Deno.env.get("APP_URL") || "https://crownlegacy-app.lovable.app";
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
+    // Check if customer already exists
+    const existingCustomers = await stripe.customers.list({ email: userEmail, limit: 1 });
+    let customerId: string | undefined;
+
+    if (existingCustomers.data.length > 0) {
+      customerId = existingCustomers.data[0].id;
+    }
+
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/planos?sucesso=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/planos?cancelado=true`,
+      metadata: {
+        user_id: userId,
+        familia_id: familiaId || "",
+      },
+      subscription_data: {
+        metadata: { user_id: userId },
+      },
+    };
+
+    if (customerId) {
+      sessionParams.customer = customerId;
+    } else {
+      sessionParams.customer_email = userEmail;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log("Checkout session criada:", session.id, "para user:", userId);
+
+    return new Response(
+      JSON.stringify({ url: session.url, sessionId: session.id }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    console.error("Erro ao criar checkout:", e.message, e.stack);
+    return new Response(
+      JSON.stringify({ error: e.message || "Erro interno ao criar checkout" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
