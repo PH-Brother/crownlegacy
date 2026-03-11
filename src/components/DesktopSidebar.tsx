@@ -1,4 +1,4 @@
-import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut } from "lucide-react";
+import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -12,6 +12,7 @@ const navItems = [
   { path: "/assets", icon: Building2, label: "Ativos" },
   { path: "/nova-transacao", icon: Zap, label: "Lançar" },
   { path: "/ia-conselho", icon: Bot, label: "IA & Análise" },
+  { path: "/insights", icon: Sparkles, label: "Insights" },
   { path: "/metas", icon: Target, label: "Metas" },
   { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },

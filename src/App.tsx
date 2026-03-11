@@ -75,6 +75,7 @@ const App = () => (
               <Route path="/ia-conselho" element={<IAConselho />} />
               <Route path="/metas" element={<Metas />} />
               <Route path="/assets" element={<Assets />} />
+              <Route path="/insights" element={<Insights />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -274,16 +274,50 @@ export default function Dashboard() {
           {/* SECTION 3 — AI Insight */}
           <Card className="card-glass-gold">
             <CardContent className="p-4">
-              {loadingNW ? (
+              {insightsLoading ? (
                 <Skeleton className="h-12 w-full" />
+              ) : firstUnread ? (
+                <div className="space-y-3">
+                  <InsightCard insight={firstUnread} onMarkAsRead={markAsRead} />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs gap-1 border-primary/20"
+                      onClick={generateNewInsights}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Gerar novo
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs text-primary"
+                      onClick={() => navigate("/insights")}
+                    >
+                      Ver todos
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-start gap-3">
                   <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Insight do Dia</p>
-                    <p className="text-sm text-foreground leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-                      {aiInsight || "Analise seus dados para receber insights personalizados da IA."}
+                    <p className="text-sm text-foreground leading-relaxed mb-2" style={{ fontFamily: "Lora, serif" }}>
+                      Gere seu primeiro insight com a IA.
                     </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs gap-1 border-primary/20"
+                      onClick={generateNewInsights}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Gerar insights
+                    </Button>
                   </div>
                 </div>
               )}
