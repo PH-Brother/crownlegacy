@@ -26,6 +26,7 @@ import Planos from "./pages/Planos";
 import IAConselho from "./pages/IAConselho";
 import Metas from "./pages/Metas";
 import Assets from "./pages/Assets";
+import Insights from "./pages/Insights";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
