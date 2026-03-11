@@ -74,21 +74,8 @@ export default function Dashboard() {
     }
   }, [loadingNW, assets, nwTransacoes, snapshots, calculateScore]);
 
-  // Fetch latest AI insight
-  useEffect(() => {
-    if (!user?.id) return;
-    const today = new Date().toISOString().split("T")[0];
-    supabase
-      .from("ai_behavior_insights")
-      .select("insight")
-      .eq("user_id", user.id)
-      .gte("generated_at", today)
-      .order("generated_at", { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data?.[0]) setAiInsight(data[0].insight);
-      });
-  }, [user?.id]);
+  // Insights fetched via useAIInsights hook
+  const firstUnread = insights.find((i) => !i.is_read) || insights[0] || null;
 
   // Cashflow for current month
   const cashflow = (() => {
