@@ -114,7 +114,7 @@ export default function Auth() {
           background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)"
         }} />
 
-      <div className="relative z-10 flex w-full max-w-[360px] flex-col items-center">
+      <div className="relative z-10 flex w-full max-w-[360px] flex-col items-center pt-[180px]">
         {/* Logo */}
         <img
           alt="Crown & Legacy Logo"
@@ -123,21 +123,21 @@ export default function Auth() {
 
         {/* Title */}
         <h1
-          className="font-display text-[30px] sm:text-[36px] lg:text-[44px] font-bold text-center leading-tight tracking-[2px] mb-1.5 animate-[fadeInUp_300ms_ease-out_80ms_both]"
+          className="font-display text-[30px] sm:text-[36px] font-bold text-center leading-tight tracking-[2px] mb-1.5 animate-[fadeInUp_300ms_ease-out_80ms_both] lg:text-4xl text-accent-light"
           style={{ color: "hsl(var(--accent-light))" }}>
           Crown &amp; Legacy
         </h1>
 
         {/* Tagline */}
         <p
-          className="text-[13px] sm:text-sm text-center mb-5 sm:mb-6 lg:mb-[22px] animate-[fadeInUp_300ms_ease-out_160ms_both]"
+          className="text-[13px] sm:text-sm text-center mb-5 sm:mb-6 lg:mb-[22px] animate-[fadeInUp_300ms_ease-out_160ms_both] text-secondary"
           style={{ color: "hsl(var(--foreground) / 0.85)" }}>
           Protect. Grow. Wealth.
         </p>
 
         {/* Subtitle */}
         <p
-          className="text-[10px] sm:text-xs font-medium uppercase tracking-[3px] text-center mb-5 sm:mb-6 lg:mb-[22px] animate-[fadeInUp_300ms_ease-out_160ms_both]"
+          className="text-[10px] sm:text-xs font-medium uppercase tracking-[3px] text-center mb-5 sm:mb-6 lg:mb-[22px] animate-[fadeInUp_300ms_ease-out_160ms_both] text-secondary"
           style={{ color: "hsl(var(--foreground) / 0.6)" }}>
           WEALTH INTELLIGENCE PLATFORM
         </p>
@@ -168,7 +168,7 @@ export default function Auth() {
             <button
               type="button"
               onClick={() => setIsLogin(false)}
-              className="flex-1 pb-2.5 text-[13px] font-medium transition-all duration-200 border-b-2"
+              className="flex-1 pb-2.5 text-[13px] font-medium transition-all duration-200 border-b-2 text-secondary"
               style={{
                 color: !isLogin ? "hsl(var(--accent-light))" : "hsl(var(--muted-foreground))",
                 borderColor: !isLogin ? "hsl(var(--accent-light))" : "transparent",
@@ -182,7 +182,7 @@ export default function Auth() {
           {isLogin &&
           <form onSubmit={handleLogin} className="space-y-3">
               <div className="space-y-1.5">
-                <label htmlFor="login-email" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                <label htmlFor="login-email" className="text-xs font-medium text-secondary" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
                   Email
                 </label>
                 <input
@@ -200,7 +200,7 @@ export default function Auth() {
                 }} />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="login-senha" className="text-xs font-medium" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+                <label htmlFor="login-senha" className="text-xs font-medium text-secondary" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
                   Senha
                 </label>
                 <div className="relative">
