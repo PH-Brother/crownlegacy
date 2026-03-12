@@ -147,7 +147,7 @@ export default function Planos() {
           <CardHeader className="pb-3 pt-6">
             <CardTitle className="text-base">Premium Mensal</CardTitle>
             <p className="text-2xl font-bold text-foreground font-mono">US 9,90/mês
-              <span className="text-sm font-normal text-muted-foreground">/mês</span>
+              <span className="text-sm font-normal text-muted-foreground"></span>
             </p>
             <p className="text-xs text-muted-foreground">Sem compromisso, cancele a qualquer momento</p>
           </CardHeader>
@@ -172,7 +172,7 @@ export default function Planos() {
               <Badge className="bg-primary text-primary-foreground text-xs">Economize 33%</Badge>
             </div>
             <p className="text-2xl font-bold text-foreground font-mono">US 99,90/ano
-              <span className="text-sm font-normal text-muted-foreground">/ano</span>
+              <span className="text-sm font-normal text-muted-foreground"></span>
             </p>
             <p className="text-xs text-muted-foreground">equivale a R$ 8,33/mês</p>
           </CardHeader>
