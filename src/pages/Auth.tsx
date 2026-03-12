@@ -102,7 +102,7 @@ export default function Auth() {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center overflow-hidden px-4 sm:px-5 lg:px-6"
+      className="fixed inset-0 flex items-center justify-start sm:justify-center overflow-y-auto px-4 sm:px-5 lg:px-6 py-8"
       style={{
         background: "linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--primary-dark)) 100%)"
       }}>
