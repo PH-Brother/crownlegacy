@@ -1,4 +1,4 @@
-import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText } from "lucide-react";
+import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText, TrendingUp, MessageCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
