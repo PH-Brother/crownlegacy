@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useRedirectToCheckout } from "@/hooks/useRedirectToCheckout";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
