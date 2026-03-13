@@ -114,7 +114,7 @@ export default function Auth() {
           background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)"
         }} />
 
-      <div className="relative z-10 flex w-full max-w-[360px] flex-col items-center pt-[180px]">
+      <div className="relative z-10 flex w-full max-w-[360px] flex-col items-center pt-[145px]">
         {/* Logo */}
         <img
           alt="Crown & Legacy Logo"
