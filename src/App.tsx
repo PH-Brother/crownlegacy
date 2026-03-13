@@ -97,6 +97,9 @@ const App = () => (
               <Route path="/financial-insights" element={<FinancialInsights />} />
               <Route path="/copilot" element={<CopilotPage />} />
               <Route path="/projection" element={<ProjectionPage />} />
+              <Route path="/challenges" element={<Challenges />} />
+              <Route path="/share" element={<Share />} />
+              <Route path="/family-network" element={<FamilyNetwork />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
