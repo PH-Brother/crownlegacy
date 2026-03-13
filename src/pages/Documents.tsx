@@ -190,9 +190,9 @@ export default function Documents() {
   const StatusIcon = ({ status }: { status: string | null }) => {
     switch (status) {
       case "completed":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-success" />;
       case "processing":
-        return <Clock className="h-4 w-4 text-amber-500 animate-pulse" />;
+        return <Clock className="h-4 w-4 text-primary animate-pulse" />;
       case "failed":
         return <AlertCircle className="h-4 w-4 text-destructive" />;
       default:
