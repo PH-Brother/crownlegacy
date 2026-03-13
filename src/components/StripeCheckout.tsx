@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useRedirectToCheckout } from "@/hooks/useRedirectToCheckout";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -13,6 +14,7 @@ interface StripeCheckoutProps {
 export default function StripeCheckout({ priceId, planType }: StripeCheckoutProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const { redirectToCheckout } = useRedirectToCheckout();
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
@@ -53,7 +55,7 @@ export default function StripeCheckout({ priceId, planType }: StripeCheckoutProp
       if (data?.error) throw new Error(data.error);
 
       if (data?.url && typeof data.url === "string") {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       } else {
         throw new Error("Plano não encontrado");
       }

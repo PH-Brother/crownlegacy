@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useProfile } from "./useProfile";
 import { useToast } from "./use-toast";
+import { useRedirectToCheckout } from "./useRedirectToCheckout";
 
 interface Assinatura {
   id: string;
@@ -22,6 +23,7 @@ export function useAssinatura() {
   const { user } = useAuth();
   const { familia } = useProfile();
   const { toast } = useToast();
+  const { redirectToCheckout } = useRedirectToCheckout();
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function useAssinatura() {
         if (invokeError) throw new Error(invokeError.message);
         if (data?.error) throw new Error(data.error);
         if (data?.url) {
-          window.location.href = data.url;
+          redirectToCheckout(data.url);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Erro ao iniciar checkout";
@@ -92,7 +94,7 @@ export function useAssinatura() {
         setCheckoutLoading(false);
       }
     },
-    [user, familia, toast]
+    [user, familia, toast, redirectToCheckout]
   );
 
   const abrirPortalCliente = useCallback(async () => {
@@ -111,7 +113,7 @@ export function useAssinatura() {
       if (invokeError) throw new Error(invokeError.message);
       if (data?.error) throw new Error(data.error);
       if (data?.url) {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao abrir portal";
@@ -119,7 +121,7 @@ export function useAssinatura() {
     } finally {
       setPortalLoading(false);
     }
-  }, [assinatura, toast]);
+  }, [assinatura, toast, redirectToCheckout]);
 
   return {
     assinatura,
