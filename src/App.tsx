@@ -32,6 +32,8 @@ import Goals from "./pages/Goals";
 import FamilyWealth from "./pages/FamilyWealth";
 import ResetPassword from "./pages/ResetPassword";
 import WealthScore from "./pages/WealthScore";
+import DocumentsPage from "./pages/Documents";
+import ExtractedTransactions from "./pages/ExtractedTransactions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -84,6 +86,8 @@ const App = () => (
               <Route path="/insights" element={<Insights />} />
               <Route path="/goals" element={<Goals />} />
               <Route path="/family-wealth" element={<FamilyWealth />} />
+              <Route path="/documents" element={<DocumentsPage />} />
+              <Route path="/extracted-transactions" element={<ExtractedTransactions />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

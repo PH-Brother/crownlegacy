@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.portal-cliente]
 verify_jwt = false
+
+[functions.pdf-parser]
+verify_jwt = false

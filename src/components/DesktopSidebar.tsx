@@ -1,4 +1,4 @@
-import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users } from "lucide-react";
+import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -15,6 +15,7 @@ const navItems = [
   { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
   { path: "/goals", icon: Target, label: "Metas Patrimônio" },
   { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
+  { path: "/documents", icon: FileText, label: "Documentos" },
   { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
