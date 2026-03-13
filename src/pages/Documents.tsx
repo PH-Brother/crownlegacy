@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 5 * 1024 * 1024;
 const RATE_LIMIT_KEY = "cl_upload_timestamps";
 const MAX_UPLOADS_PER_HOUR = 5;
 
@@ -103,7 +103,7 @@ export default function Documents() {
       return;
     }
     if (file.size > MAX_SIZE) {
-      toast({ title: "Arquivo muito grande", description: "Máximo 10MB", variant: "destructive" });
+      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
       return;
     }
     if (!checkRateLimit()) {
@@ -244,7 +244,7 @@ export default function Documents() {
                 <div className="flex flex-col items-center gap-3">
                   <Upload className="h-10 w-10 text-primary/60" />
                   <p className="text-sm text-foreground font-medium">Arraste um PDF aqui ou clique para selecionar</p>
-                  <p className="text-xs text-muted-foreground">PDF, máx 10MB</p>
+                  <p className="text-xs text-muted-foreground">PDF, máx 5MB</p>
                 </div>
               )}
             </div>

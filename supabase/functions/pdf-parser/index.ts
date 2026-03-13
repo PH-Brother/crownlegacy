@@ -7,6 +7,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Convert Uint8Array to base64 in chunks to avoid stack overflow
+function uint8ToBase64(bytes: Uint8Array): string {
+  const CHUNK = 8192;
+  let result = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    const chunk = bytes.subarray(i, i + CHUNK);
+    result += String.fromCharCode(...chunk);
+  }
+  return btoa(result);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -27,15 +38,14 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     const { fileId, storagePath, fileName } = await req.json();
     if (!fileId || !storagePath) {
@@ -45,7 +55,6 @@ serve(async (req) => {
       });
     }
 
-    // Update file status to processing
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -70,8 +79,22 @@ serve(async (req) => {
     // Download the PDF
     const pdfResponse = await fetch(urlData.signedUrl);
     if (!pdfResponse.ok) throw new Error("Failed to download PDF");
-    const pdfBytes = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+    const pdfBytes = new Uint8Array(await pdfResponse.arrayBuffer());
+
+    // Check size (5MB limit)
+    if (pdfBytes.length > 5 * 1024 * 1024) {
+      await adminClient.from("uploaded_files").update({
+        status: "failed",
+        error_message: "Documento muito grande. Máximo 5MB.",
+        updated_at: new Date().toISOString(),
+      }).eq("id", fileId);
+      return new Response(JSON.stringify({ error: "Documento muito grande. Máximo 5MB." }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const pdfBase64 = uint8ToBase64(pdfBytes);
 
     // Call Gemini API
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -95,12 +118,6 @@ Rules:
 - Convert all amounts to positive numbers
 - If a date has only DD/MM, infer the year from the document context
 - Clean merchant names (remove extra codes, normalize capitalization)
-
-Example output:
-[
-  {"date": "2024-01-15", "merchant": "Supermercado Extra", "amount": 156.78, "category": "Food", "description": "Compra supermercado"},
-  {"date": "2024-01-16", "merchant": "Uber", "amount": 23.50, "category": "Transport", "description": ""}
-]
 
 Return ONLY the JSON array, no markdown, no explanation.`;
 
@@ -137,7 +154,7 @@ Return ONLY the JSON array, no markdown, no explanation.`;
     const geminiData = await geminiResponse.json();
     const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Extract JSON from response
+    // Extract JSON from response using string methods (no regex literals)
     let transactions: Array<{
       date: string;
       merchant: string;
@@ -147,7 +164,6 @@ Return ONLY the JSON array, no markdown, no explanation.`;
     }> = [];
 
     try {
-      // Try to find JSON array in the text
       let jsonStr = rawText.trim();
       const startIdx = jsonStr.indexOf("[");
       const endIdx = jsonStr.lastIndexOf("]");
@@ -203,7 +219,6 @@ Return ONLY the JSON array, no markdown, no explanation.`;
       throw new Error("Failed to insert transactions");
     }
 
-    // Update file status
     await adminClient.from("uploaded_files").update({
       status: "completed",
       transactions_count: rows.length,
