@@ -14,6 +14,7 @@ interface StripeCheckoutProps {
 export default function StripeCheckout({ priceId, planType }: StripeCheckoutProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const { redirectToCheckout } = useRedirectToCheckout();
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
