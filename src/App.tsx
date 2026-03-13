@@ -34,6 +34,9 @@ import ResetPassword from "./pages/ResetPassword";
 import WealthScore from "./pages/WealthScore";
 import DocumentsPage from "./pages/Documents";
 import ExtractedTransactions from "./pages/ExtractedTransactions";
+import FinancialInsights from "./pages/FinancialInsights";
+import CopilotPage from "./pages/Copilot";
+import ProjectionPage from "./pages/Projection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
