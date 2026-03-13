@@ -1,4 +1,4 @@
-import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText } from "lucide-react";
+import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText, TrendingUp, MessageCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -13,6 +13,9 @@ const navItems = [
   { path: "/nova-transacao", icon: Zap, label: "Lançar" },
   { path: "/ia-conselho", icon: Bot, label: "Dicas de Sabedoria" },
   { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
+  { path: "/financial-insights", icon: TrendingUp, label: "Análise IA" },
+  { path: "/copilot", icon: MessageCircle, label: "Copilot IA" },
+  { path: "/projection", icon: TrendingUp, label: "Projeção" },
   { path: "/goals", icon: Target, label: "Metas Patrimônio" },
   { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
   { path: "/documents", icon: FileText, label: "Documentos" },
