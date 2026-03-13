@@ -23,6 +23,7 @@ export function useAssinatura() {
   const { user } = useAuth();
   const { familia } = useProfile();
   const { toast } = useToast();
+  const { redirectToCheckout } = useRedirectToCheckout();
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
