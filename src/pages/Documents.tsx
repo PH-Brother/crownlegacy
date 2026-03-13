@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 5 * 1024 * 1024;
 const RATE_LIMIT_KEY = "cl_upload_timestamps";
 const MAX_UPLOADS_PER_HOUR = 5;
 
