@@ -6,6 +6,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const DEFAULT_APP_URL = "https://crownlegacy-app.lovable.app";
+
+function normalizeAppUrl(rawUrl: string | undefined) {
+  const trimmed = (rawUrl ?? "").trim();
+  if (!trimmed) return DEFAULT_APP_URL;
+
+  const hasScheme =
+    trimmed.startsWith("https://") || trimmed.startsWith("http://");
+  const absolute = hasScheme ? trimmed : `https://${trimmed}`;
+
+  return absolute.endsWith("/") ? absolute.slice(0, -1) : absolute;
+}
+
+function buildCheckoutRedirectUrl(baseUrl: string, path: string) {
+  return new URL(path, `${baseUrl}/`).toString();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,7 +53,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    const appUrl = Deno.env.get("APP_URL") || "https://crownlegacy-app.lovable.app";
+    const appUrl = normalizeAppUrl(
+      Deno.env.get("APP_URL") || Deno.env.get("FRONTEND_URL")
+    );
+
+    let successUrl: string;
+    let cancelUrl: string;
+
+    try {
+      successUrl = buildCheckoutRedirectUrl(
+        appUrl,
+        "/planos?sucesso=true&session_id={CHECKOUT_SESSION_ID}"
+      );
+      cancelUrl = buildCheckoutRedirectUrl(appUrl, "/planos?cancelado=true");
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "APP_URL inválida. Use URL absoluta com https://" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     // Check if customer already exists
@@ -51,8 +87,8 @@ Deno.serve(async (req) => {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/planos?sucesso=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/planos?cancelado=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         user_id: userId,
         familia_id: familiaId || "",
