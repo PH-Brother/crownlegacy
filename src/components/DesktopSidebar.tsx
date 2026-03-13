@@ -15,6 +15,7 @@ const navItems = [
   { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
   { path: "/goals", icon: Target, label: "Metas Patrimônio" },
   { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
+  { path: "/documents", icon: FileText, label: "Documentos" },
   { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
