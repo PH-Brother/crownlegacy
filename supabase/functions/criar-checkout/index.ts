@@ -53,7 +53,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    const appUrl = Deno.env.get("APP_URL") || "https://crownlegacy-app.lovable.app";
+    const appUrl = normalizeAppUrl(
+      Deno.env.get("APP_URL") || Deno.env.get("FRONTEND_URL")
+    );
+
+    let successUrl: string;
+    let cancelUrl: string;
+
+    try {
+      successUrl = buildCheckoutRedirectUrl(
+        appUrl,
+        "/planos?sucesso=true&session_id={CHECKOUT_SESSION_ID}"
+      );
+      cancelUrl = buildCheckoutRedirectUrl(appUrl, "/planos?cancelado=true");
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "APP_URL inválida. Use URL absoluta com https://" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     // Check if customer already exists
@@ -68,8 +87,8 @@ Deno.serve(async (req) => {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/planos?sucesso=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/planos?cancelado=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         user_id: userId,
         familia_id: familiaId || "",
