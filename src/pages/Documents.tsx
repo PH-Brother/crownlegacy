@@ -103,7 +103,7 @@ export default function Documents() {
       return;
     }
     if (file.size > MAX_SIZE) {
-      toast({ title: "Arquivo muito grande", description: "Máximo 10MB", variant: "destructive" });
+      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
       return;
     }
     if (!checkRateLimit()) {
