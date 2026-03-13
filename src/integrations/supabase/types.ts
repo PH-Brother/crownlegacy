@@ -633,6 +633,8 @@ export type Database = {
           nome_completo: string
           pontos_total: number | null
           role: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
           telefone: string | null
           tema_preferido: string | null
           updated_at: string | null
@@ -648,6 +650,8 @@ export type Database = {
           nome_completo: string
           pontos_total?: number | null
           role?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           telefone?: string | null
           tema_preferido?: string | null
           updated_at?: string | null
@@ -663,6 +667,8 @@ export type Database = {
           nome_completo?: string
           pontos_total?: number | null
           role?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           telefone?: string | null
           tema_preferido?: string | null
           updated_at?: string | null
@@ -859,6 +865,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string | null
+          description: string | null
+          file_id: string | null
+          id: string
+          merchant: string
+          source: string | null
+          transaction_date: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_id?: string | null
+          id?: string
+          merchant: string
+          source?: string | null
+          transaction_date: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_id?: string | null
+          id?: string
+          merchant?: string
+          source?: string | null
+          transaction_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "uploaded_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uploaded_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       wealth_goals: {
         Row: {
