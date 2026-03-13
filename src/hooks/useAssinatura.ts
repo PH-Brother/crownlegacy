@@ -85,7 +85,7 @@ export function useAssinatura() {
         if (invokeError) throw new Error(invokeError.message);
         if (data?.error) throw new Error(data.error);
         if (data?.url) {
-          window.location.href = data.url;
+          redirectToCheckout(data.url);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Erro ao iniciar checkout";
@@ -94,7 +94,7 @@ export function useAssinatura() {
         setCheckoutLoading(false);
       }
     },
-    [user, familia, toast]
+    [user, familia, toast, redirectToCheckout]
   );
 
   const abrirPortalCliente = useCallback(async () => {
