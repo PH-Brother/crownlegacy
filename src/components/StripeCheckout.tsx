@@ -55,7 +55,7 @@ export default function StripeCheckout({ priceId, planType }: StripeCheckoutProp
       if (data?.error) throw new Error(data.error);
 
       if (data?.url && typeof data.url === "string") {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       } else {
         throw new Error("Plano não encontrado");
       }

@@ -113,7 +113,7 @@ export function useAssinatura() {
       if (invokeError) throw new Error(invokeError.message);
       if (data?.error) throw new Error(data.error);
       if (data?.url) {
-        window.location.href = data.url;
+        redirectToCheckout(data.url);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao abrir portal";
@@ -121,7 +121,7 @@ export function useAssinatura() {
     } finally {
       setPortalLoading(false);
     }
-  }, [assinatura, toast]);
+  }, [assinatura, toast, redirectToCheckout]);
 
   return {
     assinatura,
