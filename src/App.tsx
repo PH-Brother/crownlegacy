@@ -37,6 +37,9 @@ import ExtractedTransactions from "./pages/ExtractedTransactions";
 import FinancialInsights from "./pages/FinancialInsights";
 import CopilotPage from "./pages/Copilot";
 import ProjectionPage from "./pages/Projection";
+import Challenges from "./pages/Challenges";
+import Share from "./pages/Share";
+import FamilyNetwork from "./pages/FamilyNetwork";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +97,9 @@ const App = () => (
               <Route path="/financial-insights" element={<FinancialInsights />} />
               <Route path="/copilot" element={<CopilotPage />} />
               <Route path="/projection" element={<ProjectionPage />} />
+              <Route path="/challenges" element={<Challenges />} />
+              <Route path="/share" element={<Share />} />
+              <Route path="/family-network" element={<FamilyNetwork />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

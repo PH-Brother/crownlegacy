@@ -247,6 +247,44 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_rewards: {
+        Row: {
+          badge_name: string | null
+          challenge_id: string
+          earned_at: string | null
+          id: string
+          points: number | null
+          reward_type: string
+          user_id: string
+        }
+        Insert: {
+          badge_name?: string | null
+          challenge_id: string
+          earned_at?: string | null
+          id?: string
+          points?: number | null
+          reward_type?: string
+          user_id: string
+        }
+        Update: {
+          badge_name?: string | null
+          challenge_id?: string
+          earned_at?: string | null
+          id?: string
+          points?: number | null
+          reward_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_rewards_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "wisdom_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -794,6 +832,33 @@ export type Database = {
           },
         ]
       }
+      referral_links: {
+        Row: {
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referrer_id: string
+        }
+        Insert: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referrer_id: string
+        }
+        Update: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
       reflexoes_diarias: {
         Row: {
           aplicacao_pratica: string | null
@@ -826,6 +891,74 @@ export type Database = {
           versiculo?: string
         }
         Relationships: []
+      }
+      share_events: {
+        Row: {
+          click_count: number | null
+          id: string
+          platform: string
+          share_type: string
+          shared_at: string | null
+          user_id: string
+        }
+        Insert: {
+          click_count?: number | null
+          id?: string
+          platform: string
+          share_type: string
+          shared_at?: string | null
+          user_id: string
+        }
+        Update: {
+          click_count?: number | null
+          id?: string
+          platform?: string
+          share_type?: string
+          shared_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shared_goals: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_amount: number | null
+          deadline: string | null
+          familia_id: string
+          goal_name: string
+          id: string
+          target_amount: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_amount?: number | null
+          deadline?: string | null
+          familia_id: string
+          goal_name: string
+          id?: string
+          target_amount: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_amount?: number | null
+          deadline?: string | null
+          familia_id?: string
+          goal_name?: string
+          id?: string
+          target_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_goals_familia_id_fkey"
+            columns: ["familia_id"]
+            isOneToOne: false
+            referencedRelation: "familias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -1103,6 +1236,48 @@ export type Database = {
           net_worth_initial?: number
           projection_years?: number
           scenarios?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wisdom_challenges: {
+        Row: {
+          actual_amount: number | null
+          category: string | null
+          challenge_type: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+          streak_count: number | null
+          target_amount: number | null
+          user_id: string
+        }
+        Insert: {
+          actual_amount?: number | null
+          category?: string | null
+          challenge_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          streak_count?: number | null
+          target_amount?: number | null
+          user_id: string
+        }
+        Update: {
+          actual_amount?: number | null
+          category?: string | null
+          challenge_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          streak_count?: number | null
+          target_amount?: number | null
           user_id?: string
         }
         Relationships: []

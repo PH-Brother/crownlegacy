@@ -1,4 +1,4 @@
-import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText, TrendingUp, MessageCircle } from "lucide-react";
+import { Home, Building2, Zap, Bot, Target, Crown, User, LogOut, Sparkles, Users, FileText, TrendingUp, MessageCircle, Flame, Share2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -17,7 +17,10 @@ const navItems = [
   { path: "/copilot", icon: MessageCircle, label: "Copilot IA" },
   { path: "/projection", icon: TrendingUp, label: "Projeção" },
   { path: "/goals", icon: Target, label: "Metas Patrimônio" },
+  { path: "/challenges", icon: Flame, label: "Desafios" },
   { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
+  { path: "/family-network", icon: Users, label: "Rede Familiar" },
+  { path: "/share", icon: Share2, label: "Compartilhar" },
   { path: "/documents", icon: FileText, label: "Documentos" },
   { path: "/planos", icon: Crown, label: "Planos" },
   { path: "/perfil", icon: User, label: "Perfil" },
