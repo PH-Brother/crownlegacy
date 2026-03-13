@@ -247,6 +247,30 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documentos: {
         Row: {
           analise_resultado: string | null
@@ -400,6 +424,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      financial_insights: {
+        Row: {
+          alerts: Json | null
+          created_at: string | null
+          expires_at: string | null
+          generated_at: string | null
+          health_message: string | null
+          health_score: number | null
+          id: string
+          patterns: Json | null
+          recommendations: Json | null
+          user_id: string
+        }
+        Insert: {
+          alerts?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          health_message?: string | null
+          health_score?: number | null
+          id?: string
+          patterns?: Json | null
+          recommendations?: Json | null
+          user_id: string
+        }
+        Update: {
+          alerts?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          health_message?: string | null
+          health_score?: number | null
+          id?: string
+          patterns?: Json | null
+          recommendations?: Json | null
+          user_id?: string
+        }
+        Relationships: []
       }
       financial_scores: {
         Row: {
@@ -1010,6 +1073,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wealth_projections: {
+        Row: {
+          annual_return: number
+          created_at: string | null
+          id: string
+          monthly_savings: number
+          net_worth_initial: number
+          projection_years: number
+          scenarios: Json | null
+          user_id: string
+        }
+        Insert: {
+          annual_return: number
+          created_at?: string | null
+          id?: string
+          monthly_savings: number
+          net_worth_initial: number
+          projection_years: number
+          scenarios?: Json | null
+          user_id: string
+        }
+        Update: {
+          annual_return?: number
+          created_at?: string | null
+          id?: string
+          monthly_savings?: number
+          net_worth_initial?: number
+          projection_years?: number
+          scenarios?: Json | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
