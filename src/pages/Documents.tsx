@@ -244,7 +244,7 @@ export default function Documents() {
                 <div className="flex flex-col items-center gap-3">
                   <Upload className="h-10 w-10 text-primary/60" />
                   <p className="text-sm text-foreground font-medium">Arraste um PDF aqui ou clique para selecionar</p>
-                  <p className="text-xs text-muted-foreground">PDF, máx 10MB</p>
+                  <p className="text-xs text-muted-foreground">PDF, máx 5MB</p>
                 </div>
               )}
             </div>
