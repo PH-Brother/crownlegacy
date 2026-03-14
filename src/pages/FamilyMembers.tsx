@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAppUrl } from "@/hooks/useAppUrl";
 import { Copy, Share2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
