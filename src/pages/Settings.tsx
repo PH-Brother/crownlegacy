@@ -16,7 +16,7 @@ export default function Settings() {
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("lk_notif", String(notificacoes));
+    localStorage.setItem("cl_notif", String(notificacoes));
   }, [notificacoes]);
 
   useEffect(() => {
