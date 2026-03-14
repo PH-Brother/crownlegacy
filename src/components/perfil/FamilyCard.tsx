@@ -32,7 +32,7 @@ export default function FamilyCard({ nome, plano, dataFimTrial, codigoConvite }:
   const compartilhar = () => {
     if (!codigoConvite) return;
     const msg =
-      `🛡️ Junte-se à minha família no Legacy Kingdom!\n\n` +
+      `👑 Junte-se à minha família no Crown & Legacy!\n\n` +
       `Use o código: *${codigoConvite}*\n\n` +
       `Acesse: ${window.location.origin}\n\n` +
       `Gerencie suas finanças com sabedoria bíblica! 📖`;
