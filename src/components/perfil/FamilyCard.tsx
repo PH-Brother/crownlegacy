@@ -25,7 +25,7 @@ export default function FamilyCard({ nome, plano, dataFimTrial, codigoConvite }:
 
   const copiarCodigo = () => {
     if (!codigoConvite) return;
-    const url = `${window.location.origin}/join-family?code=${codigoConvite}`;
+    const url = `${getAppUrl()}/join-family?code=${codigoConvite}`;
     navigator.clipboard.writeText(url);
     toast({ title: "📋 Link copiado!" });
   };
