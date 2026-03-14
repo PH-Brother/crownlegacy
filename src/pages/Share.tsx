@@ -60,7 +60,7 @@ export default function Share() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const baseUrl = window.location.origin;
+  const { baseUrl } = useAppUrl();
   const referralUrl = referral ? `${baseUrl}/wealth-score?ref=${referral.referral_code}` : "";
 
   const trackShare = async (shareType: string, platform: string) => {

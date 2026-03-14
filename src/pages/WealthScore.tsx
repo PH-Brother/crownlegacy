@@ -74,7 +74,7 @@ function getExplanation(score: number) {
   return "You're just starting your wealth journey. Focus on building emergency savings and understanding basic investments.";
 }
 
-const SHARE_URL = () => window.location.origin + "/wealth-score";
+const SHARE_URL = () => (import.meta.env.VITE_APP_URL || window.location.origin) + "/wealth-score";
 
 /* ─── Component ─── */
 export default function WealthScore() {
