@@ -311,6 +311,20 @@ export default function IAConselho() {
       const { error } = await supabase.from("transacoes").insert(transacoesParaInserir);
       if (error) throw new Error("Erro ao lançar: " + error.message);
 
+      // Registra o documento em uploaded_files para aparecer na página Documentos
+      try {
+        await supabase.from("uploaded_files").insert({
+          user_id: session.user.id,
+          file_name: `Análise IA — ${new Date().toLocaleDateString("pt-BR")}`,
+          file_size: null,
+          file_url: null,
+          status: "completed",
+          transactions_count: transacoesParaInserir.length,
+        });
+      } catch {
+        // Silencioso — não bloqueia o fluxo principal
+      }
+
       await supabase.rpc("add_gamification_points", {
         p_pontos: 20,
         p_tipo_evento: "upload_documento",
