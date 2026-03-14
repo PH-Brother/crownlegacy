@@ -66,7 +66,19 @@ export default function Insights() {
       </Tabs>
 
       {loading ? (
-        <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl p-4 space-y-2"
+              style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+            >
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
         <Card className="card-premium">
           <CardContent className="p-8 text-center">

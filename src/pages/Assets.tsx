@@ -155,6 +155,18 @@ export default function Assets() {
 
   const filteredAssets = activeTab === "Todos" ? assets : assets.filter((a) => a.category === activeTab);
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[600px] px-4 py-4 space-y-4">
+        <Skeleton className="h-8 w-48 rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[600px] px-4 py-4 space-y-4">
       {/* Header */}
