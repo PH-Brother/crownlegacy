@@ -160,7 +160,7 @@ export function useNetWorth() {
 
   const totalAssets = calculateTotalAssets(assets);
   const latestSnapshot = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
-  const netWorth = latestSnapshot?.net_worth ?? totalAssets;
+  const netWorth = totalAssets;
 
   return {
     assets,
