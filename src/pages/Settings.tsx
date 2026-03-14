@@ -12,7 +12,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [notificacoes, setNotificacoes] = useState(() => localStorage.getItem("lk_notif") !== "false");
+  const [notificacoes, setNotificacoes] = useState(() => localStorage.getItem("cl_notif") !== "false");
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
