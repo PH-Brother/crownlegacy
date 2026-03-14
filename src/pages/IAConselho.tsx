@@ -728,6 +728,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
               </button>
             </div>
 
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg card-glass">
                 <p className="text-[10px] text-muted-foreground">Entradas</p>
                 <p className="text-sm font-bold text-success">{formatarMoeda(totais.receitas)}</p>
