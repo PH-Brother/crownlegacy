@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { getAppUrl } from "@/hooks/useAppUrl";
 
 interface FamilyCardProps {
   nome: string;
@@ -24,7 +25,7 @@ export default function FamilyCard({ nome, plano, dataFimTrial, codigoConvite }:
 
   const copiarCodigo = () => {
     if (!codigoConvite) return;
-    const url = `${window.location.origin}/join-family?code=${codigoConvite}`;
+    const url = `${getAppUrl()}/join-family?code=${codigoConvite}`;
     navigator.clipboard.writeText(url);
     toast({ title: "📋 Link copiado!" });
   };
@@ -34,11 +35,11 @@ export default function FamilyCard({ nome, plano, dataFimTrial, codigoConvite }:
     const msg =
       `👑 Junte-se à minha família no Crown & Legacy!\n\n` +
       `Use o código: *${codigoConvite}*\n\n` +
-      `Acesse: ${window.location.origin}\n\n` +
+      `Acesse: ${getAppUrl()}\n\n` +
       `Gerencie suas finanças com sabedoria bíblica! 📖`;
 
     if (navigator.share) {
-      navigator.share({ title: "Crown & Legacy - Convite", text: msg, url: window.location.origin });
+      navigator.share({ title: "Crown & Legacy - Convite", text: msg, url: getAppUrl() });
     } else {
       navigator.clipboard.writeText(msg);
       toast({ title: "📋 Convite copiado!" });

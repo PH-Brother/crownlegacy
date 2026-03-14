@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAppUrl } from "@/hooks/useAppUrl";
 import { Copy, Share2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,7 @@ export default function FamilyMembers() {
 
   const compartilharWhatsApp = () => {
     if (familia?.codigo_convite) {
-      const msg = encodeURIComponent(`Junte-se à nossa família no Crown & Legacy! 👑\nCódigo: ${familia.codigo_convite}\n${window.location.origin}/join-family`);
+      const msg = encodeURIComponent(`Junte-se à nossa família no Crown & Legacy! 👑\nCódigo: ${familia.codigo_convite}\n${getAppUrl()}/join-family`);
       window.open(`https://wa.me/?text=${msg}`, "_blank");
     }
   };

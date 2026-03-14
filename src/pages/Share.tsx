@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
+import { useAppUrl } from "@/hooks/useAppUrl";
 
 interface ShareEvent {
   id: string;
@@ -59,7 +60,7 @@ export default function Share() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const baseUrl = window.location.origin;
+  const { baseUrl } = useAppUrl();
   const referralUrl = referral ? `${baseUrl}/wealth-score?ref=${referral.referral_code}` : "";
 
   const trackShare = async (shareType: string, platform: string) => {
