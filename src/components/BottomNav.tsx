@@ -1,4 +1,4 @@
-import { Home, Building2, Zap, Sparkles, Target, Users, User } from "lucide-react";
+import { Home, Building2, Zap, Sparkles, LayoutGrid } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -6,10 +6,14 @@ const items = [
   { path: "/dashboard", icon: Home, label: "Início" },
   { path: "/assets", icon: Building2, label: "Ativos" },
   { path: "/nova-transacao", icon: Zap, label: "Lançar" },
-  { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
-  { path: "/goals", icon: Target, label: "Metas" },
-  { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
-  { path: "/perfil", icon: User, label: "Perfil" },
+  { path: "/insights", icon: Sparkles, label: "IA", badgeKey: "insights" as const },
+  { path: "/mais", icon: LayoutGrid, label: "Mais", badgeKey: "invites" as const },
+];
+
+const MAIS_ROUTES = [
+  "/goals", "/projection", "/challenges", "/family-wealth",
+  "/family-network", "/share", "/documents", "/planos",
+  "/perfil", "/configuracoes",
 ];
 
 export default function BottomNav() {
@@ -23,10 +27,16 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-sidebar border-t border-sidebar-border" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 sm:hidden border-t border-sidebar-border"
+      style={{
+        background: "hsl(var(--sidebar-background))",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
       <div className="mx-auto flex max-w-[430px] items-center justify-around py-1">
         {items.map(({ path, icon: Icon, label, badgeKey }) => {
-          const active = pathname === path;
+          const active = pathname === path || (path === "/mais" && MAIS_ROUTES.includes(pathname));
           const badge = getBadge(badgeKey);
           return (
             <Link

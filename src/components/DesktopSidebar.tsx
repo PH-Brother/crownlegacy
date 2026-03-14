@@ -7,24 +7,42 @@ import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const navItems = [
-  { path: "/dashboard", icon: Home, label: "Início" },
-  { path: "/assets", icon: Building2, label: "Ativos" },
-  { path: "/nova-transacao", icon: Zap, label: "Lançar" },
-  { path: "/ia-conselho", icon: Bot, label: "Dicas de Sabedoria" },
-  { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
-  { path: "/financial-insights", icon: TrendingUp, label: "Análise IA" },
-  { path: "/copilot", icon: MessageCircle, label: "Copilot IA" },
-  { path: "/projection", icon: TrendingUp, label: "Projeção" },
-  { path: "/goals", icon: Target, label: "Metas Patrimônio" },
-  { path: "/challenges", icon: Flame, label: "Desafios" },
-  { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
-  { path: "/family-network", icon: Users, label: "Rede Familiar" },
-  { path: "/share", icon: Share2, label: "Compartilhar" },
-  { path: "/documents", icon: FileText, label: "Documentos" },
-  { path: "/planos", icon: Crown, label: "Planos" },
-  { path: "/perfil", icon: User, label: "Perfil" },
-];
+function NavSeparator({ label }: { label: string }) {
+  return (
+    <div className="px-4 pt-4 pb-1">
+      <span className="text-[9px] font-semibold tracking-widest text-sidebar-foreground/30 uppercase">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function NavItem({ path, Icon, label, active, badge }: {
+  path: string;
+  Icon: React.ElementType;
+  label: string;
+  active: boolean;
+  badge: number;
+}) {
+  return (
+    <Link
+      to={path}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
+        active
+          ? "bg-sidebar-accent text-sidebar-primary border-l-[3px] border-sidebar-primary"
+          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground border-l-[3px] border-transparent"
+      }`}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      <span className="truncate">{label}</span>
+      {badge > 0 && (
+        <span className="ml-auto h-5 min-w-[20px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+          {badge}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export default function DesktopSidebar() {
   const { pathname } = useLocation();
@@ -73,30 +91,52 @@ export default function DesktopSidebar() {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 flex flex-col gap-0.5 px-3 py-4 overflow-y-auto">
-        {navItems.map(({ path, icon: Icon, label, badgeKey }) => {
-          const active = pathname === path;
-          const badge = getBadge(badgeKey);
-          return (
-            <Link
-              key={path}
-              to={path}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
-                active
-                  ? "bg-sidebar-accent text-sidebar-primary border-l-[3px] border-sidebar-primary"
-                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground border-l-[3px] border-transparent"
-              }`}
-            >
-              <Icon className="h-5 w-5 shrink-0" />
-              <span className="truncate">{label}</span>
-              {badge > 0 && (
-                <span className="ml-auto h-5 min-w-[20px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
-                  {badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 flex flex-col gap-0 px-3 py-3 overflow-y-auto">
+        {/* GRUPO: Principal */}
+        {[
+          { path: "/dashboard", icon: Home, label: "Início" },
+          { path: "/assets", icon: Building2, label: "Ativos" },
+          { path: "/nova-transacao", icon: Zap, label: "Lançar" },
+          { path: "/projection", icon: TrendingUp, label: "Projeção" },
+        ].map(({ path, icon: Icon, label }) => (
+          <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={0} />
+        ))}
+
+        <NavSeparator label="Inteligência" />
+        {[
+          { path: "/insights", icon: Sparkles, label: "Insights", badgeKey: "insights" as const },
+          { path: "/financial-insights", icon: TrendingUp, label: "Análise IA" },
+          { path: "/copilot", icon: MessageCircle, label: "Copilot IA" },
+          { path: "/ia-conselho", icon: Bot, label: "Dicas de Sabedoria" },
+        ].map(({ path, icon: Icon, label, badgeKey }) => (
+          <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={getBadge(badgeKey)} />
+        ))}
+
+        <NavSeparator label="Patrimônio" />
+        {[
+          { path: "/goals", icon: Target, label: "Metas" },
+          { path: "/challenges", icon: Flame, label: "Desafios" },
+          { path: "/documents", icon: FileText, label: "Documentos" },
+        ].map(({ path, icon: Icon, label }) => (
+          <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={0} />
+        ))}
+
+        <NavSeparator label="Família" />
+        {[
+          { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
+          { path: "/family-network", icon: Users, label: "Rede Familiar" },
+          { path: "/share", icon: Share2, label: "Compartilhar" },
+        ].map(({ path, icon: Icon, label, badgeKey }) => (
+          <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={getBadge(badgeKey)} />
+        ))}
+
+        <NavSeparator label="Conta" />
+        {[
+          { path: "/planos", icon: Crown, label: "Planos" },
+          { path: "/perfil", icon: User, label: "Perfil" },
+        ].map(({ path, icon: Icon, label }) => (
+          <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={0} />
+        ))}
       </nav>
 
       {/* Footer */}

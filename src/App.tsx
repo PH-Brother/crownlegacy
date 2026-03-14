@@ -101,6 +101,7 @@ const App = () => (
               <Route path="/challenges" element={<Challenges />} />
               <Route path="/share" element={<Share />} />
               <Route path="/family-network" element={<FamilyNetwork />} />
+              <Route path="/mais" element={<Mais />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
