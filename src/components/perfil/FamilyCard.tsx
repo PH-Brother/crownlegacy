@@ -38,7 +38,7 @@ export default function FamilyCard({ nome, plano, dataFimTrial, codigoConvite }:
       `Gerencie suas finanças com sabedoria bíblica! 📖`;
 
     if (navigator.share) {
-      navigator.share({ title: "Legacy Kingdom - Convite", text: msg, url: window.location.origin });
+      navigator.share({ title: "Crown & Legacy - Convite", text: msg, url: window.location.origin });
     } else {
       navigator.clipboard.writeText(msg);
       toast({ title: "📋 Convite copiado!" });

@@ -1,44 +1,51 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Crown &amp; Legacy — Protect. Grow. Wealth.</title>
-    <meta name="description" content="Crown &amp; Legacy
-Wealth Intelligence Platform">
-    <meta name="author" content="Lovable" />
-
-    <!-- TODO: Update og:title to match your application name -->
+    <title>Crown &amp; Legacy — Wealth Intelligence Platform</title>
+    <meta name="description" content="Crown &amp; Legacy — Wealth Intelligence Platform. Protect. Grow. Wealth.">
+    <meta name="author" content="Crown & Legacy" />
 
     <meta property="og:type" content="website" />
+    <meta property="og:title" content="Crown &amp; Legacy — Wealth Intelligence Platform">
+    <meta property="og:description" content="Protect. Grow. Wealth.">
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/9Wp90fLaDKNFMc8DveqZFBkNbdf2/social-images/social-1773190249331-logo_CL_Verde_dourado_Gold_claro.webp">
+    <meta property="og:url" content="https://crownlegacy-app.lovable.app">
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:title" content="Crown &amp; Legacy — Wealth Intelligence Platform">
+    <meta name="twitter:description" content="Protect. Grow. Wealth.">
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/9Wp90fLaDKNFMc8DveqZFBkNbdf2/social-images/social-1773190249331-logo_CL_Verde_dourado_Gold_claro.webp">
 
-    
-    
-    
-    
-    
-  
-  
-  
-  
-  
-  
-  
-  <meta property="og:title" content="Crown &amp; Legacy — Protect. Grow. Wealth.">
-  <meta name="twitter:title" content="Crown &amp; Legacy — Protect. Grow. Wealth.">
-  <meta property="og:description" content="Crown &amp; Legacy
-Wealth Intelligence Platform">
-  <meta name="twitter:description" content="Crown &amp; Legacy
-Wealth Intelligence Platform">
-</head>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0B1A14" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Crown & Legacy" />
+    <link rel="apple-touch-icon" href="/images/logo-CL-Verde-dourado-Gold-claro.png" />
+  </head>
 
   <body>
+    <div id="splash" style="
+      position:fixed;inset:0;z-index:9999;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:16px;
+      background:linear-gradient(135deg,#0B1A14 0%,#162B20 50%,#0B1A14 100%);
+    ">
+      <img src="/images/logo-CL-Verde-dourado-Gold-claro.png" alt="Crown & Legacy"
+        style="width:120px;height:120px;border-radius:24px;object-fit:cover;" />
+      <div style="text-align:center;">
+        <p style="font-family:Georgia,serif;font-size:22px;font-weight:700;
+          color:#D4A832;letter-spacing:2px;margin:0;">Crown & Legacy</p>
+        <p style="font-family:Georgia,serif;font-size:10px;font-style:italic;
+          color:rgba(212,168,50,0.6);letter-spacing:4px;margin:6px 0 0;">
+          WEALTH INTELLIGENCE PLATFORM</p>
+        <p style="font-family:Georgia,serif;font-size:9px;
+          color:rgba(212,168,50,0.4);letter-spacing:2px;margin:4px 0 0;">
+          Protect. Grow. Wealth.</p>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

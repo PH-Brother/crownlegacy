@@ -45,7 +45,7 @@ export default function FamilyMembers() {
 
   const compartilharWhatsApp = () => {
     if (familia?.codigo_convite) {
-      const msg = encodeURIComponent(`Junte-se à nossa família no Legacy Kingdom! 🛡️\nCódigo: ${familia.codigo_convite}\n${window.location.origin}/join-family`);
+      const msg = encodeURIComponent(`Junte-se à nossa família no Crown & Legacy! 👑\nCódigo: ${familia.codigo_convite}\n${window.location.origin}/join-family`);
       window.open(`https://wa.me/?text=${msg}`, "_blank");
     }
   };
