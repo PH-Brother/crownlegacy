@@ -42,28 +42,45 @@ export function useFamilyWealth() {
       // For each member, get latest net worth snapshot and active goals count
       const memberData: FamilyMember[] = await Promise.all(
         (profiles || []).map(async (p) => {
-          const [snapRes, goalsRes] = await Promise.all([
-            supabase
-              .from("net_worth_snapshots")
-              .select("total_assets")
-              .eq("user_id", p.id)
-              .order("snapshot_date", { ascending: false })
-              .limit(1),
-            supabase
-              .from("wealth_goals")
-              .select("id", { count: "exact", head: true })
-              .eq("user_id", p.id)
-              .eq("status", "active"),
-          ]);
-          return {
-            id: p.id,
-            familia_id: p.familia_id,
-            nome_completo: p.nome_completo,
-            avatar_url: p.avatar_url,
-            role: p.role,
-            netWorth: snapRes.data?.[0]?.total_assets ?? 0,
-            activeGoals: goalsRes.count ?? 0,
-          };
+          try {
+            const [assetsRes, goalsRes] = await Promise.all([
+              supabase
+                .from("assets")
+                .select("value")
+                .eq("owner_id", p.id)
+                .eq("is_active", true),
+              supabase
+                .from("wealth_goals")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", p.id)
+                .eq("status", "active"),
+            ]);
+
+            if (assetsRes.error) {
+              console.error(`Erro ao buscar assets de ${p.id}:`, assetsRes.error);
+              return {
+                id: p.id, familia_id: p.familia_id, nome_completo: p.nome_completo,
+                avatar_url: p.avatar_url, role: p.role, netWorth: 0, activeGoals: 0,
+              };
+            }
+
+            // Calcula net worth em tempo real (soma dos assets ativos)
+            const netWorth = (assetsRes.data || []).reduce(
+              (sum, a) => sum + (Number(a.value) || 0), 0
+            );
+
+            return {
+              id: p.id, familia_id: p.familia_id, nome_completo: p.nome_completo,
+              avatar_url: p.avatar_url, role: p.role, netWorth,
+              activeGoals: goalsRes.count ?? 0,
+            };
+          } catch (error) {
+            console.error(`Erro ao processar membro ${p.id}:`, error);
+            return {
+              id: p.id, familia_id: p.familia_id, nome_completo: p.nome_completo,
+              avatar_url: p.avatar_url, role: p.role, netWorth: 0, activeGoals: 0,
+            };
+          }
         })
       );
 
