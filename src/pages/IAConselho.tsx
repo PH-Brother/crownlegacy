@@ -692,7 +692,42 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-3 gap-2 text-center">
+            {/* Seletor de mês/ano */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  if (mes === 1) { setMes(12); setAno(a => a - 1); }
+                  else setMes(m => m - 1);
+                  setAnaliseMensal("");
+                }}
+                className="h-8 w-8 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
+                style={{ border: "1px solid hsl(var(--border))" }}
+              >
+                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes - 1]}
+                </p>
+                <p className="text-xs text-muted-foreground">{ano}</p>
+              </div>
+              <button
+                onClick={() => {
+                  const n = new Date();
+                  if (mes === n.getMonth() + 1 && ano === n.getFullYear()) return;
+                  if (mes === 12) { setMes(1); setAno(a => a + 1); }
+                  else setMes(m => m + 1);
+                  setAnaliseMensal("");
+                }}
+                className="h-8 w-8 rounded-full flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-30"
+                style={{ border: "1px solid hsl(var(--border))" }}
+                disabled={mes === new Date().getMonth() + 1 && ano === new Date().getFullYear()}
+              >
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
               <div className="p-2 rounded-lg card-glass">
                 <p className="text-[10px] text-muted-foreground">Entradas</p>
                 <p className="text-sm font-bold text-success">{formatarMoeda(totais.receitas)}</p>
