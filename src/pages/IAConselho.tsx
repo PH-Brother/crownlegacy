@@ -388,91 +388,151 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
               <Upload className="h-4 w-4 text-primary" /> Análise de Documentos
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Envie PDF ou imagem (JPEG, PNG, WEBP) de faturas, extratos, comprovantes ou notas fiscais.
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Envie uma <strong className="text-foreground">foto</strong> (print de tela, foto do celular) ou{" "}
+              <strong className="text-foreground">PDF</strong> de fatura, extrato ou nota fiscal.
+              A IA extrai todas as despesas, categoriza e lança no mês correto automaticamente.
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="cursor-pointer">
-                <div className="flex flex-col items-center gap-1 py-4 rounded-xl card-glass hover:border-primary/40 transition-colors">
-                  <Image className="h-6 w-6 text-primary" />
-                  <span className="text-xs text-muted-foreground">Imagem</span>
-                </div>
-                <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,image/heic" className="hidden" onChange={handleUploadDocumento} disabled={analisando} />
-              </label>
-              <label className="cursor-pointer">
-                <div className="flex flex-col items-center gap-1 py-4 rounded-xl card-glass hover:border-primary/40 transition-colors">
-                  <FileText className="h-6 w-6 text-primary" />
-                  <span className="text-xs text-muted-foreground">PDF</span>
-                </div>
-                <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleUploadDocumento} disabled={analisando} />
-              </label>
-            </div>
 
-            {analisando && (
-              <div className="flex items-center justify-center gap-2 py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">Analisando documento...</span>
+            {/* Área de upload unificada */}
+            <label className="cursor-pointer block">
+              <div
+                className="relative flex flex-col items-center justify-center gap-3 py-8 px-4 rounded-2xl transition-all duration-200 hover:border-primary/60 active:scale-[0.98]"
+                style={{
+                  border: "2px dashed hsl(var(--primary) / 0.35)",
+                  background: "hsl(var(--primary) / 0.04)",
+                }}
+              >
+                {analisando ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm font-medium text-primary">Analisando com IA...</p>
+                    <p className="text-xs text-muted-foreground">Isso pode levar alguns segundos</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-12 w-12 items-center justify-center rounded-xl"
+                        style={{ background: "hsl(var(--primary) / 0.12)" }}
+                      >
+                        <Image className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="h-8 w-px rounded-full" style={{ background: "hsl(var(--border))" }} />
+                      <div
+                        className="flex h-12 w-12 items-center justify-center rounded-xl"
+                        style={{ background: "hsl(var(--primary) / 0.12)" }}
+                      >
+                        <FileText className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-foreground">Toque para enviar foto ou PDF</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        JPG · PNG · WEBP · HEIC · PDF — máx 10 MB
+                      </p>
+                    </div>
+                    <div
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
+                        color: "hsl(var(--primary-foreground))",
+                      }}
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Selecionar arquivo
+                    </div>
+                  </>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,application/pdf,.pdf"
+                className="hidden"
+                onChange={handleUploadDocumento}
+                disabled={analisando}
+              />
+            </label>
+
+            {/* Preview de imagem */}
+            {previewUrl && !analisando && (
+              <div className="rounded-xl overflow-hidden border border-border/50">
+                <img src={previewUrl} alt="Preview" className="w-full max-h-52 object-contain bg-muted/20" />
               </div>
             )}
 
-            {previewUrl && (
-              <img src={previewUrl} alt="Preview" className="w-full rounded-lg max-h-48 object-contain" />
-            )}
-
-            {/* Structured result display */}
+            {/* Resultado estruturado da IA */}
             {resultadoAnalise && (
               <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                {/* Header */}
-                <div className="rounded-xl p-4 border border-primary/20 bg-muted/30">
-                  <div className="flex justify-between items-start mb-2">
+                {/* Cabeçalho do documento */}
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    background: "hsl(var(--primary) / 0.06)",
+                    border: "1px solid hsl(var(--primary) / 0.2)",
+                  }}
+                >
+                  <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-primary font-bold text-base">{resultadoAnalise.emissor || "Documento"}</p>
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-primary font-bold text-base">
+                        {resultadoAnalise.emissor || "Documento"}
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-0.5">
                         {resultadoAnalise.tipo_documento?.replace(/_/g, " ")}
-                        {resultadoAnalise.periodo && ` • ${resultadoAnalise.periodo}`}
+                        {resultadoAnalise.periodo && ` · ${resultadoAnalise.periodo}`}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-foreground font-bold text-xl">
+                      <p className="text-foreground font-bold text-xl font-mono">
                         R$ {resultadoAnalise.valor_total?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </p>
                       {resultadoAnalise.vencimento && (
-                        <p className="text-destructive text-xs">Vence: {resultadoAnalise.vencimento}</p>
+                        <p className="text-destructive text-xs mt-0.5">Vence: {resultadoAnalise.vencimento}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Transactions list */}
+                {/* Lista de transações extraídas */}
                 {transacoesEditaveis.length > 0 && (
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="text-foreground text-sm font-semibold">
-                        {transacoesEditaveis.length} transações encontradas
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-semibold text-foreground">
+                        {transacoesEditaveis.length} despesa{transacoesEditaveis.length !== 1 ? "s" : ""} encontrada{transacoesEditaveis.length !== 1 ? "s" : ""}
                       </p>
                       <Button
                         size="sm"
                         onClick={handleLancarTodas}
                         disabled={lancando}
-                        className="gradient-gold text-primary-foreground font-bold text-xs h-8 px-3"
+                        className="gradient-gold text-primary-foreground font-bold text-xs h-8 px-4 gap-1"
                       >
                         {lancando ? (
-                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Rocket className="h-3 w-3 mr-1" />
+                          <Rocket className="h-3 w-3" />
                         )}
-                        Lançar todas ({transacoesEditaveis.length})
+                        {lancando ? "Lançando..." : `Lançar todas (${transacoesEditaveis.length})`}
                       </Button>
                     </div>
-                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
                       {transacoesEditaveis.map((t, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50"
+                          className="flex items-center gap-2 p-3 rounded-xl"
+                          style={{
+                            background: "hsl(var(--muted) / 0.4)",
+                            border: "1px solid hsl(var(--border) / 0.5)",
+                          }}
                         >
                           {isParcela(t.descricao) && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium shrink-0">
+                            <span
+                              className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase shrink-0"
+                              style={{
+                                background: "hsl(var(--primary) / 0.15)",
+                                color: "hsl(var(--primary))",
+                              }}
+                            >
                               parcela
                             </span>
                           )}
@@ -480,14 +540,11 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                             <p className="text-foreground text-sm font-medium truncate">{t.descricao}</p>
                             <p className="text-muted-foreground text-xs">{t.data}</p>
                           </div>
-                          <p className="text-destructive font-bold text-sm shrink-0">
+                          <p className="text-destructive font-bold text-sm font-mono shrink-0">
                             R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </p>
-                          <Select
-                            value={t.categoria}
-                            onValueChange={(val) => handleCategoriaChange(i, val)}
-                          >
-                            <SelectTrigger className="w-28 h-7 text-xs border-border/50 bg-muted/50">
+                          <Select value={t.categoria} onValueChange={(val) => handleCategoriaChange(i, val)}>
+                            <SelectTrigger className="w-28 h-7 text-xs shrink-0">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -504,12 +561,18 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                   </div>
                 )}
 
-                {/* Insights */}
+                {/* Insights da IA */}
                 {resultadoAnalise.insights?.length > 0 && (
-                  <div className="p-3 rounded-xl border border-primary/20 bg-primary/5">
-                    <p className="text-primary text-xs font-semibold mb-2">💡 Insights</p>
+                  <div
+                    className="p-3 rounded-xl space-y-1"
+                    style={{
+                      background: "hsl(var(--primary) / 0.05)",
+                      border: "1px solid hsl(var(--primary) / 0.2)",
+                    }}
+                  >
+                    <p className="text-primary text-xs font-semibold">💡 Insights da IA</p>
                     {resultadoAnalise.insights.map((ins, i) => (
-                      <p key={i} className="text-foreground text-xs mb-1 flex gap-2">
+                      <p key={i} className="text-foreground text-xs flex gap-2">
                         <span className="text-primary shrink-0">•</span>
                         <span>{ins}</span>
                       </p>
@@ -517,14 +580,20 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                   </div>
                 )}
 
-                {/* Versículo */}
+                {/* Versículo bíblico */}
                 {resultadoAnalise.versiculo && (
-                  <div className="p-3 rounded-xl border border-primary/20 bg-primary/5">
+                  <div
+                    className="p-3 rounded-xl"
+                    style={{
+                      background: "hsl(var(--primary) / 0.05)",
+                      border: "1px solid hsl(var(--primary) / 0.2)",
+                    }}
+                  >
                     <p className="text-primary text-xs italic" style={{ fontFamily: "'Lora', serif" }}>
                       🙏 "{resultadoAnalise.versiculo}"
                     </p>
                     {resultadoAnalise.versiculo_ref && (
-                      <p className="text-primary/60 text-[10px] mt-1">— {resultadoAnalise.versiculo_ref}</p>
+                      <p className="text-muted-foreground text-[10px] mt-1">— {resultadoAnalise.versiculo_ref}</p>
                     )}
                   </div>
                 )}
