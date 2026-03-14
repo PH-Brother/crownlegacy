@@ -12,11 +12,11 @@ export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [notificacoes, setNotificacoes] = useState(() => localStorage.getItem("lk_notif") !== "false");
+  const [notificacoes, setNotificacoes] = useState(() => localStorage.getItem("cl_notif") !== "false");
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("lk_notif", String(notificacoes));
+    localStorage.setItem("cl_notif", String(notificacoes));
   }, [notificacoes]);
 
   useEffect(() => {
@@ -66,9 +66,9 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>Legacy Kingdom v1.0.0</p>
-            <p>Gestão financeira com sabedoria bíblica</p>
-            <p>© 2026 Legacy Kingdom</p>
+            <p>Crown & Legacy</p>
+            <p>Wealth Intelligence Platform</p>
+            <p>© 2026 Crown & Legacy. Todos os direitos reservados.</p>
           </CardContent>
         </Card>
       </div>

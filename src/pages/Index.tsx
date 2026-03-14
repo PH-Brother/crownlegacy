@@ -36,8 +36,8 @@ export default function Index() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
-        <img src={logo} alt="Legacy Kingdom" className="w-20 h-20 rounded-2xl animate-shield-pulse drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
-        <h1 className="text-2xl font-bold text-primary">Legacy Kingdom</h1>
+        <img src={logo} alt="Crown & Legacy" className="w-20 h-20 rounded-2xl animate-shield-pulse drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
+        <h1 className="text-2xl font-bold text-primary">Crown & Legacy</h1>
         <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     </div>

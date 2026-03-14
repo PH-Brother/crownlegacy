@@ -38,14 +38,14 @@ export default function PaywallGate({ feature, children }: PaywallGateProps) {
           <div>
             <h2 className="text-xl font-bold text-foreground font-display">Seu período gratuito encerrou</h2>
             <p className="text-sm text-muted-foreground mt-2">
-              Assine para continuar acessando o Legacy Kingdom
+              Assine para continuar acessando o Crown & Legacy
             </p>
           </div>
           <Button
             onClick={() => navigate("/assinatura")}
             className="w-full min-h-[48px] btn-premium text-base"
           >
-            Assinar agora — US$ 9,90/mês
+            Assinar agora — U$ 9,90/mês
           </Button>
         </div>
       </div>

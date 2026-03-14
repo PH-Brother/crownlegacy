@@ -32,13 +32,13 @@ export default function FamilyCard({ nome, plano, dataFimTrial, codigoConvite }:
   const compartilhar = () => {
     if (!codigoConvite) return;
     const msg =
-      `🛡️ Junte-se à minha família no Legacy Kingdom!\n\n` +
+      `👑 Junte-se à minha família no Crown & Legacy!\n\n` +
       `Use o código: *${codigoConvite}*\n\n` +
       `Acesse: ${window.location.origin}\n\n` +
       `Gerencie suas finanças com sabedoria bíblica! 📖`;
 
     if (navigator.share) {
-      navigator.share({ title: "Legacy Kingdom - Convite", text: msg, url: window.location.origin });
+      navigator.share({ title: "Crown & Legacy - Convite", text: msg, url: window.location.origin });
     } else {
       navigator.clipboard.writeText(msg);
       toast({ title: "📋 Convite copiado!" });

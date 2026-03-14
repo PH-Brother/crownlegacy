@@ -55,10 +55,10 @@ export default function Assinatura() {
           <CardContent className="p-5 text-center">
             <Crown className="h-12 w-12 text-primary mx-auto mb-3" />
             <h2 className="text-xl font-bold text-foreground mb-1">
-              {isActive ? "Plano Premium Ativo" : "Legacy Kingdom Premium"}
+              {isActive ? "Plano Premium Ativo" : "Crown & Legacy Premium"}
             </h2>
-            <p className="text-3xl font-bold text-primary mb-1">US$ 9,90<span className="text-sm text-muted-foreground">/mês</span></p>
-            <p className="text-sm text-accent font-medium">ou US$ 99,90/ano <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-accent ml-1">Economize 30%</span></p>
+            <p className="text-3xl font-bold text-primary mb-1">U$ 9,90<span className="text-sm text-muted-foreground">/mês</span></p>
+            <p className="text-sm text-accent font-medium">ou U$ 99,90/ano <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-accent ml-1">Economize 30%</span></p>
             {!isActive && <p className="text-sm text-muted-foreground">7 dias grátis para experimentar</p>}
           </CardContent>
         </Card>
