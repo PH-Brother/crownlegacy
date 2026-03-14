@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket } from "lucide-react";
+import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket, ChevronLeft, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,8 +132,8 @@ export default function IAConselho() {
   };
 
   const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
+  const [mes, setMes] = useState(now.getMonth() + 1);
+  const [ano, setAno] = useState(now.getFullYear());
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
@@ -310,6 +310,20 @@ export default function IAConselho() {
 
       const { error } = await supabase.from("transacoes").insert(transacoesParaInserir);
       if (error) throw new Error("Erro ao lançar: " + error.message);
+
+      // Registra o documento em uploaded_files para aparecer na página Documentos
+      try {
+        await supabase.from("uploaded_files").insert({
+          user_id: session.user.id,
+          file_name: `Análise IA — ${new Date().toLocaleDateString("pt-BR")}`,
+          file_size: null,
+          file_url: null,
+          status: "completed",
+          transactions_count: transacoesParaInserir.length,
+        });
+      } catch {
+        // Silencioso — não bloqueia o fluxo principal
+      }
 
       await supabase.rpc("add_gamification_points", {
         p_pontos: 20,
@@ -678,6 +692,42 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/* Seletor de mês/ano */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  if (mes === 1) { setMes(12); setAno(a => a - 1); }
+                  else setMes(m => m - 1);
+                  setAnaliseMensal("");
+                }}
+                className="h-8 w-8 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
+                style={{ border: "1px solid hsl(var(--border))" }}
+              >
+                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes - 1]}
+                </p>
+                <p className="text-xs text-muted-foreground">{ano}</p>
+              </div>
+              <button
+                onClick={() => {
+                  const n = new Date();
+                  if (mes === n.getMonth() + 1 && ano === n.getFullYear()) return;
+                  if (mes === 12) { setMes(1); setAno(a => a + 1); }
+                  else setMes(m => m + 1);
+                  setAnaliseMensal("");
+                }}
+                className="h-8 w-8 rounded-full flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-30"
+                style={{ border: "1px solid hsl(var(--border))" }}
+                disabled={mes === new Date().getMonth() + 1 && ano === new Date().getFullYear()}
+              >
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg card-glass">
                 <p className="text-[10px] text-muted-foreground">Entradas</p>
