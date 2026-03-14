@@ -142,6 +142,39 @@ export default function NovaTransacao() {
               💸 Despesa
             </button>
           </div>
+
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/30" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-background px-3 text-xs text-muted-foreground">ou</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate("/ia-conselho")}
+            className="w-full py-5 rounded-xl text-sm transition-all active:scale-[0.98] flex items-center gap-4 px-5"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--primary) / 0.85), hsl(var(--primary)))",
+              color: "hsl(var(--primary-foreground))",
+              border: "1px solid hsl(var(--accent) / 0.3)",
+              boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)",
+            }}
+          >
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: "rgba(255,255,255,0.1)" }}
+            >
+              <span className="text-2xl">📄</span>
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-base">Analisar PDF ou Foto</p>
+              <p className="text-xs font-normal opacity-60 mt-0.5">
+                A IA extrai e lança as despesas automaticamente
+              </p>
+            </div>
+          </button>
         </div>
         <BottomNav />
       </div>

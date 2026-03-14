@@ -166,6 +166,18 @@ export default function IAConselho() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast({ title: "Arquivo muito grande. Máximo 10 MB.", variant: "destructive" });
+      return;
+    }
+
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
+    if (!ALLOWED_TYPES.includes(file.type) && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast({ title: "Tipo de arquivo não permitido.", variant: "destructive" });
+      return;
+    }
+
     if (file.type.startsWith("image/")) {
       setPreviewUrl(URL.createObjectURL(file));
     } else {
