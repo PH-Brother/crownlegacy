@@ -1,19 +1,19 @@
-import { Home, Building2, Zap, Sparkles, LayoutGrid } from "lucide-react";
+import { Home, Building2, Zap, BookOpen, LayoutGrid } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const items = [
-  { path: "/dashboard", icon: Home, label: "Início" },
+  { path: "/dashboard", label: "Início", icon: Home },
   { path: "/assets", icon: Building2, label: "Ativos" },
   { path: "/nova-transacao", icon: Zap, label: "Lançar" },
-  { path: "/insights", icon: Sparkles, label: "IA", badgeKey: "insights" as const },
+  { path: "/ia-conselho", icon: BookOpen, label: "Sabedoria" },
   { path: "/mais", icon: LayoutGrid, label: "Mais", badgeKey: "invites" as const },
 ];
 
 const MAIS_ROUTES = [
-  "/goals", "/projection", "/challenges", "/family-wealth",
-  "/family-network", "/share", "/documents", "/planos",
-  "/perfil", "/configuracoes",
+  "/insights", "/goals", "/projection", "/challenges",
+  "/family-wealth", "/family-network", "/share", "/documents",
+  "/planos", "/perfil", "/configuracoes", "/copilot", "/financial-insights",
 ];
 
 export default function BottomNav() {
