@@ -40,6 +40,7 @@ import ProjectionPage from "./pages/Projection";
 import Challenges from "./pages/Challenges";
 import Share from "./pages/Share";
 import FamilyNetwork from "./pages/FamilyNetwork";
+import Mais from "./pages/Mais";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
