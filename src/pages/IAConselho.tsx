@@ -132,8 +132,8 @@ export default function IAConselho() {
   };
 
   const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
+  const [mes, setMes] = useState(now.getMonth() + 1);
+  const [ano, setAno] = useState(now.getFullYear());
 
   useEffect(() => {
     if (user) buscarPerfil(user.id);
