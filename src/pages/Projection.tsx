@@ -29,7 +29,6 @@ function formatBRL(value: number): string {
 }
 
 export default function ProjectionPage() {
-  const { session } = useAuth();
   const { toast } = useToast();
   const [netWorth, setNetWorth] = useState("");
   const [monthly, setMonthly] = useState("");
