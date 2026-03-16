@@ -79,7 +79,7 @@ export default function OnboardingFamily() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-[400px] space-y-6">
         <div className="text-center">
-          <img src={logo} alt="Crown & Legacy" className="w-20 h-20 mx-auto rounded-2xl mb-4 drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
+          <img src={logo} alt="Crown & Legacy" className="w-24 h-24 mx-auto mb-4 drop-shadow-[0_0_24px_rgba(212,175,55,0.4)] object-contain" />
           <h1 className="mt-2 text-xl font-bold text-primary">Bem-vindo ao Crown & Legacy</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {user?.user_metadata?.nome_completo ? `Olá, ${user.user_metadata.nome_completo.split(" ")[0]}! ` : ""}

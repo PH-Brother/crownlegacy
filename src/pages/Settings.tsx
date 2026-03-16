@@ -15,6 +15,10 @@ export default function Settings() {
 
   const [notificacoes, setNotificacoes] = useState(() => localStorage.getItem("cl_notif") !== "false");
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+  const [suporteOpen, setSuporteOpen] = useState(false);
+  const [tipoTicket, setTipoTicket] = useState("ajuda");
+  const [mensagemTicket, setMensagemTicket] = useState("");
+  const [enviandoTicket, setEnviandoTicket] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("cl_notif", String(notificacoes));
