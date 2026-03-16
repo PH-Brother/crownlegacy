@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
