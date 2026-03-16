@@ -411,6 +411,43 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
     }
   }, [totais, categorias, mes, ano, toast]);
 
+  const handleEditarTransacao = (t: any) => {
+    if (!t) return;
+    setEditTransacao(t);
+    setEditValor(String(t.valor));
+    setEditCategoria(t.categoria);
+    setEditDescricao(t.descricao || "");
+    setEditTransacaoOpen(true);
+  };
+
+  const handleSalvarEdicao = async () => {
+    if (!editTransacao || !user) return;
+    if (!editValor || Number(editValor) <= 0) {
+      toast({ title: "Valor inválido", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { error } = await supabase
+      .from("transacoes")
+      .update({ valor: Number(editValor), categoria: editCategoria, descricao: editDescricao.trim() || null })
+      .eq("id", editTransacao.id)
+      .eq("usuario_id", user.id);
+    setEditSaving(false);
+    if (error) { toast({ title: "Erro ao atualizar", variant: "destructive" }); return; }
+    toast({ title: "✅ Transação atualizada" });
+    setEditTransacaoOpen(false);
+    setEditTransacao(null);
+    if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
+  };
+
+  const handleExcluirTransacao = async () => {
+    if (!deleteTransacaoId) return;
+    const { error } = await supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
+    if (error) { toast({ title: "Erro ao excluir", variant: "destructive" }); }
+    else { toast({ title: "Transação excluída" }); if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano); }
+    setDeleteTransacaoId(null);
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-[430px] px-4 py-4 space-y-5">
