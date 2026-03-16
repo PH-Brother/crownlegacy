@@ -128,6 +128,17 @@ export default function IAConselho() {
   const [gerandoMensal, setGerandoMensal] = useState(false);
   const [lancando, setLancando] = useState(false);
 
+  // Edit/delete transaction states
+  const [deleteTransacaoId, setDeleteTransacaoId] = useState<string | null>(null);
+  const [editTransacaoOpen, setEditTransacaoOpen] = useState(false);
+  const [editTransacao, setEditTransacao] = useState<{
+    id: string; descricao: string | null; valor: number; categoria: string; tipo: string; data_transacao: string;
+  } | null>(null);
+  const [editValor, setEditValor] = useState("");
+  const [editCategoria, setEditCategoria] = useState("");
+  const [editDescricao, setEditDescricao] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
   const handleCategoriaChange = (index: number, novaCategoria: string) => {
     setTransacoesEditaveis((prev) =>
       prev.map((t, i) => (i === index ? { ...t, categoria: novaCategoria } : t))
