@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -124,6 +127,17 @@ export default function IAConselho() {
   const [analiseMenusal, setAnaliseMensal] = useState("");
   const [gerandoMensal, setGerandoMensal] = useState(false);
   const [lancando, setLancando] = useState(false);
+
+  // Edit/delete transaction states
+  const [deleteTransacaoId, setDeleteTransacaoId] = useState<string | null>(null);
+  const [editTransacaoOpen, setEditTransacaoOpen] = useState(false);
+  const [editTransacao, setEditTransacao] = useState<{
+    id: string; descricao: string | null; valor: number; categoria: string; tipo: string; data_transacao: string;
+  } | null>(null);
+  const [editValor, setEditValor] = useState("");
+  const [editCategoria, setEditCategoria] = useState("");
+  const [editDescricao, setEditDescricao] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   const handleCategoriaChange = (index: number, novaCategoria: string) => {
     setTransacoesEditaveis((prev) =>
@@ -396,6 +410,43 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
       setGerandoMensal(false);
     }
   }, [totais, categorias, mes, ano, toast]);
+
+  const handleEditarTransacao = (t: any) => {
+    if (!t) return;
+    setEditTransacao(t);
+    setEditValor(String(t.valor));
+    setEditCategoria(t.categoria);
+    setEditDescricao(t.descricao || "");
+    setEditTransacaoOpen(true);
+  };
+
+  const handleSalvarEdicao = async () => {
+    if (!editTransacao || !user) return;
+    if (!editValor || Number(editValor) <= 0) {
+      toast({ title: "Valor inválido", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { error } = await supabase
+      .from("transacoes")
+      .update({ valor: Number(editValor), categoria: editCategoria, descricao: editDescricao.trim() || null })
+      .eq("id", editTransacao.id)
+      .eq("usuario_id", user.id);
+    setEditSaving(false);
+    if (error) { toast({ title: "Erro ao atualizar", variant: "destructive" }); return; }
+    toast({ title: "✅ Transação atualizada" });
+    setEditTransacaoOpen(false);
+    setEditTransacao(null);
+    if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
+  };
+
+  const handleExcluirTransacao = async () => {
+    if (!deleteTransacaoId) return;
+    const { error } = await supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
+    if (error) { toast({ title: "Erro ao excluir", variant: "destructive" }); }
+    else { toast({ title: "Transação excluída" }); if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano); }
+    setDeleteTransacaoId(null);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -773,6 +824,50 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
               </div>
             )}
 
+            {/* Lista de transações do mês com editar/excluir */}
+            {transacoes.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Lançamentos do mês ({transacoes.length})
+                </p>
+                <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
+                  {transacoes.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center gap-2 p-3 rounded-xl"
+                      style={{ background: "hsl(var(--muted) / 0.4)", border: "1px solid hsl(var(--border) / 0.5)" }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-foreground text-sm font-medium truncate">{t.descricao || t.categoria}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {t.categoria} · {new Date(t.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <p className={`font-bold text-sm font-mono shrink-0 ${t.tipo === "receita" ? "text-success" : "text-destructive"}`}>
+                        {t.tipo === "receita" ? "+" : "-"}R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => handleEditarTransacao(t)}
+                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTransacaoId(t.id)}
+                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleAnaliseMensal}
               disabled={gerandoMensal}
@@ -811,6 +906,51 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de edição */}
+      <Dialog open={editTransacaoOpen} onOpenChange={(o) => !o && setEditTransacaoOpen(false)}>
+        <DialogContent className="max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle>Editar Transação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Valor (R$)</Label>
+              <Input type="number" value={editValor} onChange={(e) => setEditValor(e.target.value)} min={0.01} step={0.01} className="min-h-[44px]" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Categoria</Label>
+              <select value={editCategoria} onChange={(e) => setEditCategoria(e.target.value)} className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none text-sm">
+                {CATEGORIAS_DROPDOWN.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Descrição</Label>
+              <Input value={editDescricao} onChange={(e) => setEditDescricao(e.target.value)} placeholder="Descrição opcional" className="min-h-[44px]" />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 mt-2">
+            <Button variant="outline" onClick={() => setEditTransacaoOpen(false)}>Cancelar</Button>
+            <Button className="gradient-gold text-primary-foreground font-bold" onClick={handleSalvarEdicao} disabled={editSaving}>
+              {editSaving ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de exclusão */}
+      <AlertDialog open={!!deleteTransacaoId} onOpenChange={(o) => !o && setDeleteTransacaoId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir transação</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExcluirTransacao} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

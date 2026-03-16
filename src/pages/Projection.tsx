@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +29,6 @@ function formatBRL(value: number): string {
 }
 
 export default function ProjectionPage() {
-  const { session } = useAuth();
   const { toast } = useToast();
   const [netWorth, setNetWorth] = useState("");
   const [monthly, setMonthly] = useState("");
@@ -47,25 +44,50 @@ export default function ProjectionPage() {
   const yrValid = Number(years) >= 1 && Number(years) <= 50 && years !== "";
   const allValid = nwValid && moValid && rrValid && yrValid;
 
-  const calculate = async () => {
-    if (!allValid || !session?.access_token) return;
+  const calculate = () => {
+    if (!allValid) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("calculate-wealth-projection", {
-        body: {
-          netWorthInitial: Number(netWorth),
-          monthlySavings: Number(monthly),
-          annualReturn: Number(returnRate),
-          projectionYears: Number(years),
-        },
-      });
-      if (error) throw error;
-      if (data?.success) {
-        setScenarios(data.scenarios);
-        setChartData(data.chartData);
-      } else {
-        throw new Error(data?.error || "Erro ao calcular");
+      const pv = Number(netWorth);
+      const pmt = Number(monthly);
+      const yr = Number(years);
+
+      const calcScenario = (name: string, rate: number) => {
+        const r = rate / 100;
+        const yearlyBreakdown: { year: number; value: number }[] = [];
+        let current = pv;
+        yearlyBreakdown.push({ year: 0, value: Math.round(current) });
+        for (let y = 1; y <= yr; y++) {
+          current = current * (1 + r) + pmt * 12;
+          yearlyBreakdown.push({ year: y, value: Math.round(current) });
+        }
+        return {
+          name,
+          rate,
+          finalValue: Math.round(current),
+          totalGain: Math.round(current - pv),
+          yearlyBreakdown,
+        };
+      };
+
+      const s = [
+        calcScenario("Conservador", 5),
+        calcScenario("Moderado", Number(returnRate)),
+        calcScenario("Agressivo", 12),
+      ];
+
+      const points: ChartPoint[] = [];
+      for (let y = 0; y <= yr; y++) {
+        points.push({
+          year: y,
+          conservative: s[0].yearlyBreakdown[y].value,
+          moderate: s[1].yearlyBreakdown[y].value,
+          aggressive: s[2].yearlyBreakdown[y].value,
+        });
       }
+
+      setScenarios(s);
+      setChartData(points);
     } catch (err) {
       toast({ title: "Erro", description: err instanceof Error ? err.message : "Tente novamente", variant: "destructive" });
     } finally {
