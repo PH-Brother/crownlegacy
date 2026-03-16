@@ -824,6 +824,50 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
               </div>
             )}
 
+            {/* Lista de transações do mês com editar/excluir */}
+            {transacoes.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Lançamentos do mês ({transacoes.length})
+                </p>
+                <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
+                  {transacoes.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center gap-2 p-3 rounded-xl"
+                      style={{ background: "hsl(var(--muted) / 0.4)", border: "1px solid hsl(var(--border) / 0.5)" }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-foreground text-sm font-medium truncate">{t.descricao || t.categoria}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {t.categoria} · {new Date(t.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <p className={`font-bold text-sm font-mono shrink-0 ${t.tipo === "receita" ? "text-success" : "text-destructive"}`}>
+                        {t.tipo === "receita" ? "+" : "-"}R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => handleEditarTransacao(t)}
+                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTransacaoId(t.id)}
+                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleAnaliseMensal}
               disabled={gerandoMensal}
@@ -862,6 +906,51 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de edição */}
+      <Dialog open={editTransacaoOpen} onOpenChange={(o) => !o && setEditTransacaoOpen(false)}>
+        <DialogContent className="max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle>Editar Transação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Valor (R$)</Label>
+              <Input type="number" value={editValor} onChange={(e) => setEditValor(e.target.value)} min={0.01} step={0.01} className="min-h-[44px]" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Categoria</Label>
+              <select value={editCategoria} onChange={(e) => setEditCategoria(e.target.value)} className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none text-sm">
+                {CATEGORIAS_DROPDOWN.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Descrição</Label>
+              <Input value={editDescricao} onChange={(e) => setEditDescricao(e.target.value)} placeholder="Descrição opcional" className="min-h-[44px]" />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 mt-2">
+            <Button variant="outline" onClick={() => setEditTransacaoOpen(false)}>Cancelar</Button>
+            <Button className="gradient-gold text-primary-foreground font-bold" onClick={handleSalvarEdicao} disabled={editSaving}>
+              {editSaving ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de exclusão */}
+      <AlertDialog open={!!deleteTransacaoId} onOpenChange={(o) => !o && setDeleteTransacaoId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir transação</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExcluirTransacao} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
