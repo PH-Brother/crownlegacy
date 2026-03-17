@@ -318,7 +318,7 @@ export default function Dashboard() {
                     transition={{ duration: 0.25 }}
                     className="text-3xl sm:text-4xl font-mono font-bold tracking-tight text-white"
                   >
-                    {formatCurrency(netWorth)}
+                    {formatCurrency(displayValue)}
                   </motion.p>
                 ) : (
                   <motion.p
