@@ -60,8 +60,8 @@ export default function Share() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const { baseUrl } = useAppUrl();
-  const referralUrl = referral ? `${baseUrl}/wealth-score?ref=${referral.referral_code}` : "";
+  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  const referralUrl = referral ? `${baseUrl}/auth?tab=signup&ref=${referral.referral_code}` : "";
 
   const trackShare = async (shareType: string, platform: string) => {
     if (!user) return;
