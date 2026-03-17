@@ -45,7 +45,7 @@ export default function PaywallGate({ feature, children }: PaywallGateProps) {
             onClick={() => navigate("/assinatura")}
             className="w-full min-h-[48px] btn-premium text-base"
           >
-            Assinar agora — U$ 9,90/mês
+            Assinar agora — R$ 59,90/mês
           </Button>
         </div>
       </div>

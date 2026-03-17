@@ -82,7 +82,7 @@ export default function FeatureGate({
             Ver planos
           </Button>
           <p className="text-[10px] text-muted-foreground">
-            A partir de U$ 9,90/mês · Cancele quando quiser
+            A partir de R$ 59,90/mês · Cancele quando quiser
           </p>
         </div>
       </motion.div>

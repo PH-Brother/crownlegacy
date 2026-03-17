@@ -4,24 +4,24 @@ import { Crown, Shield, Sparkles } from "lucide-react";
 const cards = [
   {
     icon: Crown,
-    label: "Net Worth",
-    value: "$2,430,000",
-    desc: "Your total wealth snapshot",
+    label: "Patrimônio Total",
+    value: "R$ 2.430.000",
+    desc: "Seu patrimônio consolidado",
     delay: 400,
   },
   {
     icon: Shield,
-    label: "Financial Score",
-    value: "78 / 100",
-    desc: "Your financial health rating",
+    label: "Score Financeiro",
+    value: "782 / 1000",
+    desc: "Sua pontuação financeira",
     delay: 500,
   },
   {
     icon: Sparkles,
-    label: "AI Insight",
+    label: "IA Insight",
     value: null,
-    text: "You could reach $8.2M in net worth in 20 years.",
-    desc: "Powered by AI analysis",
+    text: "Você pode alcançar R$ 8,2M em patrimônio em 20 anos.",
+    desc: "Análise com Inteligência Artificial",
     delay: 600,
   },
 ] as const;
@@ -127,7 +127,7 @@ export default function ValuePreview() {
         >
           <button
             onClick={() => navigate("/auth?tab=signup")}
-            aria-label="Create Account"
+            aria-label="Criar Conta"
             className="w-full h-10 rounded-lg text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               background: "linear-gradient(135deg, #F0D58A 0%, #E8C547 100%)",
@@ -135,11 +135,11 @@ export default function ValuePreview() {
               outline: "none",
             }}
           >
-            Create Account
+            Criar Conta
           </button>
           <button
             onClick={() => navigate("/auth?tab=login")}
-            aria-label="Sign In"
+            aria-label="Entrar"
             className="w-full h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-[rgba(240,213,138,0.1)] focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               background: "transparent",
@@ -148,7 +148,7 @@ export default function ValuePreview() {
               outline: "none",
             }}
           >
-            Sign In
+            Entrar
           </button>
         </div>
       </div>
