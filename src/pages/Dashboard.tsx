@@ -136,6 +136,34 @@ export default function Dashboard() {
     }
   }, [loadingNW, assets, nwTransacoes, snapshots, calculateScore]);
 
+  // Contador animado para Patrimônio Líquido
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!netWorth || loadingNW || netWorth === 0) {
+      setDisplayValue(netWorth ?? 0);
+      return;
+    }
+    if (netWorth < 0) {
+      setDisplayValue(netWorth);
+      return;
+    }
+    const duration = 1200;
+    const steps = 60;
+    const increment = netWorth / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= netWorth) {
+        setDisplayValue(netWorth);
+        clearInterval(timer);
+      } else {
+        setDisplayValue(Math.floor(current));
+      }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [netWorth, loadingNW]);
+
   const firstUnread = insights.find((i) => !i.is_read) || insights[0] || null;
 
   const cashflow = (() => {
