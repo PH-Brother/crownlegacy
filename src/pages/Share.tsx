@@ -27,6 +27,10 @@ interface ReferralLink {
   created_at: string;
 }
 
+function isValidReferralCode(code: string): boolean {
+  return /^CL-[A-Z0-9]{6,16}$/.test(code);
+}
+
 export default function Share() {
   const { user } = useAuth();
   const { profile } = useProfile();
