@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-CL-Verde-dourado-Gold-claro.png";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {

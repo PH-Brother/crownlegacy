@@ -24,7 +24,7 @@ import GradientCard from "@/components/ui/GradientCard";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { useWealthGoals } from "@/hooks/useWealthGoals";
 import { calculateDaysRemaining, calculateGoalProgress, getGoalProgressColor } from "@/utils/goalHelpers";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-CL-Verde-dourado-Gold-claro.png";
 import { supabase } from "@/integrations/supabase/client";
 
 const sectionVariants = {
