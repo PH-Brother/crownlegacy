@@ -74,9 +74,11 @@ export default function Share() {
 
   const shareText = (type: string) => {
     const name = profile?.nome_completo?.split(" ")[0] || "Eu";
-    if (type === "score") return `${name} testou seu Score de Inteligência Financeira no Crown & Legacy! Teste o seu:`;
-    if (type === "challenge") return `${name} completou um desafio financeiro no Crown & Legacy! Você consegue?`;
-    return `${name} está projetando seu crescimento de riqueza no Crown & Legacy! Veja:`;
+    if (type === "score")
+      return `${name} está construindo patrimônio com o Crown & Legacy — o app de inteligência financeira para famílias! 🏆 Teste grátis por 14 dias:`;
+    if (type === "challenge")
+      return `${name} acabou de completar um desafio financeiro no Crown & Legacy! 🔥 Aceita o desafio também?`;
+    return `${name} projetou seu patrimônio no Crown & Legacy e os números são incríveis! 📈 Simule o seu:`;
   };
 
   const handleShare = async (type: string, platform: string) => {
