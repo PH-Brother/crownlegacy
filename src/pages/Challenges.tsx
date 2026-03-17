@@ -84,6 +84,15 @@ export default function Challenges() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
+  // Custom challenge states
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customTitle, setCustomTitle] = useState("");
+  const [customDesc, setCustomDesc] = useState("");
+  const [customTarget, setCustomTarget] = useState("0");
+  const [customCategory, setCustomCategory] = useState("Outros");
+  const [customPoints, setCustomPoints] = useState("25");
+  const [savingCustom, setSavingCustom] = useState(false);
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
