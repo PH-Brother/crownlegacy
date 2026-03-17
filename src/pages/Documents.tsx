@@ -81,6 +81,7 @@ export default function Documents() {
   const [uploadProgress, setUploadProgress] = useState("");
   const [dragging, setDragging] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [vencimentoFatura, setVencimentoFatura] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PAGE_SIZE = 10;
