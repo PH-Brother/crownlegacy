@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getVersiculoAleatorio } from "@/lib/versiculos";
+import { getVersiculoAleatorio, getVersiculoContextual } from "@/lib/versiculos";
 
 export default function ReflexaoDiaria() {
   const [verso, setVerso] = useState({ versiculo: "", referencia: "" });
@@ -46,6 +46,12 @@ export default function ReflexaoDiaria() {
       >
         {verso.versiculo}
       </p>
+
+      {verso?.referencia && (
+        <span className="text-[10px] text-primary/40 uppercase tracking-wider mt-1 block">
+          {verso.referencia}
+        </span>
+      )}
 
       <p
         className="mt-2 text-primary"
