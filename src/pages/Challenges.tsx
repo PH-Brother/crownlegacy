@@ -294,6 +294,28 @@ export default function Challenges() {
           </div>
         )}
 
+        {/* Custom Challenge CTA */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Criar meu desafio</h2>
+          <button
+            onClick={() => setCustomOpen(true)}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--accent) / 0.1), hsl(var(--accent) / 0.05))",
+              border: "1px solid hsl(var(--accent) / 0.3)",
+            }}
+          >
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--accent) / 0.15)" }}>
+              ✨
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">Desafio Personalizado</p>
+              <p className="text-xs text-muted-foreground">Crie um desafio de acordo com seus hábitos e metas</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-accent shrink-0" />
+          </button>
+        </div>
+
         {/* Start New Challenge */}
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Iniciar Novo Desafio</h2>
