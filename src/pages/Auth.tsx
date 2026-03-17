@@ -103,6 +103,15 @@ export default function Auth() {
       const data = await signUp(cadEmail, cadSenha, nome);
       toast({ title: "✅ Conta criada!", description: "Verifique seu email para confirmar." });
       if (data.user) {
+        // Increment referral clicks
+        try {
+          const refCode = localStorage.getItem("cl_ref_code");
+          if (refCode && isValidReferralCode(refCode)) {
+            await supabase.rpc("increment_referral_clicks", { p_referral_code: refCode });
+          }
+        } catch (refErr) {
+          console.warn("Erro ao processar referral:", refErr);
+        }
         await navigateAfterAuth(data.user.id);
       }
     } catch (err: unknown) {

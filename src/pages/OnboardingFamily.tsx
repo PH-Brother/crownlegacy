@@ -1,4 +1,8 @@
 import { useState } from "react";
+
+function isValidReferralCode(code: string): boolean {
+  return /^CL-[A-Z0-9]{6,16}$/.test(code);
+}
 import logo from "@/assets/logo-CL-Verde-dourado-Gold-claro.png";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
