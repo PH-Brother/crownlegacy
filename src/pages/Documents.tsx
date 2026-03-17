@@ -23,6 +23,22 @@ const MAX_SIZE = 5 * 1024 * 1024;
 const RATE_LIMIT_KEY = "cl_upload_timestamps";
 const MAX_UPLOADS_PER_HOUR = 5;
 
+function mapCategory(cat: string): string {
+  const map: Record<string, string> = {
+    "Food": "Alimentação",
+    "Transport": "Transporte",
+    "Health": "Saúde",
+    "Education": "Educação",
+    "Entertainment": "Lazer",
+    "Shopping": "Roupas",
+    "Utilities": "Moradia",
+    "Travel": "Lazer",
+    "Services": "Outros",
+    "Other": "Outros",
+  };
+  return map[cat] || "Outros";
+}
+
 interface UploadedFile {
   id: string;
   file_name: string;
