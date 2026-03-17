@@ -1298,6 +1298,10 @@ export type Database = {
       get_user_familia_id:
         | { Args: never; Returns: string }
         | { Args: { user_id: string }; Returns: string }
+      increment_referral_clicks: {
+        Args: { p_referral_code: string }
+        Returns: undefined
+      }
       join_family_with_code: {
         Args: { p_codigo_convite: string }
         Returns: {

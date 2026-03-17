@@ -1,19 +1,32 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+
+function isValidReferralCode(code: string): boolean {
+  return /^CL-[A-Z0-9]{6,16}$/.test(code);
+}
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [searchParams] = useSearchParams();
+
   const [isLogin, setIsLogin] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("tab") !== "signup";
+    return searchParams.get("tab") !== "signup";
   });
+
+  // Capture and persist referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref && isValidReferralCode(ref)) {
+      localStorage.setItem("cl_ref_code", ref);
+    }
+  }, [searchParams]);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
   const [nome, setNome] = useState("");
@@ -90,6 +103,15 @@ export default function Auth() {
       const data = await signUp(cadEmail, cadSenha, nome);
       toast({ title: "✅ Conta criada!", description: "Verifique seu email para confirmar." });
       if (data.user) {
+        // Increment referral clicks
+        try {
+          const refCode = localStorage.getItem("cl_ref_code");
+          if (refCode && isValidReferralCode(refCode)) {
+            await supabase.rpc("increment_referral_clicks", { p_referral_code: refCode });
+          }
+        } catch (refErr) {
+          console.warn("Erro ao processar referral:", refErr);
+        }
         await navigateAfterAuth(data.user.id);
       }
     } catch (err: unknown) {

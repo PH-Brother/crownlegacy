@@ -1,4 +1,8 @@
 import { useState } from "react";
+
+function isValidReferralCode(code: string): boolean {
+  return /^CL-[A-Z0-9]{6,16}$/.test(code);
+}
 import logo from "@/assets/logo-CL-Verde-dourado-Gold-claro.png";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -67,6 +71,59 @@ export default function OnboardingFamily() {
 
       toast({ title: "🏠 Família criada com sucesso!" });
       navigate("/dashboard", { replace: true });
+
+      // Process referral bonus
+      try {
+        const refCode = localStorage.getItem("cl_ref_code");
+        if (refCode && isValidReferralCode(refCode)) {
+          const { data: refLink } = await supabase
+            .from("referral_links")
+            .select("id, referrer_id, conversions")
+            .eq("referral_code", refCode)
+            .maybeSingle();
+
+          if (refLink) {
+            await supabase
+              .from("referral_links")
+              .update({ conversions: (refLink.conversions || 0) + 1 })
+              .eq("id", refLink.id);
+
+            const { data: referrerProfile } = await supabase
+              .from("profiles")
+              .select("familia_id")
+              .eq("id", refLink.referrer_id)
+              .maybeSingle();
+
+            if (referrerProfile?.familia_id) {
+              const { data: familiaRef } = await supabase
+                .from("familias")
+                .select("data_fim_trial")
+                .eq("id", referrerProfile.familia_id)
+                .maybeSingle();
+
+              if (familiaRef) {
+                const baseDate = familiaRef.data_fim_trial
+                  ? new Date(Math.max(new Date(familiaRef.data_fim_trial).getTime(), Date.now()))
+                  : new Date();
+                baseDate.setDate(baseDate.getDate() + 30);
+
+                await supabase
+                  .from("familias")
+                  .update({ data_fim_trial: baseDate.toISOString() })
+                  .eq("id", referrerProfile.familia_id);
+              }
+            }
+
+            localStorage.removeItem("cl_ref_code");
+            toast({
+              title: "🎁 Conta criada via indicação!",
+              description: "Seu amigo ganhou 30 dias grátis no Crown & Legacy.",
+            });
+          }
+        }
+      } catch (refErr) {
+        console.warn("Erro ao processar referral:", refErr);
+      }
     } catch (err) {
       toast({ title: "Erro ao criar família. Tente novamente.", variant: "destructive" });
       console.error(err);

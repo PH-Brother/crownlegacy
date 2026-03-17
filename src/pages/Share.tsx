@@ -27,6 +27,10 @@ interface ReferralLink {
   created_at: string;
 }
 
+function isValidReferralCode(code: string): boolean {
+  return /^CL-[A-Z0-9]{6,16}$/.test(code);
+}
+
 export default function Share() {
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -208,7 +212,7 @@ export default function Share() {
         </div>
 
         {/* Referral Link */}
-        {referral && (
+        {referral && isValidReferralCode(referral.referral_code) ? (
           <Card className="card-premium border-accent/20">
             <CardContent className="p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Seu Link de Referral</p>
@@ -222,6 +226,8 @@ export default function Share() {
               </div>
             </CardContent>
           </Card>
+        ) : (
+          <p className="text-xs text-muted-foreground">Gerando seu link de referral...</p>
         )}
 
         {/* Share Tabs */}
