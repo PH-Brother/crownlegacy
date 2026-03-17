@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-CL-Verde-dourado-Gold-claro.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
