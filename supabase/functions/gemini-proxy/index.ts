@@ -197,7 +197,7 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
           ],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 32768,
+            maxOutputTokens: 65536,
           },
         }),
       });
@@ -220,8 +220,48 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
       console.log("finishReason:", finishReason);
 
       if (finishReason === "MAX_TOKENS") {
+        console.log("MAX_TOKENS atingido — tentando extrair resultado parcial");
+        const partialPart = parsed.candidates?.[0]?.content?.parts?.[0];
+        const partialText = partialPart?.text || "";
+        // Tenta recuperar JSON parcial
+        const clean1 = partialText.split("```json").join("");
+        const clean2 = clean1.split("```").join("");
+        const clean3 = clean2.trim();
+        const startBrace = clean3.indexOf("{");
+        if (startBrace !== -1) {
+          // Fecha arrays e objetos abertos para formar JSON válido
+          let jsonAttempt = clean3.substring(startBrace);
+          // Conta chaves e colchetes abertos
+          let openBraces = 0;
+          let openBrackets = 0;
+          for (let i = 0; i < jsonAttempt.length; i++) {
+            const ch = jsonAttempt[i];
+            if (ch === "{") openBraces++;
+            else if (ch === "}") openBraces--;
+            else if (ch === "[") openBrackets++;
+            else if (ch === "]") openBrackets--;
+          }
+          // Fecha colchetes e chaves pendentes
+          for (let i = 0; i < openBrackets; i++) jsonAttempt += "]";
+          for (let i = 0; i < openBraces; i++) jsonAttempt += "}";
+          // Remove possível vírgula antes de ] ou }
+          jsonAttempt = jsonAttempt.split(",]").join("]");
+          jsonAttempt = jsonAttempt.split(",}").join("}");
+          try {
+            const parcial = JSON.parse(jsonAttempt);
+            parcial.parcial = true;
+            parcial.alerta = "Documento muito extenso — resultado parcial. Algumas transacoes podem nao ter sido extraidas.";
+            console.log("Resultado parcial recuperado. Transacoes:", parcial.transacoes?.length || 0);
+            return new Response(JSON.stringify({ resultado: parcial }), {
+              headers: { ...cors, "Content-Type": "application/json" },
+            });
+          } catch (_parseErr) {
+            console.error("Falha ao recuperar JSON parcial");
+          }
+        }
+        // Se não conseguiu recuperar, retorna erro amigável
         return new Response(
-          JSON.stringify({ error: "Documento muito extenso. Tente um arquivo menor." }),
+          JSON.stringify({ error: "Documento muito extenso. Tente um arquivo menor ou com menos paginas." }),
           { status: 422, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }

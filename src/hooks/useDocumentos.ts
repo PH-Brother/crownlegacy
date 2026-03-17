@@ -127,18 +127,20 @@ export function useDocumentos(userId: string, familiaId: string) {
           throw new Error("Sem resultado");
         }
 
+        const isParcial = resultado.parcial === true;
+
         await supabase
           .from("documentos")
-          .update({ status: "analisado", analise_resultado: resultado })
+          .update({ status: "analisado", analise_resultado: typeof resultado === "string" ? resultado : JSON.stringify(resultado) })
           .eq("id", doc.id);
 
         setDocs((prev) =>
           prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "analisado", analise_resultado: resultado } : d
+            d.id === doc.id ? { ...d, status: "analisado", analise_resultado: typeof resultado === "string" ? resultado : JSON.stringify(resultado) } : d
           )
         );
 
-        toast({ title: "Análise concluída! ✅" });
+        toast({ title: isParcial ? "⚠️ Análise parcial concluída" : "Análise concluída! ✅", description: isParcial ? "Documento muito extenso — algumas transações podem estar faltando." : undefined });
         return resultado;
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : "Erro desconhecido";
