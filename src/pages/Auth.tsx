@@ -1,9 +1,13 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+
+function isValidReferralCode(code: string): boolean {
+  return /^CL-[A-Z0-9]{6,16}$/.test(code);
+}
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
