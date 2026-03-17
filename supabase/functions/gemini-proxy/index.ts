@@ -220,48 +220,84 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
       console.log("finishReason:", finishReason);
 
       if (finishReason === "MAX_TOKENS") {
-        console.log("MAX_TOKENS atingido — tentando extrair resultado parcial");
-        const partialPart = parsed.candidates?.[0]?.content?.parts?.[0];
-        const partialText = partialPart?.text || "";
-        // Tenta recuperar JSON parcial
-        const clean1 = partialText.split("```json").join("");
-        const clean2 = clean1.split("```").join("");
-        const clean3 = clean2.trim();
-        const startBrace = clean3.indexOf("{");
-        if (startBrace !== -1) {
-          // Fecha arrays e objetos abertos para formar JSON válido
-          let jsonAttempt = clean3.substring(startBrace);
-          // Conta chaves e colchetes abertos
-          let openBraces = 0;
-          let openBrackets = 0;
-          for (let i = 0; i < jsonAttempt.length; i++) {
-            const ch = jsonAttempt[i];
-            if (ch === "{") openBraces++;
-            else if (ch === "}") openBraces--;
-            else if (ch === "[") openBrackets++;
-            else if (ch === "]") openBrackets--;
+        console.log("[gemini-proxy] MAX_TOKENS — tentando aproveitar resultado parcial");
+        const partParcial = parsed.candidates?.[0]?.content?.parts?.[0];
+        const textoParcial = partParcial?.text ?? "";
+
+        let resultadoParcial: Record<string, unknown> | null = null;
+
+        try {
+          // 1. Remove marcadores de código markdown
+          let candidato = textoParcial
+            .split("```json").join("")
+            .split("```").join("")
+            .trim();
+
+          // 2. Localiza início do objeto JSON
+          const inicio = candidato.indexOf("{");
+          if (inicio === -1) throw new Error("Nenhum objeto JSON encontrado no texto parcial");
+          candidato = candidato.substring(inicio);
+
+          // 3. Conta chaves abertas para saber se o JSON está incompleto
+          let abertas = 0;
+          for (let i = 0; i < candidato.length; i++) {
+            if (candidato[i] === "{") abertas++;
+            if (candidato[i] === "}") abertas--;
           }
-          // Fecha colchetes e chaves pendentes
-          for (let i = 0; i < openBrackets; i++) jsonAttempt += "]";
-          for (let i = 0; i < openBraces; i++) jsonAttempt += "}";
-          // Remove possível vírgula antes de ] ou }
-          jsonAttempt = jsonAttempt.split(",]").join("]");
-          jsonAttempt = jsonAttempt.split(",}").join("}");
-          try {
-            const parcial = JSON.parse(jsonAttempt);
-            parcial.parcial = true;
-            parcial.alerta = "Documento muito extenso — resultado parcial. Algumas transacoes podem nao ter sido extraidas.";
-            console.log("Resultado parcial recuperado. Transacoes:", parcial.transacoes?.length || 0);
-            return new Response(JSON.stringify({ resultado: parcial }), {
-              headers: { ...cors, "Content-Type": "application/json" },
-            });
-          } catch (_parseErr) {
-            console.error("Falha ao recuperar JSON parcial");
+          console.log("[gemini-proxy] Chaves abertas no JSON parcial: " + abertas);
+
+          // 4. Se há array de transacoes incompleto, tenta truncar na última transação completa
+          if (candidato.includes('"transacoes":[')) {
+            const ultimaTransacaoCompleta = candidato.lastIndexOf("},");
+            if (ultimaTransacaoCompleta > 0 && !candidato.trim().endsWith("]}")) {
+              candidato = candidato.substring(0, ultimaTransacaoCompleta + 1);
+              console.log("[gemini-proxy] Truncado na ultima transacao completa");
+            }
+
+            // 5. Fecha o JSON com campos obrigatórios mínimos
+            candidato += '],' +
+              '"resumo_categorias":[],' +
+              '"insights":["Analise parcial — fatura muito extensa"],' +
+              '"alerta":"Documento processado parcialmente por ser muito extenso",' +
+              '"versiculo":null,' +
+              '"versiculo_ref":null' +
+              "}";
+          } else if (abertas > 0) {
+            // 6. Fallback: fecha chaves abertas genericamente
+            for (let i = 0; i < abertas; i++) candidato += "}";
           }
+
+          // 7. Tenta fazer o parse do JSON reparado
+          resultadoParcial = JSON.parse(candidato) as Record<string, unknown>;
+
+          // 8. Valida campos obrigatórios mínimos
+          const transacoes = resultadoParcial?.transacoes;
+          if (!Array.isArray(transacoes)) {
+            throw new Error("Campo 'transacoes' ausente ou invalido no JSON parcial");
+          }
+
+          console.log("[gemini-proxy] Parcial aproveitado: " + transacoes.length + " transacoes");
+        } catch (errParcial) {
+          console.error("[gemini-proxy] Falha ao recuperar JSON parcial:", errParcial);
+          resultadoParcial = null;
         }
-        // Se não conseguiu recuperar, retorna erro amigável
+
+        // 9. Se conseguiu aproveitar transações, retorna resultado parcial
+        const transacoesParciais = resultadoParcial?.transacoes as unknown[] | undefined;
+        if (resultadoParcial && Array.isArray(transacoesParciais) && transacoesParciais.length > 0) {
+          return new Response(
+            JSON.stringify({ resultado: resultadoParcial, parcial: true }),
+            { headers: { ...cors, "Content-Type": "application/json" } }
+          );
+        }
+
+        // 10. Se não conseguiu aproveitar nada, retorna erro informativo
+        console.warn("[gemini-proxy] Nao foi possivel aproveitar resultado parcial");
         return new Response(
-          JSON.stringify({ error: "Documento muito extenso. Tente um arquivo menor ou com menos paginas." }),
+          JSON.stringify({
+            error: "Documento muito extenso. Divida a fatura em partes menores ou fotografe apenas as paginas de lancamentos.",
+            dica: "Faturas com mais de 100 transacoes podem exceder o limite. Tente enviar apenas as paginas de lancamentos.",
+          }),
           { status: 422, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
