@@ -14,10 +14,19 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [searchParams] = useSearchParams();
+
   const [isLogin, setIsLogin] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("tab") !== "signup";
+    return searchParams.get("tab") !== "signup";
   });
+
+  // Capture and persist referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref && isValidReferralCode(ref)) {
+      localStorage.setItem("cl_ref_code", ref);
+    }
+  }, [searchParams]);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
   const [nome, setNome] = useState("");

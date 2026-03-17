@@ -212,7 +212,7 @@ export default function Share() {
         </div>
 
         {/* Referral Link */}
-        {referral && (
+        {referral && isValidReferralCode(referral.referral_code) ? (
           <Card className="card-premium border-accent/20">
             <CardContent className="p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Seu Link de Referral</p>
