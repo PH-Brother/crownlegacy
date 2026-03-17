@@ -127,6 +127,7 @@ export default function IAConselho() {
   const [analiseMenusal, setAnaliseMensal] = useState("");
   const [gerandoMensal, setGerandoMensal] = useState(false);
   const [lancando, setLancando] = useState(false);
+  const [vencimentoManual, setVencimentoManual] = useState("");
 
   // Edit/delete transaction states
   const [deleteTransacaoId, setDeleteTransacaoId] = useState<string | null>(null);
@@ -280,6 +281,9 @@ export default function IAConselho() {
         transacao: { data_lancamento?: string | null; data?: string | null },
         resultadoIA: { data_lancamento?: string | null; vencimento?: string | null }
       ): string => {
+        // Prioridade 1: vencimento manual informado pelo usuário
+        if (vencimentoManual) return `${vencimentoManual}-01`;
+
         const dl = transacao.data_lancamento ?? resultadoIA.data_lancamento;
         const porLancamento = mesParaDate(dl);
         if (porLancamento) return porLancamento;
@@ -349,6 +353,7 @@ export default function IAConselho() {
       setResultadoAnalise(null);
       setTransacoesEditaveis([]);
       setPreviewUrl(null);
+      setVencimentoManual("");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao lançar";
       toast({ title: msg, variant: "destructive" });
@@ -471,6 +476,22 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
               <strong className="text-foreground">PDF</strong> de fatura, extrato ou nota fiscal.
               A IA extrai todas as despesas, categoriza e lança no mês correto automaticamente.
             </p>
+
+            {/* Campo de vencimento para faturas */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">
+                Mês de vencimento da fatura (opcional)
+              </label>
+              <input
+                type="month"
+                value={vencimentoManual}
+                onChange={(e) => setVencimentoManual(e.target.value)}
+                className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none focus:border-primary text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Informe o mês do vencimento para lançar as despesas no mês correto
+              </p>
+            </div>
 
             {/* Área de upload unificada */}
             <label className="cursor-pointer block">

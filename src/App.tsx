@@ -40,6 +40,7 @@ import ProjectionPage from "./pages/Projection";
 import Challenges from "./pages/Challenges";
 import Share from "./pages/Share";
 import FamilyNetwork from "./pages/FamilyNetwork";
+import MinhaFamilia from "./pages/MinhaFamilia";
 import Mais from "./pages/Mais";
 import NotFound from "./pages/NotFound";
 
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/challenges" element={<Challenges />} />
               <Route path="/share" element={<Share />} />
               <Route path="/family-network" element={<FamilyNetwork />} />
+              <Route path="/minha-familia" element={<MinhaFamilia />} />
               <Route path="/mais" element={<Mais />} />
             </Route>
             <Route path="*" element={<NotFound />} />

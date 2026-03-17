@@ -23,6 +23,22 @@ const MAX_SIZE = 5 * 1024 * 1024;
 const RATE_LIMIT_KEY = "cl_upload_timestamps";
 const MAX_UPLOADS_PER_HOUR = 5;
 
+function mapCategory(cat: string): string {
+  const map: Record<string, string> = {
+    "Food": "Alimentação",
+    "Transport": "Transporte",
+    "Health": "Saúde",
+    "Education": "Educação",
+    "Entertainment": "Lazer",
+    "Shopping": "Roupas",
+    "Utilities": "Moradia",
+    "Travel": "Lazer",
+    "Services": "Outros",
+    "Other": "Outros",
+  };
+  return map[cat] || "Outros";
+}
+
 interface UploadedFile {
   id: string;
   file_name: string;
@@ -65,6 +81,7 @@ export default function Documents() {
   const [uploadProgress, setUploadProgress] = useState("");
   const [dragging, setDragging] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [vencimentoFatura, setVencimentoFatura] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PAGE_SIZE = 10;
@@ -151,6 +168,43 @@ export default function Documents() {
 
       const count = result?.transactionsCount || 0;
       toast({ title: `✅ ${count} transações extraídas com sucesso!` });
+
+      // Lança transações extraídas também na tabela "transacoes" do app
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && result?.transactions?.length > 0) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("familia_id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (prof?.familia_id) {
+            const rows = result.transactions.map((t: any) => {
+              let dataFinal = t.date || new Date().toISOString().split("T")[0];
+              if (vencimentoFatura) {
+                dataFinal = `${vencimentoFatura}-01`;
+              }
+              return {
+                usuario_id: session.user.id,
+                familia_id: prof.familia_id,
+                tipo: "despesa",
+                valor: Math.abs(Number(t.amount || 0)),
+                categoria: mapCategory(t.category || "Other"),
+                descricao: t.merchant || t.description || "PDF importado",
+                data_transacao: dataFinal,
+                recorrente: false,
+                tags: ["pdf-importado"],
+              };
+            });
+            await supabase.from("transacoes").insert(rows);
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao lançar em transacoes:", err);
+      }
+
+      setVencimentoFatura("");
       setPage(1);
       await fetchFiles();
     } catch (err) {
@@ -222,6 +276,22 @@ export default function Documents() {
             <CardTitle className="text-base text-foreground">Upload de Comprovante Financeiro</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Campo de vencimento para faturas */}
+            <div className="mb-4 space-y-1.5">
+              <label className="text-xs font-medium text-foreground">
+                Mês de vencimento da fatura (opcional)
+              </label>
+              <input
+                type="month"
+                value={vencimentoFatura}
+                onChange={(e) => setVencimentoFatura(e.target.value)}
+                className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none focus:border-primary text-sm"
+                placeholder="Ex: 2026-03"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Para faturas de cartão: informe o mês do vencimento para lançar no mês correto
+              </p>
+            </div>
             <div
               role="button"
               aria-label="Arraste um PDF ou clique para selecionar"

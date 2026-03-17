@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, TrendingUp, Target, FileText, Users, Share2, Flame, Crown, User, Settings, ChevronRight, Users2, MessageCircle, BarChart3 } from "lucide-react";
+import { Sparkles, TrendingUp, Target, FileText, Users, Share2, Flame, Crown, User, Settings, ChevronRight, MessageCircle, BarChart3 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import AppLayout from "@/components/AppLayout";
 
@@ -23,8 +23,7 @@ const sections = [
   {
     label: "Família",
     items: [
-      { icon: Users, label: "Gestão Familiar", desc: "Patrimônio da família", path: "/family-wealth", badge: "invites", gold: false },
-      { icon: Users2, label: "Rede Familiar", desc: "Conecte membros", path: "/family-network", gold: false },
+      { icon: Users, label: "Minha Família", desc: "Patrimônio, rede e metas familiares", path: "/minha-familia", badge: "invites", gold: false },
     ],
   },
   {
