@@ -168,6 +168,43 @@ export default function Documents() {
 
       const count = result?.transactionsCount || 0;
       toast({ title: `✅ ${count} transações extraídas com sucesso!` });
+
+      // Lança transações extraídas também na tabela "transacoes" do app
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && result?.transactions?.length > 0) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("familia_id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (prof?.familia_id) {
+            const rows = result.transactions.map((t: any) => {
+              let dataFinal = t.date || new Date().toISOString().split("T")[0];
+              if (vencimentoFatura) {
+                dataFinal = `${vencimentoFatura}-01`;
+              }
+              return {
+                usuario_id: session.user.id,
+                familia_id: prof.familia_id,
+                tipo: "despesa",
+                valor: Math.abs(Number(t.amount || 0)),
+                categoria: mapCategory(t.category || "Other"),
+                descricao: t.merchant || t.description || "PDF importado",
+                data_transacao: dataFinal,
+                recorrente: false,
+                tags: ["pdf-importado"],
+              };
+            });
+            await supabase.from("transacoes").insert(rows);
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao lançar em transacoes:", err);
+      }
+
+      setVencimentoFatura("");
       setPage(1);
       await fetchFiles();
     } catch (err) {
