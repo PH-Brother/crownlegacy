@@ -123,8 +123,7 @@ export default function DesktopSidebar() {
 
         <NavSeparator label="Família" />
         {[
-          { path: "/family-wealth", icon: Users, label: "Família", badgeKey: "invites" as const },
-          { path: "/family-network", icon: Users, label: "Rede Familiar" },
+          { path: "/minha-familia", icon: Users, label: "Minha Família", badgeKey: "invites" as const },
           { path: "/share", icon: Share2, label: "Compartilhar" },
         ].map(({ path, icon: Icon, label, badgeKey }) => (
           <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={getBadge(badgeKey)} />

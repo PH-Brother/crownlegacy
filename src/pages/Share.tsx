@@ -157,6 +157,35 @@ export default function Share() {
       <div className="mx-auto max-w-[520px] px-4 py-6 space-y-5">
         <h1 className="text-xl font-bold text-foreground font-display">Compartilhar</h1>
 
+        {/* Seção de Incentivo */}
+        <Card className="card-premium border-accent/20">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🎁</span>
+              <div>
+                <p className="text-sm font-bold text-foreground">Programa de Indicação</p>
+                <p className="text-xs text-muted-foreground">Indique amigos e ganhe recompensas</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 rounded-xl" style={{ background: "hsl(var(--accent) / 0.08)", border: "1px solid hsl(var(--accent) / 0.2)" }}>
+                <p className="text-xl font-mono font-bold text-accent">30 dias</p>
+                <p className="text-[10px] text-muted-foreground font-medium">Premium grátis</p>
+                <p className="text-[10px] text-muted-foreground">para você</p>
+              </div>
+              <div className="text-center p-3 rounded-xl" style={{ background: "hsl(var(--primary) / 0.08)", border: "1px solid hsl(var(--primary) / 0.2)" }}>
+                <p className="text-xl font-mono font-bold text-primary">14 dias</p>
+                <p className="text-[10px] text-muted-foreground font-medium">trial estendido</p>
+                <p className="text-[10px] text-muted-foreground">para o indicado</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              A cada amigo que criar conta usando seu link e permanecer ativo por 7 dias, você ganha{" "}
+              <span className="text-accent font-semibold">30 dias grátis</span> no Crown & Legacy Premium. Sem limite de indicações. 👑
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Tracking Overview */}
         <div className="grid grid-cols-3 gap-2">
           <Card className="card-premium">

@@ -276,6 +276,22 @@ export default function Documents() {
             <CardTitle className="text-base text-foreground">Upload de Comprovante Financeiro</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Campo de vencimento para faturas */}
+            <div className="mb-4 space-y-1.5">
+              <label className="text-xs font-medium text-foreground">
+                Mês de vencimento da fatura (opcional)
+              </label>
+              <input
+                type="month"
+                value={vencimentoFatura}
+                onChange={(e) => setVencimentoFatura(e.target.value)}
+                className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none focus:border-primary text-sm"
+                placeholder="Ex: 2026-03"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Para faturas de cartão: informe o mês do vencimento para lançar no mês correto
+              </p>
+            </div>
             <div
               role="button"
               aria-label="Arraste um PDF ou clique para selecionar"

@@ -353,6 +353,7 @@ export default function IAConselho() {
       setResultadoAnalise(null);
       setTransacoesEditaveis([]);
       setPreviewUrl(null);
+      setVencimentoManual("");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao lançar";
       toast({ title: msg, variant: "destructive" });

@@ -400,6 +400,89 @@ export default function Challenges() {
           </div>
         )}
       </div>
+
+      {/* Custom Challenge Dialog */}
+      <Dialog open={customOpen} onOpenChange={(o) => !o && setCustomOpen(false)}>
+        <DialogContent className="max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>✨ Criar Desafio Personalizado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Nome do desafio *</Label>
+              <Input
+                placeholder="Ex: Não pedir delivery por 7 dias"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value.slice(0, 80))}
+                className="min-h-[44px]"
+                maxLength={80}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Descrição (opcional)</Label>
+              <Textarea
+                placeholder="Descreva seu desafio..."
+                value={customDesc}
+                onChange={(e) => setCustomDesc(e.target.value.slice(0, 200))}
+                className="min-h-[72px] resize-none"
+                maxLength={200}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Categoria</Label>
+                <select
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none text-sm"
+                >
+                  <option value="Alimentação">🍽️ Alimentação</option>
+                  <option value="Transporte">🚗 Transporte</option>
+                  <option value="Lazer">🎉 Lazer</option>
+                  <option value="Compras">🛍️ Compras</option>
+                  <option value="Saúde">❤️ Saúde</option>
+                  <option value="Poupança">💰 Poupança</option>
+                  <option value="Outros">📦 Outros</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Meta (R$)</Label>
+                <Input
+                  type="number"
+                  placeholder="Ex: 500"
+                  value={customTarget}
+                  onChange={(e) => setCustomTarget(e.target.value)}
+                  min={0}
+                  className="min-h-[44px]"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Recompensa em pontos</Label>
+              <select
+                value={customPoints}
+                onChange={(e) => setCustomPoints(e.target.value)}
+                className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none text-sm"
+              >
+                <option value="25">25 pontos — Desafio leve</option>
+                <option value="50">50 pontos — Desafio médio</option>
+                <option value="100">100 pontos — Desafio difícil</option>
+                <option value="200">200 pontos — Desafio extremo</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => setCustomOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={saveCustomChallenge}
+              disabled={savingCustom || !customTitle.trim()}
+              className="gradient-gold text-primary-foreground font-bold"
+            >
+              {savingCustom ? "Criando..." : "🎯 Criar Desafio"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
