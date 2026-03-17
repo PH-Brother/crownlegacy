@@ -226,6 +226,8 @@ export default function Share() {
               </div>
             </CardContent>
           </Card>
+        ) : (
+          <p className="text-xs text-muted-foreground">Gerando seu link de referral...</p>
         )}
 
         {/* Share Tabs */}
