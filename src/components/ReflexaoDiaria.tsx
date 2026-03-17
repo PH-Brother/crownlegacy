@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getVersiculoAleatorio } from "@/lib/versiculos";
+import { getVersiculoAleatorio, getVersiculoContextual } from "@/lib/versiculos";
 
 export default function ReflexaoDiaria() {
   const [verso, setVerso] = useState({ versiculo: "", referencia: "" });
