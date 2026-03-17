@@ -175,6 +175,38 @@ export default function Challenges() {
     }
   };
 
+  const saveCustomChallenge = async () => {
+    if (!user || !customTitle.trim()) {
+      toast({ title: "Dê um título ao seu desafio", variant: "destructive" });
+      return;
+    }
+    setSavingCustom(true);
+    try {
+      const { error } = await supabase.from("wisdom_challenges").insert({
+        user_id: user.id,
+        challenge_type: "custom",
+        category: customCategory,
+        target_amount: Number(customTarget) || 0,
+        actual_amount: 0,
+        status: "active",
+        streak_count: currentStreak,
+      });
+      if (error) throw error;
+      toast({ title: `🎯 Desafio "${customTitle}" criado! Bora vencer!` });
+      setCustomOpen(false);
+      setCustomTitle("");
+      setCustomDesc("");
+      setCustomTarget("0");
+      setCustomCategory("Outros");
+      setCustomPoints("25");
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Erro ao criar desafio", description: err?.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setSavingCustom(false);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     if (status === "completed") return <CheckCircle2 className="h-4 w-4 text-success" />;
     if (status === "failed") return <XCircle className="h-4 w-4 text-destructive" />;
