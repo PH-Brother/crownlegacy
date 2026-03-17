@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
-import { useAppUrl } from "@/hooks/useAppUrl";
 
 interface ShareEvent {
   id: string;

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, TrendingUp, Target, FileText, Users, Share2, Flame, Crown, User, Settings, ChevronRight, Users2, MessageCircle, BarChart3 } from "lucide-react";
+import { Sparkles, TrendingUp, Target, FileText, Users, Share2, Flame, Crown, User, Settings, ChevronRight, MessageCircle, BarChart3 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import AppLayout from "@/components/AppLayout";
 
