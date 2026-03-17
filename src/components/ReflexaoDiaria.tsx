@@ -47,6 +47,12 @@ export default function ReflexaoDiaria() {
         {verso.versiculo}
       </p>
 
+      {verso?.referencia && (
+        <span className="text-[10px] text-primary/40 uppercase tracking-wider mt-1 block">
+          {verso.referencia}
+        </span>
+      )}
+
       <p
         className="mt-2 text-primary"
         style={{
