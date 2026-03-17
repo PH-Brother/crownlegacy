@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flame, Star, Trophy, CheckCircle2, XCircle, Clock, Plus, Loader2, Target } from "lucide-react";
+import { Flame, Star, Trophy, CheckCircle2, XCircle, Clock, Plus, Loader2, Target, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
