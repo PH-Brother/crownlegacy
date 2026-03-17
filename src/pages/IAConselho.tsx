@@ -127,6 +127,7 @@ export default function IAConselho() {
   const [analiseMenusal, setAnaliseMensal] = useState("");
   const [gerandoMensal, setGerandoMensal] = useState(false);
   const [lancando, setLancando] = useState(false);
+  const [vencimentoManual, setVencimentoManual] = useState("");
 
   // Edit/delete transaction states
   const [deleteTransacaoId, setDeleteTransacaoId] = useState<string | null>(null);
