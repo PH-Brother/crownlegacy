@@ -281,6 +281,9 @@ export default function IAConselho() {
         transacao: { data_lancamento?: string | null; data?: string | null },
         resultadoIA: { data_lancamento?: string | null; vencimento?: string | null }
       ): string => {
+        // Prioridade 1: vencimento manual informado pelo usuário
+        if (vencimentoManual) return `${vencimentoManual}-01`;
+
         const dl = transacao.data_lancamento ?? resultadoIA.data_lancamento;
         const porLancamento = mesParaDate(dl);
         if (porLancamento) return porLancamento;
