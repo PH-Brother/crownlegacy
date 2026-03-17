@@ -4,24 +4,24 @@ import { Crown, Shield, Sparkles } from "lucide-react";
 const cards = [
   {
     icon: Crown,
-    label: "Net Worth",
-    value: "$2,430,000",
-    desc: "Your total wealth snapshot",
+    label: "Patrimônio Total",
+    value: "R$ 2.430.000",
+    desc: "Seu patrimônio consolidado",
     delay: 400,
   },
   {
     icon: Shield,
-    label: "Financial Score",
-    value: "78 / 100",
-    desc: "Your financial health rating",
+    label: "Score Financeiro",
+    value: "782 / 1000",
+    desc: "Sua pontuação financeira",
     delay: 500,
   },
   {
     icon: Sparkles,
-    label: "AI Insight",
+    label: "IA Insight",
     value: null,
-    text: "You could reach $8.2M in net worth in 20 years.",
-    desc: "Powered by AI analysis",
+    text: "Você pode alcançar R$ 8,2M em patrimônio em 20 anos.",
+    desc: "Análise com Inteligência Artificial",
     delay: 600,
   },
 ] as const;
