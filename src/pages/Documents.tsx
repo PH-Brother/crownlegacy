@@ -130,6 +130,7 @@ function isImageFile(name: string): boolean {
 export default function Documents() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(true);
