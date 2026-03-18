@@ -44,6 +44,20 @@ function pluralTransacao(n: number): string {
   return n === 1 ? "1 transação" : `${n} transações`;
 }
 
+function getDataHoje(): string {
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+function isDataValida(date: string): boolean {
+  if (!date || date.trim() === "") return false;
+  const parsed = Date.parse(date);
+  return !isNaN(parsed);
+}
+
 interface UploadedFile {
   id: string;
   file_name: string;
@@ -164,11 +178,23 @@ export default function Documents() {
       setUploadProgress("Registrando arquivo...");
 
       // Insert file record
+      const fileName = (() => {
+        if (vencimentoFatura) {
+          try {
+            const [ano, mes] = vencimentoFatura.split("-");
+            const d = new Date(Number(ano), Number(mes) - 1, 1);
+            const mesNome = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+            return `Fatura ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)} — ${file.name}`;
+          } catch { /* fallback */ }
+        }
+        return file.name;
+      })();
+
       const { data: fileRecord, error: dbErr } = await supabase
         .from("uploaded_files")
         .insert({
           user_id: user.id,
-          file_name: file.name,
+          file_name: fileName,
           file_size: file.size,
           file_url: storagePath,
           status: "processing",
@@ -247,23 +273,22 @@ export default function Documents() {
             .maybeSingle();
 
           if (prof?.familia_id) {
-            const rows = resultTransactions.map((t: any) => {
-              let dataFinal = t.date || t.data || new Date().toISOString().split("T")[0];
-              if (vencimentoFatura) {
-                dataFinal = `${vencimentoFatura}-01`;
-              }
-              return {
+            const rows = resultTransactions.map((t: any) => ({
                 usuario_id: session.user.id,
                 familia_id: prof.familia_id,
                 tipo: "despesa",
                 valor: Math.abs(Number(t.amount || t.valor || 0)),
                 categoria: mapCategory(t.category || t.categoria || "Other"),
                 descricao: t.merchant || t.description || t.descricao || "Documento importado",
-                data_transacao: dataFinal,
+                data_transacao: (() => {
+                  if (vencimentoFatura && vencimentoFatura.trim() !== "") return `${vencimentoFatura}-01`;
+                  const aiDate = t.date || t.data;
+                  if (aiDate && isDataValida(aiDate)) return aiDate;
+                  return getDataHoje();
+                })(),
                 recorrente: false,
                 tags: ["documento-importado"],
-              };
-            });
+              }));
             await supabase.from("transacoes").insert(rows);
           }
         }

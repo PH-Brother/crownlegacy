@@ -96,7 +96,7 @@ export default function DesktopSidebar() {
         {[
           { path: "/dashboard", icon: Home, label: "Início" },
           { path: "/assets", icon: Building2, label: "Ativos" },
-          { path: "/nova-transacao", icon: Zap, label: "Lançar" },
+          { path: "/documents", icon: Zap, label: "Lançar" },
           { path: "/projection", icon: TrendingUp, label: "Projeção" },
         ].map(({ path, icon: Icon, label }) => (
           <NavItem key={path} path={path} Icon={Icon} label={label} active={pathname === path} badge={0} />

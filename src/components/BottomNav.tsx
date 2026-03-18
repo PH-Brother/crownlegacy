@@ -5,14 +5,14 @@ import { useNotifications } from "@/hooks/useNotifications";
 const items = [
   { path: "/dashboard", label: "Início", icon: Home },
   { path: "/assets", icon: Building2, label: "Ativos" },
-  { path: "/nova-transacao", icon: Zap, label: "Lançar" },
+  { path: "/documents", icon: Zap, label: "Lançar" },
   { path: "/ia-conselho", icon: BookOpen, label: "Sabedoria" },
   { path: "/mais", icon: LayoutGrid, label: "Mais", badgeKey: "invites" as const },
 ];
 
 const MAIS_ROUTES = [
   "/insights", "/goals", "/projection", "/challenges",
-  "/family-wealth", "/family-network", "/minha-familia", "/share", "/documents",
+  "/family-wealth", "/family-network", "/minha-familia", "/share",
   "/planos", "/perfil", "/configuracoes", "/copilot", "/financial-insights",
 ];
 
