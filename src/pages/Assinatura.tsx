@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useAssinatura } from "@/hooks/useAssinatura";
 import BottomNav from "@/components/BottomNav";
+
+const PRICE_MENSAL = import.meta.env.VITE_STRIPE_PRICE_MENSAL || "";
 
 const BENEFICIOS = [
   "Transações ilimitadas",
@@ -24,21 +27,9 @@ export default function Assinatura() {
   const { familia } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { isPremium, checkoutLoading, portalLoading, iniciarCheckout, abrirPortalCliente, assinatura } = useAssinatura();
 
-  const isActive = familia?.plano === "premium" || familia?.plano === "active";
-
-  const handleCheckout = async () => {
-    setLoading(true);
-    try {
-      // TODO: Integrate with Stripe Checkout
-      toast({ title: "🔧 Integração com Stripe em breve!", description: "Por enquanto, aproveite o trial." });
-    } catch {
-      toast({ title: "Erro ao iniciar checkout", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isActive = isPremium || familia?.plano === "premium" || familia?.plano === "active";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -58,7 +49,7 @@ export default function Assinatura() {
               {isActive ? "Plano Premium Ativo" : "Crown & Legacy Premium"}
             </h2>
             <p className="text-3xl font-bold text-primary mb-1">R$ 59,90<span className="text-sm text-muted-foreground">/mês</span></p>
-            <p className="text-sm text-accent font-medium">ou R$ 499,00/ano <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-accent ml-1">Economize 30%</span></p>
+            <p className="text-sm text-accent font-medium">ou R$ 499,00/ano <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-accent ml-1">Economize 31%</span></p>
             {!isActive && <p className="text-sm text-muted-foreground">7 dias grátis para experimentar</p>}
           </CardContent>
         </Card>
@@ -84,17 +75,18 @@ export default function Assinatura() {
           <Button
             variant="outline"
             className="w-full min-h-[48px] border-primary/30 text-primary"
-            onClick={() => toast({ title: "🔧 Portal de gerenciamento em breve!" })}
+            onClick={abrirPortalCliente}
+            disabled={portalLoading}
           >
-            Gerenciar Assinatura
+            {portalLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Gerenciar Assinatura"}
           </Button>
         ) : (
           <Button
-            onClick={handleCheckout}
-            disabled={loading}
+            onClick={() => iniciarCheckout(PRICE_MENSAL)}
+            disabled={checkoutLoading}
             className="w-full min-h-[48px] gradient-gold text-primary-foreground font-bold text-base"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🚀 Começar 7 Dias Grátis"}
+            {checkoutLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "🚀 Começar 7 Dias Grátis"}
           </Button>
         )}
       </div>

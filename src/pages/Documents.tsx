@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, FileText, Loader2, Trash2, Eye, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Upload, FileText, Image, Loader2, Trash2, Eye, AlertCircle, CheckCircle2, Clock, X, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
 const RATE_LIMIT_KEY = "cl_upload_timestamps";
 const MAX_UPLOADS_PER_HOUR = 5;
 
@@ -36,13 +37,18 @@ function mapCategory(cat: string): string {
     "Services": "Outros",
     "Other": "Outros",
   };
-  return map[cat] || "Outros";
+  return map[cat] || cat || "Outros";
+}
+
+function pluralTransacao(n: number): string {
+  return n === 1 ? "1 transação" : `${n} transações`;
 }
 
 interface UploadedFile {
   id: string;
   file_name: string;
   file_size: number | null;
+  file_url: string | null;
   status: string | null;
   transactions_count: number | null;
   error_message: string | null;
@@ -71,6 +77,11 @@ function recordUpload() {
   } catch { /* noop */ }
 }
 
+function isImageFile(name: string): boolean {
+  const ext = name.split(".").pop()?.toLowerCase() || "";
+  return ["jpg", "jpeg", "png", "webp", "heic"].includes(ext);
+}
+
 export default function Documents() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -81,9 +92,11 @@ export default function Documents() {
   const [uploadProgress, setUploadProgress] = useState("");
   const [dragging, setDragging] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [vencimentoFatura, setVencimentoFatura] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [viewingFile, setViewingFile] = useState<{ url: string; type: "pdf" | "image"; name: string } | null>(null);
   const PAGE_SIZE = 10;
 
   const fetchFiles = useCallback(async () => {
@@ -100,7 +113,7 @@ export default function Documents() {
 
     const { data } = await supabase
       .from("uploaded_files")
-      .select("id, file_name, file_size, status, transactions_count, error_message, created_at")
+      .select("id, file_name, file_size, file_url, status, transactions_count, error_message, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .range(from, to);
@@ -115,12 +128,17 @@ export default function Documents() {
 
   const handleUpload = async (file: File) => {
     if (!user) return;
-    if (file.type !== "application/pdf") {
-      toast({ title: "Arquivo inválido", description: "Apenas PDF é suportado", variant: "destructive" });
+
+    const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const isAllowed = ALLOWED_TYPES.includes(file.type) || ext === "pdf" || ["jpg", "jpeg", "png", "webp", "heic"].includes(ext);
+
+    if (!isAllowed) {
+      toast({ title: "Arquivo inválido", description: "Formatos aceitos: JPG, PNG, WEBP, HEIC, PDF", variant: "destructive" });
       return;
     }
     if (file.size > MAX_SIZE) {
-      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
+      toast({ title: "Arquivo muito grande", description: "Máximo 10MB", variant: "destructive" });
       return;
     }
     if (!checkRateLimit()) {
@@ -132,7 +150,9 @@ export default function Documents() {
     setUploadProgress("Enviando arquivo...");
 
     try {
-      const storagePath = `${user.id}/${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}-${Date.now()}.pdf`;
+      const safeExt = ext || "bin";
+      const storagePath = `${user.id}/${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}-${Date.now()}.${safeExt}`;
+      const isPdf = file.type === "application/pdf" || ext === "pdf";
 
       // Upload to storage
       const { error: storageErr } = await supabase.storage
@@ -159,20 +179,67 @@ export default function Documents() {
 
       setUploadProgress("Analisando com IA... aguarde");
 
-      // Call edge function
-      const { data: result, error: fnErr } = await supabase.functions.invoke("pdf-parser", {
-        body: { fileId: fileRecord.id, storagePath, fileName: file.name },
-      });
+      let count = 0;
+      let resultTransactions: any[] = [];
 
-      if (fnErr) throw fnErr;
+      if (isPdf) {
+        // PDF → use pdf-parser edge function
+        const { data: result, error: fnErr } = await supabase.functions.invoke("pdf-parser", {
+          body: { fileId: fileRecord.id, storagePath, fileName: file.name },
+        });
+        if (fnErr) throw fnErr;
+        count = result?.transactionsCount || 0;
+        resultTransactions = result?.transactions || [];
+      } else {
+        // Image → use gemini-proxy edge function with signed URL
+        const { data: urlData } = await supabase.storage
+          .from("financial-documents")
+          .createSignedUrl(storagePath, 600);
+        if (!urlData?.signedUrl) throw new Error("Arquivo não encontrado");
 
-      const count = result?.transactionsCount || 0;
-      toast({ title: `✅ ${count} transações extraídas com sucesso!` });
+        const MIME_MAP: Record<string, string> = {
+          jpg: "image/jpeg", jpeg: "image/jpeg",
+          png: "image/png", webp: "image/webp", heic: "image/heic",
+        };
+        const mimeResolvido = file.type && file.type !== "application/octet-stream"
+          ? file.type.toLowerCase().trim()
+          : MIME_MAP[ext] || "image/jpeg";
 
-      // Lança transações extraídas também na tabela "transacoes" do app
+        const { data: result, error: fnErr } = await supabase.functions.invoke("gemini-proxy", {
+          body: {
+            signedUrl: urlData.signedUrl,
+            mimeType: mimeResolvido,
+            fileName: file.name,
+          },
+        });
+        if (fnErr) throw fnErr;
+        if (result?.error) throw new Error(result.error);
+
+        const resultado = result?.resultado;
+        if (resultado && typeof resultado === "object" && Array.isArray(resultado.transacoes)) {
+          count = resultado.transacoes.length;
+          resultTransactions = resultado.transacoes.map((t: any) => ({
+            amount: t.valor,
+            merchant: t.descricao,
+            category: t.categoria,
+            date: t.data,
+            description: t.descricao,
+          }));
+        }
+
+        // Update file record
+        await supabase.from("uploaded_files").update({
+          status: "completed",
+          transactions_count: count,
+        }).eq("id", fileRecord.id);
+      }
+
+      toast({ title: `✅ ${pluralTransacao(count)} extraída${count !== 1 ? "s" : ""} com sucesso!` });
+
+      // Sync to transacoes table
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session && result?.transactions?.length > 0) {
+        if (session && resultTransactions.length > 0) {
           const { data: prof } = await supabase
             .from("profiles")
             .select("familia_id")
@@ -180,8 +247,8 @@ export default function Documents() {
             .maybeSingle();
 
           if (prof?.familia_id) {
-            const rows = result.transactions.map((t: any) => {
-              let dataFinal = t.date || new Date().toISOString().split("T")[0];
+            const rows = resultTransactions.map((t: any) => {
+              let dataFinal = t.date || t.data || new Date().toISOString().split("T")[0];
               if (vencimentoFatura) {
                 dataFinal = `${vencimentoFatura}-01`;
               }
@@ -189,12 +256,12 @@ export default function Documents() {
                 usuario_id: session.user.id,
                 familia_id: prof.familia_id,
                 tipo: "despesa",
-                valor: Math.abs(Number(t.amount || 0)),
-                categoria: mapCategory(t.category || "Other"),
-                descricao: t.merchant || t.description || "PDF importado",
+                valor: Math.abs(Number(t.amount || t.valor || 0)),
+                categoria: mapCategory(t.category || t.categoria || "Other"),
+                descricao: t.merchant || t.description || t.descricao || "Documento importado",
                 data_transacao: dataFinal,
                 recorrente: false,
-                tags: ["pdf-importado"],
+                tags: ["documento-importado"],
               };
             });
             await supabase.from("transacoes").insert(rows);
@@ -229,14 +296,56 @@ export default function Documents() {
     if (f) handleUpload(f);
   };
 
+  const handleViewFile = async (file: UploadedFile) => {
+    if (!file.file_url) {
+      toast({ title: "Arquivo não disponível", variant: "destructive" });
+      return;
+    }
+    try {
+      const { data } = await supabase.storage
+        .from("financial-documents")
+        .createSignedUrl(file.file_url, 3600);
+      if (!data?.signedUrl) throw new Error("URL não encontrada");
+
+      const type = isImageFile(file.file_name) ? "image" : "pdf";
+      setViewingFile({ url: data.signedUrl, type, name: file.file_name });
+    } catch {
+      toast({ title: "Erro ao carregar arquivo", variant: "destructive" });
+    }
+  };
+
   const handleDelete = async () => {
-    if (!deleteId) return;
-    // Delete transactions first
-    await supabase.from("transactions").delete().eq("file_id", deleteId);
-    await supabase.from("uploaded_files").delete().eq("id", deleteId);
-    toast({ title: "Arquivo deletado" });
-    setDeleteId(null);
-    fetchFiles();
+    if (!deleteId || !user) return;
+    setDeleting(true);
+    try {
+      // Find the file to get its storage path
+      const fileToDelete = files.find(f => f.id === deleteId);
+
+      // Delete associated transacoes (by tag + user)
+      await supabase.from("transacoes")
+        .delete()
+        .eq("usuario_id", user.id)
+        .contains("tags", ["documento-importado"]);
+
+      // Delete transactions from transactions table
+      await supabase.from("transactions").delete().eq("file_id", deleteId);
+
+      // Delete from storage if path exists
+      if (fileToDelete?.file_url) {
+        await supabase.storage.from("financial-documents").remove([fileToDelete.file_url]);
+      }
+
+      // Delete the file record
+      await supabase.from("uploaded_files").delete().eq("id", deleteId);
+
+      toast({ title: "Documento excluído com sucesso" });
+      setDeleteId(null);
+      fetchFiles();
+    } catch {
+      toast({ title: "Erro ao excluir documento", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -289,12 +398,12 @@ export default function Documents() {
                 placeholder="Ex: 2026-03"
               />
               <p className="text-[10px] text-muted-foreground">
-                Para faturas de cartão: informe o mês do vencimento para lançar no mês correto
+                Para faturas de cartão: informe o mês do vencimento para lançar as despesas no mês correto
               </p>
             </div>
             <div
               role="button"
-              aria-label="Arraste um PDF ou clique para selecionar"
+              aria-label="Arraste um arquivo ou clique para selecionar"
               aria-busy={uploading}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
@@ -312,19 +421,27 @@ export default function Documents() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <Upload className="h-10 w-10 text-primary/60" />
-                  <p className="text-sm text-foreground font-medium">Arraste um PDF aqui ou clique para selecionar</p>
-                  <p className="text-xs text-muted-foreground">PDF, máx 5MB</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                      <Image className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="h-8 w-px rounded-full bg-border" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                      <FileText className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-foreground font-medium">Toque para enviar foto ou PDF</p>
+                  <p className="text-xs text-muted-foreground">JPG · PNG · WEBP · HEIC · PDF — máx 10MB</p>
                 </div>
               )}
             </div>
             <input
               ref={inputRef}
               type="file"
-              accept=".pdf"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,application/pdf,.pdf"
               className="hidden"
               onChange={onFileChange}
-              aria-label="Selecionar arquivo PDF"
+              aria-label="Selecionar arquivo"
             />
           </CardContent>
         </Card>
@@ -345,7 +462,7 @@ export default function Documents() {
               <div className="text-center py-8 space-y-2">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground/40" />
                 <p className="text-sm text-foreground font-medium">Nenhum documento enviado ainda</p>
-                <p className="text-xs text-muted-foreground">Comece agora fazendo upload de um PDF!</p>
+                <p className="text-xs text-muted-foreground">Comece agora fazendo upload de uma foto ou PDF!</p>
               </div>
             ) : (
               <>
@@ -374,13 +491,20 @@ export default function Documents() {
                               <span className="text-foreground">{statusLabel(f.status)}</span>
                             </span>
                           </td>
-                          <td className="py-3 text-right text-foreground">{f.transactions_count || 0}</td>
+                          <td className="py-3 text-right text-foreground">
+                            {pluralTransacao(f.transactions_count || 0)}
+                          </td>
                           <td className="py-3 text-right">
                             <div className="flex justify-end gap-1">
+                              {f.file_url && (
+                                <Button variant="ghost" size="sm" className="h-7 text-xs text-primary" onClick={() => handleViewFile(f)}>
+                                  <Eye className="h-3 w-3 mr-1" /> Ver
+                                </Button>
+                              )}
                               {f.status === "completed" && (f.transactions_count || 0) > 0 && (
                                 <Button variant="ghost" size="sm" asChild className="h-7 text-xs text-primary">
                                   <Link to={`/extracted-transactions?file_id=${f.id}`}>
-                                    <Eye className="h-3 w-3 mr-1" /> Ver
+                                    <FileText className="h-3 w-3 mr-1" /> Dados
                                   </Link>
                                 </Button>
                               )}
@@ -412,15 +536,20 @@ export default function Documents() {
                           <StatusIcon status={f.status} />
                           <span className="text-[10px] text-muted-foreground">{statusLabel(f.status)}</span>
                           {(f.transactions_count || 0) > 0 && (
-                            <span className="text-[10px] text-primary">{f.transactions_count} transações</span>
+                            <span className="text-[10px] text-primary">{pluralTransacao(f.transactions_count || 0)}</span>
                           )}
                         </div>
                       </div>
                       <div className="flex gap-1">
+                        {f.file_url && (
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-primary" onClick={() => handleViewFile(f)}>
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        )}
                         {f.status === "completed" && (f.transactions_count || 0) > 0 && (
                           <Button variant="ghost" size="sm" asChild className="h-7 px-2 text-[10px] text-primary">
                             <Link to={`/extracted-transactions?file_id=${f.id}`}>
-                              <Eye className="h-3 w-3" />
+                              <FileText className="h-3 w-3" />
                             </Link>
                           </Button>
                         )}
@@ -459,19 +588,44 @@ export default function Documents() {
         </Card>
       </div>
 
+      {/* View File Dialog */}
+      <Dialog open={!!viewingFile} onOpenChange={(open) => !open && setViewingFile(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="truncate pr-8">{viewingFile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[75vh]">
+            {viewingFile?.type === "image" ? (
+              <img src={viewingFile.url} alt={viewingFile.name} className="w-full max-h-[70vh] object-contain rounded-lg" />
+            ) : viewingFile?.type === "pdf" ? (
+              <iframe src={viewingFile.url} className="w-full h-[70vh] rounded-lg border-0" title={viewingFile.name} />
+            ) : null}
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button variant="outline" asChild>
+              <a href={viewingFile?.url} download={viewingFile?.name} target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4 mr-2" /> Baixar
+              </a>
+            </Button>
+            <Button variant="outline" onClick={() => setViewingFile(null)}>Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deletar documento</AlertDialogTitle>
+            <AlertDialogTitle>Excluir documento</AlertDialogTitle>
             <AlertDialogDescription>
-              Deletar este arquivo e todas as suas transações extraídas? Esta ação não pode ser desfeita.
+              Esta ação não pode ser desfeita. O documento e todos os lançamentos associados serão removidos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-              Deletar
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground" disabled={deleting}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {deleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
