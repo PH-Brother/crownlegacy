@@ -261,23 +261,22 @@ export default function Documents() {
             .maybeSingle();
 
           if (prof?.familia_id) {
-            const rows = resultTransactions.map((t: any) => {
-              let dataFinal = t.date || t.data || new Date().toISOString().split("T")[0];
-              if (vencimentoFatura) {
-                dataFinal = `${vencimentoFatura}-01`;
-              }
-              return {
+            const rows = resultTransactions.map((t: any) => ({
                 usuario_id: session.user.id,
                 familia_id: prof.familia_id,
                 tipo: "despesa",
                 valor: Math.abs(Number(t.amount || t.valor || 0)),
                 categoria: mapCategory(t.category || t.categoria || "Other"),
                 descricao: t.merchant || t.description || t.descricao || "Documento importado",
-                data_transacao: dataFinal,
+                data_transacao: (() => {
+                  if (vencimentoFatura && vencimentoFatura.trim() !== "") return `${vencimentoFatura}-01`;
+                  const aiDate = t.date || t.data;
+                  if (aiDate && isDataValida(aiDate)) return aiDate;
+                  return getDataHoje();
+                })(),
                 recorrente: false,
                 tags: ["documento-importado"],
-              };
-            });
+              }));
             await supabase.from("transacoes").insert(rows);
           }
         }
