@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Zap, FileText, Image, Loader2, ArrowLeft, TrendingDown, Rocket, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Zap, Loader2, ArrowLeft, TrendingDown, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -17,48 +16,11 @@ import { useTransacoes } from "@/hooks/useTransacoes";
 import { formatarMoeda } from "@/lib/utils";
 import { gerarAnaliseFinanceira } from "@/lib/gemini";
 import { supabase } from "@/integrations/supabase/client";
-import { safeStoragePath } from "@/lib/sanitize";
-import { mesParaDate } from "@/utils/formatters";
 
 const CATEGORIAS_DROPDOWN = [
   "Alimentação", "Transporte", "Moradia", "Saúde", "Educação",
   "Lazer", "Assinaturas", "Roupas", "Dízimo/Oferta", "Investimentos", "Outros",
 ];
-
-const PADROES_PARCELA = [
-  /\d{1,2}\/\d{1,2}/,
-  /parc/i,
-  /parcela/i,
-  /\d+\s*de\s*\d+/i,
-];
-
-const isParcela = (descricao: string): boolean => {
-  return PADROES_PARCELA.some((p) => p.test(descricao));
-};
-
-const parsearData = (dataStr: string | null): string => {
-  if (!dataStr) return new Date().toISOString().split("T")[0];
-  const partes = dataStr.split("/");
-  if (partes.length === 3) {
-    const dia = partes[0].padStart(2, "0");
-    const mes = partes[1].padStart(2, "0");
-    const ano = partes[2].length === 2 ? "20" + partes[2] : partes[2];
-    return `${ano}-${mes}-${dia}`;
-  }
-  return new Date().toISOString().split("T")[0];
-};
-
-const normalizarTransacoes = (
-  transacoes: TransacaoExtraida[],
-  vencimentoFatura: string | null
-): TransacaoExtraida[] => {
-  const dataFatura = vencimentoFatura ? parsearData(vencimentoFatura) : null;
-  return transacoes.map((t) => {
-    const ehParcela = isParcela(t.descricao);
-    const dataCorreta = ehParcela && dataFatura ? dataFatura : parsearData(t.data);
-    return { ...t, data: dataCorreta };
-  });
-};
 
 const CORES_CATEGORIA: Record<string, string> = {
   "Alimentação": "#22c55e",
@@ -86,30 +48,6 @@ const ICONES_CATEGORIA: Record<string, string> = {
   "Outros": "📦",
 };
 
-interface TransacaoExtraida {
-  data: string;
-  data_lancamento?: string;
-  descricao: string;
-  valor: number;
-  categoria: string;
-}
-
-interface ResultadoAnaliseJSON {
-  tipo_documento: string;
-  emissor: string;
-  titular: string;
-  valor_total: number;
-  vencimento: string;
-  periodo: string;
-  data_lancamento?: string;
-  transacoes: TransacaoExtraida[];
-  resumo_categorias: { categoria: string; total: number; percentual: number }[];
-  insights: string[];
-  alerta: string;
-  versiculo: string;
-  versiculo_ref: string;
-}
-
 export default function IAConselho() {
   const { user } = useAuth();
   const { profile, buscarPerfil } = useProfile();
@@ -117,17 +55,11 @@ export default function IAConselho() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [analisando, setAnalisando] = useState(false);
-  const [resultadoAnalise, setResultadoAnalise] = useState<ResultadoAnaliseJSON | null>(null);
-  const [transacoesEditaveis, setTransacoesEditaveis] = useState<TransacaoExtraida[]>([]);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pergunta, setPergunta] = useState("");
   const [respostaIA, setRespostaIA] = useState("");
   const [consultando, setConsultando] = useState(false);
   const [analiseMenusal, setAnaliseMensal] = useState("");
   const [gerandoMensal, setGerandoMensal] = useState(false);
-  const [lancando, setLancando] = useState(false);
-  const [vencimentoManual, setVencimentoManual] = useState("");
 
   // Edit/delete transaction states
   const [deleteTransacaoId, setDeleteTransacaoId] = useState<string | null>(null);
@@ -139,12 +71,6 @@ export default function IAConselho() {
   const [editCategoria, setEditCategoria] = useState("");
   const [editDescricao, setEditDescricao] = useState("");
   const [editSaving, setEditSaving] = useState(false);
-
-  const handleCategoriaChange = (index: number, novaCategoria: string) => {
-    setTransacoesEditaveis((prev) =>
-      prev.map((t, i) => (i === index ? { ...t, categoria: novaCategoria } : t))
-    );
-  };
 
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
@@ -177,191 +103,6 @@ export default function IAConselho() {
     .sort((a, b) => b.total - a.total)
     .slice(0, 6);
 
-  const handleUploadDocumento = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      toast({ title: "Arquivo muito grande. Máximo 10 MB.", variant: "destructive" });
-      return;
-    }
-
-    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
-    if (!ALLOWED_TYPES.includes(file.type) && !file.name.toLowerCase().endsWith(".pdf")) {
-      toast({ title: "Tipo de arquivo não permitido.", variant: "destructive" });
-      return;
-    }
-
-    if (file.type.startsWith("image/")) {
-      setPreviewUrl(URL.createObjectURL(file));
-    } else {
-      setPreviewUrl(null);
-    }
-
-    setAnalisando(true);
-    setResultadoAnalise(null);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate("/auth"); return; }
-
-      const path = safeStoragePath(session.user.id, file.type);
-      const { error: uploadError } = await supabase.storage.from("documentos").upload(path, file);
-      if (uploadError) throw uploadError;
-
-      // Signed URL — sem base64, sem carregar em memória
-      const { data: urlData } = await supabase.storage.from("documentos").createSignedUrl(path, 600);
-      if (!urlData?.signedUrl) throw new Error("Arquivo não encontrado");
-
-      const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      const MIME_MAP: Record<string, string> = {
-        pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg",
-        png: "image/png", webp: "image/webp", heic: "image/heic",
-      };
-      const mimeResolvido = (file.type && file.type !== "application/octet-stream")
-        ? file.type.toLowerCase().trim()
-        : MIME_MAP[ext] || "application/pdf";
-
-      const { data, error } = await supabase.functions.invoke("gemini-proxy", {
-        body: {
-          signedUrl: urlData.signedUrl,
-          mimeType: mimeResolvido,
-          fileName: file.name,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const resultado = data?.resultado;
-      if (!resultado) throw new Error("Sem resultado da IA");
-
-      if (typeof resultado === "object") {
-        const res = resultado as ResultadoAnaliseJSON;
-        setResultadoAnalise(res);
-        setTransacoesEditaveis(normalizarTransacoes(res.transacoes || [], res.vencimento));
-        toast({ title: `✅ ${res.transacoes?.length || 0} transações extraídas!` });
-      } else {
-        const text = String(resultado);
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]) as ResultadoAnaliseJSON;
-          setResultadoAnalise(parsed);
-          setTransacoesEditaveis(normalizarTransacoes(parsed.transacoes || [], parsed.vencimento));
-          toast({ title: `✅ ${parsed.transacoes?.length || 0} transações extraídas!` });
-        } else {
-          toast({ title: "Não foi possível extrair dados estruturados", variant: "destructive" });
-        }
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao analisar";
-      toast({ title: msg, variant: "destructive" });
-    } finally {
-      setAnalisando(false);
-    }
-  };
-
-  const handleLancarTodas = async () => {
-    if (!transacoesEditaveis.length) return;
-    setLancando(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data: prof } = await supabase
-        .from("profiles").select("familia_id")
-        .eq("id", session.user.id).maybeSingle();
-
-      if (!prof?.familia_id) {
-        toast({ title: "Complete o onboarding primeiro", variant: "destructive" });
-        return;
-      }
-
-      const resolverDataInsert = (
-        transacao: { data_lancamento?: string | null; data?: string | null },
-        resultadoIA: { data_lancamento?: string | null; vencimento?: string | null }
-      ): string => {
-        // Prioridade 1: vencimento manual informado pelo usuário
-        if (vencimentoManual) return `${vencimentoManual}-01`;
-
-        const dl = transacao.data_lancamento ?? resultadoIA.data_lancamento;
-        const porLancamento = mesParaDate(dl);
-        if (porLancamento) return porLancamento;
-
-        const v = resultadoIA.vencimento;
-        if (v) {
-          const p = v.split("/");
-          if (p.length === 3) return `${p[2]}-${p[1].padStart(2, "0")}-01`;
-        }
-
-        const d = transacao.data;
-        if (d && d.includes("/")) {
-          const p = d.split("/");
-          if (p.length === 3) return `${p[2]}-${p[1].padStart(2, "0")}-${p[0].padStart(2, "0")}`;
-        }
-
-        return new Date().toISOString().split("T")[0];
-      };
-
-      const transacoesParaInserir = transacoesEditaveis.map((t) => {
-        const dataFinal = resolverDataInsert(t, {
-          data_lancamento: resultadoAnalise?.data_lancamento || null,
-          vencimento: resultadoAnalise?.vencimento || null,
-        });
-
-        console.log("Insert:", t.descricao,
-          "| dl:", t.data_lancamento,
-          "| data_banco:", dataFinal);
-
-        return {
-          usuario_id: session.user.id,
-          familia_id: prof.familia_id,
-          tipo: "despesa" as const,
-          descricao: t.descricao,
-          valor: Math.abs(Number(t.valor)),
-          categoria: t.categoria || "Outros",
-          data_transacao: dataFinal,
-          recorrente: false,
-          tags: ["ia-lancado"] as string[],
-        };
-      });
-
-      const { error } = await supabase.from("transacoes").insert(transacoesParaInserir);
-      if (error) throw new Error("Erro ao lançar: " + error.message);
-
-      // Registra o documento em uploaded_files para aparecer na página Documentos
-      try {
-        await supabase.from("uploaded_files").insert({
-          user_id: session.user.id,
-          file_name: `Análise IA — ${new Date().toLocaleDateString("pt-BR")}`,
-          file_size: null,
-          file_url: null,
-          status: "completed",
-          transactions_count: transacoesParaInserir.length,
-        });
-      } catch {
-        // Silencioso — não bloqueia o fluxo principal
-      }
-
-      await supabase.rpc("add_gamification_points", {
-        p_pontos: 20,
-        p_tipo_evento: "upload_documento",
-        p_descricao: `Lançou ${transacoesParaInserir.length} transações via IA`,
-      });
-
-      toast({ title: `🎉 ${transacoesParaInserir.length} transações lançadas! +20 pontos` });
-      setResultadoAnalise(null);
-      setTransacoesEditaveis([]);
-      setPreviewUrl(null);
-      setVencimentoManual("");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao lançar";
-      toast({ title: msg, variant: "destructive" });
-    } finally {
-      setLancando(false);
-    }
-  };
-
   const handleConsultar = useCallback(async () => {
     if (!pergunta.trim()) return;
     setConsultando(true);
@@ -375,7 +116,11 @@ Pergunta: ${pergunta.slice(0, 500)}
 Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3) Plano de ação prático`,
         },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Edge Function error:", error);
+        toast({ title: "Não foi possível processar", description: "Tente novamente em instantes.", variant: "destructive" });
+        return;
+      }
       setRespostaIA(data?.text || data?.resultado || "Sem resposta");
 
       await supabase.rpc("add_gamification_points", {
@@ -384,8 +129,9 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
         p_descricao: "Consultou conselho IA",
       });
       toast({ title: "⚡ +15 pontos por consultar a IA!" });
-    } catch {
-      toast({ title: "Erro ao consultar IA", variant: "destructive" });
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      toast({ title: "Erro inesperado", description: "Tente novamente em instantes.", variant: "destructive" });
     } finally {
       setConsultando(false);
     }
@@ -463,244 +209,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           <h1 className="text-lg font-bold" style={{ fontFamily: "'Lora', serif", color: "hsl(var(--primary))" }}>📖 Dicas de Sabedoria</h1>
         </div>
 
-        {/* SEÇÃO 1: Upload de Documentos */}
-        <Card className="card-glass-gold">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Upload className="h-4 w-4 text-primary" /> Análise de Documentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Envie uma <strong className="text-foreground">foto</strong> (print de tela, foto do celular) ou{" "}
-              <strong className="text-foreground">PDF</strong> de fatura, extrato ou nota fiscal.
-              A IA extrai todas as despesas, categoriza e lança no mês correto automaticamente.
-            </p>
-
-            {/* Campo de vencimento para faturas */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">
-                Mês de vencimento da fatura (opcional)
-              </label>
-              <input
-                type="month"
-                value={vencimentoManual}
-                onChange={(e) => setVencimentoManual(e.target.value)}
-                className="w-full min-h-[44px] px-3 rounded-xl border border-border bg-input text-foreground outline-none focus:border-primary text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Informe o mês do vencimento para lançar as despesas no mês correto
-              </p>
-            </div>
-
-            {/* Área de upload unificada */}
-            <label className="cursor-pointer block">
-              <div
-                className="relative flex flex-col items-center justify-center gap-3 py-8 px-4 rounded-2xl transition-all duration-200 hover:border-primary/60 active:scale-[0.98]"
-                style={{
-                  border: "2px dashed hsl(var(--primary) / 0.35)",
-                  background: "hsl(var(--primary) / 0.04)",
-                }}
-              >
-                {analisando ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm font-medium text-primary">Analisando com IA...</p>
-                    <p className="text-xs text-muted-foreground">Isso pode levar alguns segundos</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl"
-                        style={{ background: "hsl(var(--primary) / 0.12)" }}
-                      >
-                        <Image className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="h-8 w-px rounded-full" style={{ background: "hsl(var(--border))" }} />
-                      <div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl"
-                        style={{ background: "hsl(var(--primary) / 0.12)" }}
-                      >
-                        <FileText className="h-6 w-6 text-primary" />
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-semibold text-foreground">Toque para enviar foto ou PDF</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        JPG · PNG · WEBP · HEIC · PDF — máx 10 MB
-                      </p>
-                    </div>
-                    <div
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold"
-                      style={{
-                        background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
-                        color: "hsl(var(--primary-foreground))",
-                      }}
-                    >
-                      <Upload className="h-3.5 w-3.5" />
-                      Selecionar arquivo
-                    </div>
-                  </>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,application/pdf,.pdf"
-                className="hidden"
-                onChange={handleUploadDocumento}
-                disabled={analisando}
-              />
-            </label>
-
-            {/* Preview de imagem */}
-            {previewUrl && !analisando && (
-              <div className="rounded-xl overflow-hidden border border-border/50">
-                <img src={previewUrl} alt="Preview" className="w-full max-h-52 object-contain bg-muted/20" />
-              </div>
-            )}
-
-            {/* Resultado estruturado da IA */}
-            {resultadoAnalise && (
-              <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                {/* Cabeçalho do documento */}
-                <div
-                  className="rounded-xl p-4"
-                  style={{
-                    background: "hsl(var(--primary) / 0.06)",
-                    border: "1px solid hsl(var(--primary) / 0.2)",
-                  }}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-primary font-bold text-base">
-                        {resultadoAnalise.emissor || "Documento"}
-                      </p>
-                      <p className="text-muted-foreground text-xs mt-0.5">
-                        {resultadoAnalise.tipo_documento?.replace(/_/g, " ")}
-                        {resultadoAnalise.periodo && ` · ${resultadoAnalise.periodo}`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-foreground font-bold text-xl font-mono">
-                        R$ {resultadoAnalise.valor_total?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </p>
-                      {resultadoAnalise.vencimento && (
-                        <p className="text-destructive text-xs mt-0.5">Vence: {resultadoAnalise.vencimento}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Lista de transações extraídas */}
-                {transacoesEditaveis.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm font-semibold text-foreground">
-                        {transacoesEditaveis.length} despesa{transacoesEditaveis.length !== 1 ? "s" : ""} encontrada{transacoesEditaveis.length !== 1 ? "s" : ""}
-                      </p>
-                      <Button
-                        size="sm"
-                        onClick={handleLancarTodas}
-                        disabled={lancando}
-                        className="gradient-gold text-primary-foreground font-bold text-xs h-8 px-4 gap-1"
-                      >
-                        {lancando ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Rocket className="h-3 w-3" />
-                        )}
-                        {lancando ? "Lançando..." : `Lançar todas (${transacoesEditaveis.length})`}
-                      </Button>
-                    </div>
-                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
-                      {transacoesEditaveis.map((t, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 p-3 rounded-xl"
-                          style={{
-                            background: "hsl(var(--muted) / 0.4)",
-                            border: "1px solid hsl(var(--border) / 0.5)",
-                          }}
-                        >
-                          {isParcela(t.descricao) && (
-                            <span
-                              className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase shrink-0"
-                              style={{
-                                background: "hsl(var(--primary) / 0.15)",
-                                color: "hsl(var(--primary))",
-                              }}
-                            >
-                              parcela
-                            </span>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-foreground text-sm font-medium truncate">{t.descricao}</p>
-                            <p className="text-muted-foreground text-xs">{t.data}</p>
-                          </div>
-                          <p className="text-destructive font-bold text-sm font-mono shrink-0">
-                            R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
-                          <Select value={t.categoria} onValueChange={(val) => handleCategoriaChange(i, val)}>
-                            <SelectTrigger className="w-28 h-7 text-xs shrink-0">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {CATEGORIAS_DROPDOWN.map((cat) => (
-                                <SelectItem key={cat} value={cat} className="text-xs">
-                                  {cat}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Insights da IA */}
-                {resultadoAnalise.insights?.length > 0 && (
-                  <div
-                    className="p-3 rounded-xl space-y-1"
-                    style={{
-                      background: "hsl(var(--primary) / 0.05)",
-                      border: "1px solid hsl(var(--primary) / 0.2)",
-                    }}
-                  >
-                    <p className="text-primary text-xs font-semibold">💡 Insights da IA</p>
-                    {resultadoAnalise.insights.map((ins, i) => (
-                      <p key={i} className="text-foreground text-xs flex gap-2">
-                        <span className="text-primary shrink-0">•</span>
-                        <span>{ins}</span>
-                      </p>
-                    ))}
-                  </div>
-                )}
-
-                {/* Versículo bíblico */}
-                {resultadoAnalise.versiculo && (
-                  <div
-                    className="p-3 rounded-xl"
-                    style={{
-                      background: "hsl(var(--primary) / 0.05)",
-                      border: "1px solid hsl(var(--primary) / 0.2)",
-                    }}
-                  >
-                    <p className="text-primary text-xs italic" style={{ fontFamily: "'Lora', serif" }}>
-                      🙏 "{resultadoAnalise.versiculo}"
-                    </p>
-                    {resultadoAnalise.versiculo_ref && (
-                      <p className="text-muted-foreground text-[10px] mt-1">— {resultadoAnalise.versiculo_ref}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* SEÇÃO 2: Conselho Financeiro */}
+        {/* SEÇÃO 1: Conselho Financeiro */}
         <Card className="card-glass-gold">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -756,7 +265,7 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           </CardContent>
         </Card>
 
-        {/* SEÇÃO 3: Análise Mensal — with horizontal bars */}
+        {/* SEÇÃO 2: Análise Mensal — with horizontal bars */}
         <Card className="card-glass-gold">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
