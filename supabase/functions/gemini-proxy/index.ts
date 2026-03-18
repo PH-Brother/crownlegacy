@@ -162,6 +162,8 @@ ESCOPO: Extrair APENAS lancamentos da secao atual. Nomes comuns da secao: "Lanca
 
 REGRA DE MES — CRITICA: Cartao de credito cobra no mes SEGUINTE a compra. Usar SEMPRE a data de vencimento como referencia do mes de lancamento de TODAS as transacoes da fatura. Exemplo: vencimento 15/02/2026 → data_lancamento = "02/2026" para TODAS as transacoes, independente da data da compra.
 
+REGRA DE VENCIMENTO — OBRIGATORIA: O campo "vencimento" no JSON DEVE conter a data de vencimento da fatura. Procure por QUALQUER um destes campos: "Vencimento", "Com vencimento em", "Data de vencimento", "Vence em", "Pagamento ate", "Pagar ate". NAO use "Previsao prox. Fechamento", "Emissao", "Data de corte" ou "Proximo vencimento". Formato: DD/MM/AAAA. Se encontrar multiplos campos de data, priorize "Vencimento" ou "Com vencimento em". Se nao encontrar, retorne null.
+
 REGRA DE DATA INDIVIDUAL: Campo "data" = data real da compra (DD/MM/AAAA) para historico. Datas DD/MM sem ano: usar ano do periodo da fatura. Se mes da transacao > mes da fatura: ano e o anterior.
 
 REGRA DE PARCELAMENTO: Itau/Bradesco: padrao NOMEDD/MM colado. Exemplo: AMAZON 03/06 = parcela 3 de 6. data_lancamento = mes do vencimento da fatura atual. parcela = "3/6". Nubank/C6/Inter/Santander: texto "Parcela X de Y" na descricao. data_lancamento = mes do vencimento da fatura atual. parcela = "X/Y". Para TODOS os bancos: preservar numero da parcela no campo "parcela" no formato "X/Y".
