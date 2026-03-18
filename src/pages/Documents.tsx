@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, FileText, Image, Loader2, Trash2, Eye, AlertCircle, CheckCircle2, Clock, X, Download } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -52,10 +52,41 @@ function getDataHoje(): string {
   return `${ano}-${mes}-${dia}`;
 }
 
-function isDataValida(date: string): boolean {
+function isDataValida(date: string | null | undefined): boolean {
   if (!date || date.trim() === "") return false;
-  const parsed = Date.parse(date);
-  return !isNaN(parsed);
+  return !isNaN(Date.parse(date));
+}
+
+function normalizarData(date: string | null | undefined): string | null {
+  if (!date || date.trim() === "") return null;
+  const d = date.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const m1 = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
+  const m2 = d.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
+  const m3 = d.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (m3) return `${m3[3]}-${m3[2]}-${m3[1]}`;
+  // MM/YYYY (data_lancamento format)
+  const m4 = d.match(/^(\d{2})\/(\d{4})$/);
+  if (m4) return `${m4[2]}-${m4[1]}-01`;
+  if (/^\d{4}-\d{2}$/.test(d)) return `${d}-01`;
+  return null;
+}
+
+function extrairAnoMes(date: string): string {
+  return date.substring(0, 7);
+}
+
+function formatarMesVencimento(yyyyMM: string): string {
+  try {
+    const [ano, mes] = yyyyMM.split("-");
+    const data = new Date(Number(ano), Number(mes) - 1, 1);
+    const nome = data.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return nome.charAt(0).toUpperCase() + nome.slice(1);
+  } catch {
+    return yyyyMM;
+  }
 }
 
 interface UploadedFile {
@@ -99,6 +130,7 @@ function isImageFile(name: string): boolean {
 export default function Documents() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,6 +239,8 @@ export default function Documents() {
 
       let count = 0;
       let resultTransactions: any[] = [];
+      let vencimentoDoDocumento: string | null = null;
+      let mesReferenciaDoDocumento: string | null = null;
 
       if (isPdf) {
         // PDF → use pdf-parser edge function
@@ -216,6 +250,7 @@ export default function Documents() {
         if (fnErr) throw fnErr;
         count = result?.transactionsCount || 0;
         resultTransactions = result?.transactions || [];
+        vencimentoDoDocumento = normalizarData(result?.vencimento_fatura ?? null);
       } else {
         // Image → use gemini-proxy edge function with signed URL
         const { data: urlData } = await supabase.storage
@@ -250,7 +285,14 @@ export default function Documents() {
             category: t.categoria,
             date: t.data,
             description: t.descricao,
+            data_lancamento: t.data_lancamento,
           }));
+          // Extract vencimento from gemini-proxy response
+          vencimentoDoDocumento = normalizarData(resultado.vencimento ?? null);
+          if (resultado.data_lancamento) {
+            const dl = String(resultado.data_lancamento).trim();
+            mesReferenciaDoDocumento = normalizarData(dl);
+          }
         }
 
         // Update file record
@@ -258,6 +300,21 @@ export default function Documents() {
           status: "completed",
           transactions_count: count,
         }).eq("id", fileRecord.id);
+      }
+
+      // Debug logs
+      console.log("[Crown] vencimentoFatura (manual):", vencimentoFatura);
+      console.log("[Crown] vencimentoDoDocumento (IA):", vencimentoDoDocumento);
+      console.log("[Crown] mesReferenciaDoDocumento (IA):", mesReferenciaDoDocumento);
+
+      // Update file name with vencimento info
+      const mesBase = vencimentoFatura
+        || (vencimentoDoDocumento ? extrairAnoMes(vencimentoDoDocumento) : null)
+        || (mesReferenciaDoDocumento ? extrairAnoMes(mesReferenciaDoDocumento) : null)
+        || null;
+      if (mesBase) {
+        const nomeAtualizado = `Fatura ${formatarMesVencimento(mesBase)} — ${file.name}`;
+        await supabase.from("uploaded_files").update({ file_name: nomeAtualizado }).eq("id", fileRecord.id);
       }
 
       toast({ title: `✅ ${pluralTransacao(count)} extraída${count !== 1 ? "s" : ""} com sucesso!` });
@@ -281,9 +338,22 @@ export default function Documents() {
                 categoria: mapCategory(t.category || t.categoria || "Other"),
                 descricao: t.merchant || t.description || t.descricao || "Documento importado",
                 data_transacao: (() => {
-                  if (vencimentoFatura && vencimentoFatura.trim() !== "") return `${vencimentoFatura}-01`;
+                  // PRIORIDADE 1: mês de vencimento informado manualmente
+                  if (vencimentoFatura && vencimentoFatura.trim() !== "") {
+                    return `${vencimentoFatura}-01`;
+                  }
+                  // PRIORIDADE 2: vencimento extraído pela IA do documento
+                  if (vencimentoDoDocumento && isDataValida(vencimentoDoDocumento)) {
+                    return `${extrairAnoMes(vencimentoDoDocumento)}-01`;
+                  }
+                  // PRIORIDADE 3: mês de referência extraído pela IA
+                  if (mesReferenciaDoDocumento && isDataValida(mesReferenciaDoDocumento)) {
+                    return mesReferenciaDoDocumento;
+                  }
+                  // PRIORIDADE 4: data individual da transação
                   const aiDate = t.date || t.data;
                   if (aiDate && isDataValida(aiDate)) return aiDate;
+                  // PRIORIDADE 5: data local de hoje
                   return getDataHoje();
                 })(),
                 recorrente: false,
@@ -403,6 +473,38 @@ export default function Documents() {
         <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "Lora, serif" }}>
           Meus Documentos
         </h1>
+
+        {/* ★ Card Nova Transação — TOPO */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            Novo lançamento manual
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate("/nova-transacao?tipo=receita")}
+              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all duration-150 min-h-[80px] shadow-lg shadow-emerald-900/30"
+            >
+              <span className="text-2xl">💰</span>
+              <span className="text-sm font-semibold text-white">Receita</span>
+            </button>
+            <button
+              onClick={() => navigate("/nova-transacao?tipo=despesa")}
+              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-red-600 hover:bg-red-500 active:scale-95 transition-all duration-150 min-h-[80px] shadow-lg shadow-red-900/30"
+            >
+              <span className="text-2xl">💸</span>
+              <span className="text-sm font-semibold text-white">Despesa</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Separador */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            ou envie um documento
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
 
         {/* Upload Card */}
         <Card className="card-premium">

@@ -102,9 +102,21 @@ serve(async (req) => {
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-    const prompt = `Analyze this financial document (bank statement, credit card bill, or receipt) and extract ALL transactions.
+    const prompt = `Analyze this financial document (bank statement, credit card bill, or receipt) and extract ALL transactions AND the billing due date.
 
-Return ONLY a valid JSON array of transactions. Each transaction must have:
+Return ONLY a valid JSON object with this structure:
+{
+  "vencimento_fatura": "YYYY-MM-DD or null",
+  "transactions": [array of transaction objects]
+}
+
+The "vencimento_fatura" field:
+- Look for: "Vencimento", "Com vencimento em", "Data de vencimento", "Vence em", "Pagamento até"
+- Do NOT use: "Previsão prox. Fechamento", "Emissão", "Data de corte"
+- Convert to YYYY-MM-DD format. Example: "18/12/2025" becomes "2025-12-18"
+- If not found, set to null
+
+Each transaction in the "transactions" array must have:
 - "date": string in "YYYY-MM-DD" format
 - "merchant": string (merchant/store name, clean and normalized)
 - "amount": number (positive value, no currency symbols)
@@ -119,7 +131,7 @@ Rules:
 - If a date has only DD/MM, infer the year from the document context
 - Clean merchant names (remove extra codes, normalize capitalization)
 
-Return ONLY the JSON array, no markdown, no explanation.`;
+Return ONLY the JSON object, no markdown, no explanation.`;
 
     const geminiResponse = await fetch(geminiUrl, {
       method: "POST",
@@ -162,15 +174,43 @@ Return ONLY the JSON array, no markdown, no explanation.`;
       category: string;
       description: string;
     }> = [];
+    let vencimentoFatura: string | null = null;
 
     try {
       let jsonStr = rawText.trim();
-      const startIdx = jsonStr.indexOf("[");
-      const endIdx = jsonStr.lastIndexOf("]");
-      if (startIdx !== -1 && endIdx !== -1) {
-        jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+      // Try to parse as object first (new format with vencimento_fatura)
+      const objStart = jsonStr.indexOf("{");
+      const objEnd = jsonStr.lastIndexOf("}");
+      if (objStart !== -1 && objEnd !== -1) {
+        try {
+          const parsed = JSON.parse(jsonStr.substring(objStart, objEnd + 1));
+          if (parsed.transactions && Array.isArray(parsed.transactions)) {
+            transactions = parsed.transactions;
+            vencimentoFatura = parsed.vencimento_fatura || null;
+            console.log("[pdf-parser] vencimento_fatura extraido:", vencimentoFatura);
+          } else {
+            throw new Error("No transactions array in object");
+          }
+        } catch (objErr) {
+          // Fallback: try as array (legacy format)
+          console.log("[pdf-parser] Fallback to array format");
+          const startIdx = jsonStr.indexOf("[");
+          const endIdx = jsonStr.lastIndexOf("]");
+          if (startIdx !== -1 && endIdx !== -1) {
+            jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+            transactions = JSON.parse(jsonStr);
+          } else {
+            throw objErr;
+          }
+        }
+      } else {
+        const startIdx = jsonStr.indexOf("[");
+        const endIdx = jsonStr.lastIndexOf("]");
+        if (startIdx !== -1 && endIdx !== -1) {
+          jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+        }
+        transactions = JSON.parse(jsonStr);
       }
-      transactions = JSON.parse(jsonStr);
     } catch {
       console.error("Failed to parse Gemini response:", rawText.substring(0, 500));
       await adminClient.from("uploaded_files").update({
@@ -190,7 +230,7 @@ Return ONLY the JSON array, no markdown, no explanation.`;
         transactions_count: 0,
         updated_at: new Date().toISOString(),
       }).eq("id", fileId);
-      return new Response(JSON.stringify({ success: true, transactionsCount: 0, transactions: [] }), {
+      return new Response(JSON.stringify({ success: true, transactionsCount: 0, transactions: [], vencimento_fatura: vencimentoFatura }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -225,8 +265,9 @@ Return ONLY the JSON array, no markdown, no explanation.`;
       updated_at: new Date().toISOString(),
     }).eq("id", fileId);
 
+    console.log("[pdf-parser] vencimento_fatura final:", vencimentoFatura, "| transacoes:", rows.length);
     return new Response(
-      JSON.stringify({ success: true, transactionsCount: rows.length, transactions: rows }),
+      JSON.stringify({ success: true, transactionsCount: rows.length, transactions: rows, vencimento_fatura: vencimentoFatura }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

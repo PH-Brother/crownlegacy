@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,10 @@ const EMOJIS_CAT: Record<string, string> = {
 
 export default function NovaTransacao() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tipoInicial = searchParams.get("tipo") as "receita" | "despesa" | null;
 
-  const [tipo, setTipo] = useState<"receita" | "despesa" | "">("");
+  const [tipo, setTipo] = useState<"receita" | "despesa" | "">(tipoInicial || "");
   const [valorDisplay, setValorDisplay] = useState("");
   const [valorNum, setValorNum] = useState(0);
   const [categoria, setCategoria] = useState("");

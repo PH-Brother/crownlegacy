@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Loader2, ArrowLeft, TrendingDown, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Zap, Loader2, ArrowLeft, TrendingDown, ChevronLeft, ChevronRight, Pencil, Trash2, Plus } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -208,6 +208,15 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
           </Button>
           <h1 className="text-lg font-bold" style={{ fontFamily: "'Lora', serif", color: "hsl(var(--primary))" }}>📖 Dicas de Sabedoria</h1>
         </div>
+
+        {/* Botão Nova Transação */}
+        <button
+          onClick={() => navigate("/nova-transacao")}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-primary/10 hover:bg-primary/20 border border-primary/20 active:scale-95 transition-all duration-150 text-primary font-medium text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Nova Transação
+        </button>
 
         {/* SEÇÃO 1: Conselho Financeiro */}
         <Card className="card-glass-gold">
