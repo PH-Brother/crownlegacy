@@ -474,6 +474,38 @@ export default function Documents() {
           Meus Documentos
         </h1>
 
+        {/* ★ Card Nova Transação — TOPO */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            Novo lançamento manual
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate("/nova-transacao?tipo=receita")}
+              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all duration-150 min-h-[80px] shadow-lg shadow-emerald-900/30"
+            >
+              <span className="text-2xl">💰</span>
+              <span className="text-sm font-semibold text-white">Receita</span>
+            </button>
+            <button
+              onClick={() => navigate("/nova-transacao?tipo=despesa")}
+              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-red-600 hover:bg-red-500 active:scale-95 transition-all duration-150 min-h-[80px] shadow-lg shadow-red-900/30"
+            >
+              <span className="text-2xl">💸</span>
+              <span className="text-sm font-semibold text-white">Despesa</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Separador */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            ou envie um documento
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
         {/* Upload Card */}
         <Card className="card-premium">
           <CardHeader className="pb-2">

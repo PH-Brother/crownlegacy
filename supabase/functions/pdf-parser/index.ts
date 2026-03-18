@@ -265,8 +265,9 @@ Return ONLY the JSON object, no markdown, no explanation.`;
       updated_at: new Date().toISOString(),
     }).eq("id", fileId);
 
+    console.log("[pdf-parser] vencimento_fatura final:", vencimentoFatura, "| transacoes:", rows.length);
     return new Response(
-      JSON.stringify({ success: true, transactionsCount: rows.length, transactions: rows }),
+      JSON.stringify({ success: true, transactionsCount: rows.length, transactions: rows, vencimento_fatura: vencimentoFatura }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

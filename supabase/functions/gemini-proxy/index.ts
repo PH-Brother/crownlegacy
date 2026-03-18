@@ -340,9 +340,10 @@ Retorne SOMENTE JSON valido, sem texto antes ou depois:
         }
       }
 
-      console.log("data_lancamento extraido:", resultado?.data_lancamento);
-      console.log("total transacoes:", resultado?.transacoes?.length || 0);
-      console.log("Tipo:", resultado?.tipo_documento);
+      console.log("[gemini-proxy] vencimento extraido:", resultado?.vencimento ?? "nao encontrado");
+      console.log("[gemini-proxy] data_lancamento extraido:", resultado?.data_lancamento);
+      console.log("[gemini-proxy] total transacoes:", resultado?.transacoes?.length || 0);
+      console.log("[gemini-proxy] Tipo:", resultado?.tipo_documento);
       return new Response(JSON.stringify({ resultado }), {
         headers: { ...cors, "Content-Type": "application/json" },
       });
