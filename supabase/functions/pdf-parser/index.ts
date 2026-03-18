@@ -174,15 +174,43 @@ Return ONLY the JSON object, no markdown, no explanation.`;
       category: string;
       description: string;
     }> = [];
+    let vencimentoFatura: string | null = null;
 
     try {
       let jsonStr = rawText.trim();
-      const startIdx = jsonStr.indexOf("[");
-      const endIdx = jsonStr.lastIndexOf("]");
-      if (startIdx !== -1 && endIdx !== -1) {
-        jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+      // Try to parse as object first (new format with vencimento_fatura)
+      const objStart = jsonStr.indexOf("{");
+      const objEnd = jsonStr.lastIndexOf("}");
+      if (objStart !== -1 && objEnd !== -1) {
+        try {
+          const parsed = JSON.parse(jsonStr.substring(objStart, objEnd + 1));
+          if (parsed.transactions && Array.isArray(parsed.transactions)) {
+            transactions = parsed.transactions;
+            vencimentoFatura = parsed.vencimento_fatura || null;
+            console.log("[pdf-parser] vencimento_fatura extraido:", vencimentoFatura);
+          } else {
+            throw new Error("No transactions array in object");
+          }
+        } catch (objErr) {
+          // Fallback: try as array (legacy format)
+          console.log("[pdf-parser] Fallback to array format");
+          const startIdx = jsonStr.indexOf("[");
+          const endIdx = jsonStr.lastIndexOf("]");
+          if (startIdx !== -1 && endIdx !== -1) {
+            jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+            transactions = JSON.parse(jsonStr);
+          } else {
+            throw objErr;
+          }
+        }
+      } else {
+        const startIdx = jsonStr.indexOf("[");
+        const endIdx = jsonStr.lastIndexOf("]");
+        if (startIdx !== -1 && endIdx !== -1) {
+          jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+        }
+        transactions = JSON.parse(jsonStr);
       }
-      transactions = JSON.parse(jsonStr);
     } catch {
       console.error("Failed to parse Gemini response:", rawText.substring(0, 500));
       await adminClient.from("uploaded_files").update({
@@ -202,7 +230,7 @@ Return ONLY the JSON object, no markdown, no explanation.`;
         transactions_count: 0,
         updated_at: new Date().toISOString(),
       }).eq("id", fileId);
-      return new Response(JSON.stringify({ success: true, transactionsCount: 0, transactions: [] }), {
+      return new Response(JSON.stringify({ success: true, transactionsCount: 0, transactions: [], vencimento_fatura: vencimentoFatura }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
