@@ -239,6 +239,8 @@ export default function Documents() {
 
       let count = 0;
       let resultTransactions: any[] = [];
+      let vencimentoDoDocumento: string | null = null;
+      let mesReferenciaDoDocumento: string | null = null;
 
       if (isPdf) {
         // PDF → use pdf-parser edge function
@@ -248,6 +250,7 @@ export default function Documents() {
         if (fnErr) throw fnErr;
         count = result?.transactionsCount || 0;
         resultTransactions = result?.transactions || [];
+        vencimentoDoDocumento = normalizarData(result?.vencimento_fatura ?? null);
       } else {
         // Image → use gemini-proxy edge function with signed URL
         const { data: urlData } = await supabase.storage
@@ -282,7 +285,14 @@ export default function Documents() {
             category: t.categoria,
             date: t.data,
             description: t.descricao,
+            data_lancamento: t.data_lancamento,
           }));
+          // Extract vencimento from gemini-proxy response
+          vencimentoDoDocumento = normalizarData(resultado.vencimento ?? null);
+          if (resultado.data_lancamento) {
+            const dl = String(resultado.data_lancamento).trim();
+            mesReferenciaDoDocumento = normalizarData(dl);
+          }
         }
 
         // Update file record
@@ -290,6 +300,21 @@ export default function Documents() {
           status: "completed",
           transactions_count: count,
         }).eq("id", fileRecord.id);
+      }
+
+      // Debug logs
+      console.log("[Crown] vencimentoFatura (manual):", vencimentoFatura);
+      console.log("[Crown] vencimentoDoDocumento (IA):", vencimentoDoDocumento);
+      console.log("[Crown] mesReferenciaDoDocumento (IA):", mesReferenciaDoDocumento);
+
+      // Update file name with vencimento info
+      const mesBase = vencimentoFatura
+        || (vencimentoDoDocumento ? extrairAnoMes(vencimentoDoDocumento) : null)
+        || (mesReferenciaDoDocumento ? extrairAnoMes(mesReferenciaDoDocumento) : null)
+        || null;
+      if (mesBase) {
+        const nomeAtualizado = `Fatura ${formatarMesVencimento(mesBase)} — ${file.name}`;
+        await supabase.from("uploaded_files").update({ file_name: nomeAtualizado }).eq("id", fileRecord.id);
       }
 
       toast({ title: `✅ ${pluralTransacao(count)} extraída${count !== 1 ? "s" : ""} com sucesso!` });
@@ -313,9 +338,22 @@ export default function Documents() {
                 categoria: mapCategory(t.category || t.categoria || "Other"),
                 descricao: t.merchant || t.description || t.descricao || "Documento importado",
                 data_transacao: (() => {
-                  if (vencimentoFatura && vencimentoFatura.trim() !== "") return `${vencimentoFatura}-01`;
+                  // PRIORIDADE 1: mês de vencimento informado manualmente
+                  if (vencimentoFatura && vencimentoFatura.trim() !== "") {
+                    return `${vencimentoFatura}-01`;
+                  }
+                  // PRIORIDADE 2: vencimento extraído pela IA do documento
+                  if (vencimentoDoDocumento && isDataValida(vencimentoDoDocumento)) {
+                    return `${extrairAnoMes(vencimentoDoDocumento)}-01`;
+                  }
+                  // PRIORIDADE 3: mês de referência extraído pela IA
+                  if (mesReferenciaDoDocumento && isDataValida(mesReferenciaDoDocumento)) {
+                    return mesReferenciaDoDocumento;
+                  }
+                  // PRIORIDADE 4: data individual da transação
                   const aiDate = t.date || t.data;
                   if (aiDate && isDataValida(aiDate)) return aiDate;
+                  // PRIORIDADE 5: data local de hoje
                   return getDataHoje();
                 })(),
                 recorrente: false,
