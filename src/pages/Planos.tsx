@@ -14,20 +14,20 @@ const PRICE_MENSAL = import.meta.env.VITE_STRIPE_PRICE_MENSAL || "";
 const PRICE_ANUAL = import.meta.env.VITE_STRIPE_PRICE_ANUAL || "";
 
 const RECURSOS_FREE = [
-{ label: "1 banco conectado", included: true },
-{ label: "5 uploads/mês", included: true },
-{ label: "IA básica", included: true },
-{ label: "Análise mensal", included: false },
-{ label: "Relatórios detalhados", included: false }];
-
+  { label: "Comprovantes e faturas ilimitados para análise", included: true },
+  { label: "5 uploads/mês", included: true },
+  { label: "IA básica", included: true },
+  { label: "Análise mensal", included: false },
+  { label: "Relatórios detalhados", included: false },
+];
 
 const RECURSOS_PREMIUM = [
-{ label: "Bancos ilimitados", included: true },
-{ label: "IA completa", included: true },
-{ label: "Análise financeira", included: true },
-{ label: "Relatórios detalhados", included: true },
-{ label: "Suporte prioritário", included: true }];
-
+  { label: "Comprovantes e faturas ilimitados para análise", included: true },
+  { label: "IA completa", included: true },
+  { label: "Análise financeira", included: true },
+  { label: "Relatórios detalhados", included: true },
+  { label: "Suporte prioritário", included: true },
+];
 
 export default function Planos() {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function Planos() {
 
   useEffect(() => {
     if (pollingCount > 0 && pollingCount <= 5) {
-      const timer = setTimeout(() => {refetch();setPollingCount((c) => c + 1);}, 2000);
+      const timer = setTimeout(() => { refetch(); setPollingCount((c) => c + 1); }, 2000);
       return () => clearTimeout(timer);
     }
   }, [pollingCount, refetch]);
@@ -63,8 +63,8 @@ export default function Planos() {
           <Skeleton className="h-[400px]" />
           <Skeleton className="h-[400px]" />
         </div>
-      </div>);
-
+      </div>
+    );
   }
 
   if (error) {
@@ -79,16 +79,16 @@ export default function Planos() {
             </Button>
           </CardContent>
         </Card>
-      </div>);
-
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <h1 className="text-xl font-bold text-foreground font-display">Planos</h1>
 
-      {isPremium && assinatura &&
-      <Card className="border-primary/30 bg-primary/5">
+      {isPremium && assinatura && (
+        <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
@@ -104,19 +104,19 @@ export default function Planos() {
                 </p>
               </div>
             </div>
-            {assinatura.cancelar_ao_fim &&
-          <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+            {assinatura.cancelar_ao_fim && (
+              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
                 <p className="text-xs text-destructive font-medium">
                   ⚠️ Sua assinatura será cancelada em {formatarData(assinatura.periodo_fim?.split("T")[0] || null)}
                 </p>
               </div>
-          }
+            )}
             <Button variant="outline" className="w-full border-primary/30 text-primary" onClick={abrirPortalCliente} disabled={portalLoading}>
               {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : assinatura.cancelar_ao_fim ? "Reativar assinatura" : "Gerenciar assinatura"}
             </Button>
           </CardContent>
         </Card>
-      }
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         {/* Free */}
@@ -129,12 +129,12 @@ export default function Planos() {
             <p className="text-2xl font-bold text-foreground font-mono">Grátis</p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {RECURSOS_FREE.map((r) =>
-            <div key={r.label} className="flex items-center gap-2 text-sm">
+            {RECURSOS_FREE.map((r) => (
+              <div key={r.label} className="flex items-center gap-2 text-sm">
                 {r.included ? <Check className="h-4 w-4 text-primary flex-shrink-0" /> : <X className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />}
                 <span className={r.included ? "text-foreground" : "text-muted-foreground/60"}>{r.label}</span>
               </div>
-            )}
+            ))}
             <Button variant="outline" className="w-full mt-4" disabled>Plano atual</Button>
           </CardContent>
         </Card>
@@ -146,18 +146,18 @@ export default function Planos() {
           </div>
           <CardHeader className="pb-3 pt-6">
             <CardTitle className="text-base">Premium Mensal</CardTitle>
-            <p className="text-2xl font-bold text-foreground font-mono">US 9,90/mês
-              <span className="text-sm font-normal text-muted-foreground"></span>
+            <p className="text-2xl font-bold text-foreground font-mono">
+              R$ 59,90<span className="text-sm font-normal text-muted-foreground">/mês</span>
             </p>
             <p className="text-xs text-muted-foreground">Sem compromisso, cancele a qualquer momento</p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {RECURSOS_PREMIUM.map((r) =>
-            <div key={r.label} className="flex items-center gap-2 text-sm">
+            {RECURSOS_PREMIUM.map((r) => (
+              <div key={r.label} className="flex items-center gap-2 text-sm">
                 <Check className="h-4 w-4 text-primary flex-shrink-0" />
                 <span className="text-foreground">{r.label}</span>
               </div>
-            )}
+            ))}
             <Button className="w-full mt-4 btn-accent" onClick={() => iniciarCheckout(PRICE_MENSAL)} disabled={isPremium || checkoutLoading}>
               {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPremium ? "Plano ativo" : "Assinar agora"}
             </Button>
@@ -169,26 +169,26 @@ export default function Planos() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Premium Anual</CardTitle>
-              <Badge className="bg-primary text-primary-foreground text-xs">Economize 33%</Badge>
+              <Badge className="bg-primary text-primary-foreground text-xs">Economize 31%</Badge>
             </div>
-            <p className="text-2xl font-bold text-foreground font-mono">US 99,90/ano
-              <span className="text-sm font-normal text-muted-foreground"></span>
+            <p className="text-2xl font-bold text-foreground font-mono">
+              R$ 499,00<span className="text-sm font-normal text-muted-foreground">/ano</span>
             </p>
-            <p className="text-xs text-muted-foreground">equivale a R$ 8,33/mês</p>
+            <p className="text-xs text-muted-foreground">equivale a R$ 41,58/mês</p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {RECURSOS_PREMIUM.map((r) =>
-            <div key={r.label} className="flex items-center gap-2 text-sm">
+            {RECURSOS_PREMIUM.map((r) => (
+              <div key={r.label} className="flex items-center gap-2 text-sm">
                 <Check className="h-4 w-4 text-primary flex-shrink-0" />
                 <span className="text-foreground">{r.label}</span>
               </div>
-            )}
+            ))}
             <Button variant="outline" className="w-full mt-4 border-primary/50 text-primary hover:bg-primary/10" onClick={() => iniciarCheckout(PRICE_ANUAL)} disabled={isPremium || checkoutLoading}>
               {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPremium ? "Plano ativo" : "Assinar anual"}
             </Button>
           </CardContent>
         </Card>
       </div>
-    </div>);
-
+    </div>
+  );
 }
