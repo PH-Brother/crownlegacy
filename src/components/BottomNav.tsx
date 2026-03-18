@@ -12,7 +12,7 @@ const items = [
 
 const MAIS_ROUTES = [
   "/insights", "/goals", "/projection", "/challenges",
-  "/family-wealth", "/family-network", "/minha-familia", "/share", "/documents",
+  "/family-wealth", "/family-network", "/minha-familia", "/share",
   "/planos", "/perfil", "/configuracoes", "/copilot", "/financial-insights",
 ];
 
