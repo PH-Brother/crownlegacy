@@ -52,10 +52,41 @@ function getDataHoje(): string {
   return `${ano}-${mes}-${dia}`;
 }
 
-function isDataValida(date: string): boolean {
+function isDataValida(date: string | null | undefined): boolean {
   if (!date || date.trim() === "") return false;
-  const parsed = Date.parse(date);
-  return !isNaN(parsed);
+  return !isNaN(Date.parse(date));
+}
+
+function normalizarData(date: string | null | undefined): string | null {
+  if (!date || date.trim() === "") return null;
+  const d = date.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const m1 = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
+  const m2 = d.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
+  const m3 = d.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (m3) return `${m3[3]}-${m3[2]}-${m3[1]}`;
+  // MM/YYYY (data_lancamento format)
+  const m4 = d.match(/^(\d{2})\/(\d{4})$/);
+  if (m4) return `${m4[2]}-${m4[1]}-01`;
+  if (/^\d{4}-\d{2}$/.test(d)) return `${d}-01`;
+  return null;
+}
+
+function extrairAnoMes(date: string): string {
+  return date.substring(0, 7);
+}
+
+function formatarMesVencimento(yyyyMM: string): string {
+  try {
+    const [ano, mes] = yyyyMM.split("-");
+    const data = new Date(Number(ano), Number(mes) - 1, 1);
+    const nome = data.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return nome.charAt(0).toUpperCase() + nome.slice(1);
+  } catch {
+    return yyyyMM;
+  }
 }
 
 interface UploadedFile {
