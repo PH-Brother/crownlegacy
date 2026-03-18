@@ -44,6 +44,20 @@ function pluralTransacao(n: number): string {
   return n === 1 ? "1 transação" : `${n} transações`;
 }
 
+function getDataHoje(): string {
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+function isDataValida(date: string): boolean {
+  if (!date || date.trim() === "") return false;
+  const parsed = Date.parse(date);
+  return !isNaN(parsed);
+}
+
 interface UploadedFile {
   id: string;
   file_name: string;
