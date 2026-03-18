@@ -178,11 +178,23 @@ export default function Documents() {
       setUploadProgress("Registrando arquivo...");
 
       // Insert file record
+      const fileName = (() => {
+        if (vencimentoFatura) {
+          try {
+            const [ano, mes] = vencimentoFatura.split("-");
+            const d = new Date(Number(ano), Number(mes) - 1, 1);
+            const mesNome = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+            return `Fatura ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)} — ${file.name}`;
+          } catch { /* fallback */ }
+        }
+        return file.name;
+      })();
+
       const { data: fileRecord, error: dbErr } = await supabase
         .from("uploaded_files")
         .insert({
           user_id: user.id,
-          file_name: file.name,
+          file_name: fileName,
           file_size: file.size,
           file_url: storagePath,
           status: "processing",
