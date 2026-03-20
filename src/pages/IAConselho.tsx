@@ -86,7 +86,21 @@ export default function IAConselho() {
   }, [user, buscarPerfil]);
 
   useEffect(() => {
-    if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
+    if (profile?.familia_id) {
+      buscarTransacoes(profile.familia_id, mes, ano);
+      // Load family members for author display
+      supabase
+        .from("profiles")
+        .select("id, nome_completo")
+        .eq("familia_id", profile.familia_id)
+        .then(({ data }) => {
+          if (data) {
+            const map: Record<string, string> = {};
+            data.forEach((p) => { map[p.id] = p.nome_completo; });
+            setMembersMap(map);
+          }
+        });
+    }
   }, [profile?.familia_id, mes, ano, buscarTransacoes]);
 
   const totais = calcularTotais(transacoes);
