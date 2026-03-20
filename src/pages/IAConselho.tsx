@@ -530,12 +530,24 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
       <AlertDialog open={!!deleteTransacaoId} onOpenChange={(o) => !o && setDeleteTransacaoId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir transação</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>Excluir lançamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const t = transacoes.find((tr) => tr.id === deleteTransacaoId);
+                const isOwn = t?.usuario_id === user?.id;
+                const authorName = t?.usuario_id ? membersMap[t.usuario_id] : null;
+                if (!isOwn && authorName) {
+                  return `Tem certeza que deseja excluir o lançamento "${t?.descricao || t?.categoria}" de ${authorName.split(" ")[0]}? Esta ação não pode ser desfeita.`;
+                }
+                return `Tem certeza que deseja excluir "${t?.descricao || t?.categoria || "este lançamento"}"? Esta ação não pode ser desfeita.`;
+              })()}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExcluirTransacao} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
+            <AlertDialogCancel disabled={editSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExcluirTransacao} disabled={editSaving} className="bg-destructive text-destructive-foreground">
+              {editSaving ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
