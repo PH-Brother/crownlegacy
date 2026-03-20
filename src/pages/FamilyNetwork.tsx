@@ -98,6 +98,43 @@ export default function FamilyNetwork() {
     setCreating(false);
   };
 
+  const handleSaveMemberName = async (memberId: string) => {
+    if (!editingMemberName.trim()) return;
+    setAdminSaving(true);
+    try {
+      const { error } = await supabase.rpc("admin_update_member_name" as any, {
+        p_member_id: memberId,
+        p_new_name: editingMemberName.trim(),
+      });
+      if (error) throw error;
+      toast({ title: "✅ Nome atualizado" });
+      setEditingMemberId(null);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível atualizar", variant: "destructive" });
+    } finally {
+      setAdminSaving(false);
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!removeMemberId) return;
+    setAdminSaving(true);
+    try {
+      const { error } = await supabase.rpc("admin_remove_family_member" as any, {
+        p_member_id: removeMemberId,
+      });
+      if (error) throw error;
+      toast({ title: "✅ Membro removido da família" });
+      setRemoveMemberId(null);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível remover", variant: "destructive" });
+    } finally {
+      setAdminSaving(false);
+    }
+  };
+
   const sortedByPoints = [...members].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
   const totalNetWorth = 0; // Would need net_worth_snapshots join
 
