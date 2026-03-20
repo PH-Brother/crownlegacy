@@ -197,11 +197,15 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
       return;
     }
     setEditSaving(true);
-    const { error } = await supabase
+    // Admin can edit any transaction; member can only edit own
+    let query = supabase
       .from("transacoes")
       .update({ valor: Number(editValor), categoria: editCategoria, descricao: editDescricao.trim() || null })
-      .eq("id", editTransacao.id)
-      .eq("usuario_id", user.id);
+      .eq("id", editTransacao.id);
+    if (!isAdmin) {
+      query = query.eq("usuario_id", user.id);
+    }
+    const { error } = await query;
     setEditSaving(false);
     if (error) { toast({ title: "Erro ao atualizar", variant: "destructive" }); return; }
     toast({ title: "✅ Transação atualizada" });
@@ -212,7 +216,11 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
 
   const handleExcluirTransacao = async () => {
     if (!deleteTransacaoId) return;
-    const { error } = await supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
+    let query = supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
+    if (!isAdmin) {
+      query = query.eq("usuario_id", user!.id);
+    }
+    const { error } = await query;
     if (error) { toast({ title: "Erro ao excluir", variant: "destructive" }); }
     else { toast({ title: "Transação excluída" }); if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano); }
     setDeleteTransacaoId(null);
