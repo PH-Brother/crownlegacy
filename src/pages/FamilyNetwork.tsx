@@ -65,10 +65,10 @@ export default function FamilyNetwork() {
     if (!familiaId) return;
     setLoading(true);
     const [mbRes, glRes] = await Promise.all([
-      supabase.from("profiles").select("id, nome_completo, avatar_url, pontos_total, nivel_gamificacao").eq("familia_id", familiaId),
+      supabase.from("profiles").select("id, nome_completo, avatar_url, pontos_total, nivel_gamificacao, role").eq("familia_id", familiaId),
       supabase.from("shared_goals").select("*").eq("familia_id", familiaId).order("created_at", { ascending: false }),
     ]);
-    if (mbRes.data) setMembers(mbRes.data);
+    if (mbRes.data) setMembers(mbRes.data as FamilyMember[]);
     if (glRes.data) setGoals(glRes.data as SharedGoal[]);
     setLoading(false);
   }, [familiaId]);
