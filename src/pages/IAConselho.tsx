@@ -197,7 +197,6 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
       return;
     }
     setEditSaving(true);
-    // Admin can edit any transaction; member can only edit own
     let query = supabase
       .from("transacoes")
       .update({ valor: Number(editValor), categoria: editCategoria, descricao: editDescricao.trim() || null })
@@ -207,8 +206,16 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
     }
     const { error } = await query;
     setEditSaving(false);
-    if (error) { toast({ title: "Erro ao atualizar", variant: "destructive" }); return; }
-    toast({ title: "✅ Transação atualizada" });
+    if (error) {
+      console.error("Erro ao atualizar:", error);
+      toast({
+        title: error.code === "PGRST116" ? "❌ Sem permissão" : "❌ Erro ao atualizar",
+        description: error.code === "PGRST116" ? "Apenas o ADM pode editar lançamentos de outros" : "Não foi possível atualizar o lançamento",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({ title: "✅ Lançamento atualizado" });
     setEditTransacaoOpen(false);
     setEditTransacao(null);
     if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
@@ -216,13 +223,24 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
 
   const handleExcluirTransacao = async () => {
     if (!deleteTransacaoId) return;
+    setEditSaving(true);
     let query = supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
     if (!isAdmin) {
       query = query.eq("usuario_id", user!.id);
     }
     const { error } = await query;
-    if (error) { toast({ title: "Erro ao excluir", variant: "destructive" }); }
-    else { toast({ title: "Transação excluída" }); if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano); }
+    setEditSaving(false);
+    if (error) {
+      console.error("Erro ao excluir:", error);
+      toast({
+        title: error.code === "PGRST116" ? "❌ Sem permissão" : "❌ Erro ao excluir",
+        description: error.code === "PGRST116" ? "Apenas o ADM pode deletar lançamentos de outros" : "Não foi possível excluir o lançamento",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "✅ Lançamento excluído" });
+      if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
+    }
     setDeleteTransacaoId(null);
   };
 
@@ -512,12 +530,24 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
       <AlertDialog open={!!deleteTransacaoId} onOpenChange={(o) => !o && setDeleteTransacaoId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir transação</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>Excluir lançamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const t = transacoes.find((tr) => tr.id === deleteTransacaoId);
+                const isOwn = t?.usuario_id === user?.id;
+                const authorName = t?.usuario_id ? membersMap[t.usuario_id] : null;
+                if (!isOwn && authorName) {
+                  return `Tem certeza que deseja excluir o lançamento "${t?.descricao || t?.categoria}" de ${authorName.split(" ")[0]}? Esta ação não pode ser desfeita.`;
+                }
+                return `Tem certeza que deseja excluir "${t?.descricao || t?.categoria || "este lançamento"}"? Esta ação não pode ser desfeita.`;
+              })()}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExcluirTransacao} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
+            <AlertDialogCancel disabled={editSaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExcluirTransacao} disabled={editSaving} className="bg-destructive text-destructive-foreground">
+              {editSaving ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
