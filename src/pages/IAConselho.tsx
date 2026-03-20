@@ -55,6 +55,11 @@ export default function IAConselho() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const isAdmin = profile?.role === "pai" || profile?.role === "admin";
+
+  // Members lookup for transaction author display
+  const [membersMap, setMembersMap] = useState<Record<string, string>>({});
+
   const [pergunta, setPergunta] = useState("");
   const [respostaIA, setRespostaIA] = useState("");
   const [consultando, setConsultando] = useState(false);
