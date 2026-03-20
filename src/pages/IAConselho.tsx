@@ -397,14 +397,23 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                   Lançamentos do mês ({transacoes.length})
                 </p>
                 <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
-                  {transacoes.map((t) => (
+                  {transacoes.map((t) => {
+                    const isOwn = t.usuario_id === user?.id;
+                    const canEdit = isAdmin || isOwn;
+                    const authorName = t.usuario_id && membersMap[t.usuario_id] ? membersMap[t.usuario_id]?.split(" ")[0] : null;
+                    return (
                     <div
                       key={t.id}
                       className="flex items-center gap-2 p-3 rounded-xl"
                       style={{ background: "hsl(var(--muted) / 0.4)", border: "1px solid hsl(var(--border) / 0.5)" }}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-foreground text-sm font-medium truncate">{t.descricao || t.categoria}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-foreground text-sm font-medium truncate">{t.descricao || t.categoria}</p>
+                          {!isOwn && authorName && (
+                            <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full shrink-0 font-medium">{authorName}</span>
+                          )}
+                        </div>
                         <p className="text-muted-foreground text-xs">
                           {t.categoria} · {new Date(t.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
                         </p>
@@ -412,24 +421,19 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                       <p className={`font-bold text-sm font-mono shrink-0 ${t.tipo === "receita" ? "text-success" : "text-destructive"}`}>
                         {t.tipo === "receita" ? "+" : "-"}R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </p>
+                      {canEdit && (
                       <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => handleEditarTransacao(t)}
-                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
-                          title="Editar"
-                        >
+                        <button onClick={() => handleEditarTransacao(t)} className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors" title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                         </button>
-                        <button
-                          onClick={() => setDeleteTransacaoId(t.id)}
-                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
-                          title="Excluir"
-                        >
+                        <button onClick={() => setDeleteTransacaoId(t.id)} className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors" title="Excluir">
                           <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
                         </button>
                       </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
