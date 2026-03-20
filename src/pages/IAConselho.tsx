@@ -55,6 +55,11 @@ export default function IAConselho() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const isAdmin = profile?.role === "pai" || profile?.role === "admin";
+
+  // Members lookup for transaction author display
+  const [membersMap, setMembersMap] = useState<Record<string, string>>({});
+
   const [pergunta, setPergunta] = useState("");
   const [respostaIA, setRespostaIA] = useState("");
   const [consultando, setConsultando] = useState(false);
@@ -81,7 +86,21 @@ export default function IAConselho() {
   }, [user, buscarPerfil]);
 
   useEffect(() => {
-    if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano);
+    if (profile?.familia_id) {
+      buscarTransacoes(profile.familia_id, mes, ano);
+      // Load family members for author display
+      supabase
+        .from("profiles")
+        .select("id, nome_completo")
+        .eq("familia_id", profile.familia_id)
+        .then(({ data }) => {
+          if (data) {
+            const map: Record<string, string> = {};
+            data.forEach((p) => { map[p.id] = p.nome_completo; });
+            setMembersMap(map);
+          }
+        });
+    }
   }, [profile?.familia_id, mes, ano, buscarTransacoes]);
 
   const totais = calcularTotais(transacoes);
@@ -178,11 +197,15 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
       return;
     }
     setEditSaving(true);
-    const { error } = await supabase
+    // Admin can edit any transaction; member can only edit own
+    let query = supabase
       .from("transacoes")
       .update({ valor: Number(editValor), categoria: editCategoria, descricao: editDescricao.trim() || null })
-      .eq("id", editTransacao.id)
-      .eq("usuario_id", user.id);
+      .eq("id", editTransacao.id);
+    if (!isAdmin) {
+      query = query.eq("usuario_id", user.id);
+    }
+    const { error } = await query;
     setEditSaving(false);
     if (error) { toast({ title: "Erro ao atualizar", variant: "destructive" }); return; }
     toast({ title: "✅ Transação atualizada" });
@@ -193,7 +216,11 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
 
   const handleExcluirTransacao = async () => {
     if (!deleteTransacaoId) return;
-    const { error } = await supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
+    let query = supabase.from("transacoes").delete().eq("id", deleteTransacaoId);
+    if (!isAdmin) {
+      query = query.eq("usuario_id", user!.id);
+    }
+    const { error } = await query;
     if (error) { toast({ title: "Erro ao excluir", variant: "destructive" }); }
     else { toast({ title: "Transação excluída" }); if (profile?.familia_id) buscarTransacoes(profile.familia_id, mes, ano); }
     setDeleteTransacaoId(null);
@@ -370,14 +397,23 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                   Lançamentos do mês ({transacoes.length})
                 </p>
                 <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
-                  {transacoes.map((t) => (
+                  {transacoes.map((t) => {
+                    const isOwn = t.usuario_id === user?.id;
+                    const canEdit = isAdmin || isOwn;
+                    const authorName = t.usuario_id && membersMap[t.usuario_id] ? membersMap[t.usuario_id]?.split(" ")[0] : null;
+                    return (
                     <div
                       key={t.id}
                       className="flex items-center gap-2 p-3 rounded-xl"
                       style={{ background: "hsl(var(--muted) / 0.4)", border: "1px solid hsl(var(--border) / 0.5)" }}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-foreground text-sm font-medium truncate">{t.descricao || t.categoria}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-foreground text-sm font-medium truncate">{t.descricao || t.categoria}</p>
+                          {!isOwn && authorName && (
+                            <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full shrink-0 font-medium">{authorName}</span>
+                          )}
+                        </div>
                         <p className="text-muted-foreground text-xs">
                           {t.categoria} · {new Date(t.data_transacao + "T00:00:00").toLocaleDateString("pt-BR")}
                         </p>
@@ -385,24 +421,19 @@ Responda incluindo: 1) Versículo bíblico relevante 2) Análise da situação 3
                       <p className={`font-bold text-sm font-mono shrink-0 ${t.tipo === "receita" ? "text-success" : "text-destructive"}`}>
                         {t.tipo === "receita" ? "+" : "-"}R$ {Number(t.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </p>
+                      {canEdit && (
                       <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => handleEditarTransacao(t)}
-                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
-                          title="Editar"
-                        >
+                        <button onClick={() => handleEditarTransacao(t)} className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors" title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                         </button>
-                        <button
-                          onClick={() => setDeleteTransacaoId(t.id)}
-                          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
-                          title="Excluir"
-                        >
+                        <button onClick={() => setDeleteTransacaoId(t.id)} className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors" title="Excluir">
                           <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
                         </button>
                       </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

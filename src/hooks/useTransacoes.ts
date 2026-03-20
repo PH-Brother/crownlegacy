@@ -60,7 +60,7 @@ export function useTransacoes() {
   }) => {
     const { data, error } = await supabase
       .from("transacoes")
-      .insert(dados)
+      .insert({ ...dados, user_id: dados.usuario_id })
       .select()
       .single();
     if (error) throw error;

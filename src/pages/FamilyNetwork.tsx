@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Plus, Target, Trophy, Crown, Loader2, UserPlus } from "lucide-react";
+import { Users, Plus, Target, Trophy, Crown, Loader2, UserPlus, Edit3, Check, X, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -23,6 +24,7 @@ interface FamilyMember {
   avatar_url: string | null;
   pontos_total: number;
   nivel_gamificacao: number;
+  role: string | null;
 }
 
 interface SharedGoal {
@@ -51,14 +53,22 @@ export default function FamilyNetwork() {
   const [creating, setCreating] = useState(false);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
+  // Admin editing states
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberName, setEditingMemberName] = useState("");
+  const [removeMemberId, setRemoveMemberId] = useState<string | null>(null);
+  const [adminSaving, setAdminSaving] = useState(false);
+
+  const isAdmin = profile?.role === "pai" || profile?.role === "admin";
+
   const fetchData = useCallback(async () => {
     if (!familiaId) return;
     setLoading(true);
     const [mbRes, glRes] = await Promise.all([
-      supabase.from("profiles").select("id, nome_completo, avatar_url, pontos_total, nivel_gamificacao").eq("familia_id", familiaId),
+      supabase.from("profiles").select("id, nome_completo, avatar_url, pontos_total, nivel_gamificacao, role").eq("familia_id", familiaId),
       supabase.from("shared_goals").select("*").eq("familia_id", familiaId).order("created_at", { ascending: false }),
     ]);
-    if (mbRes.data) setMembers(mbRes.data);
+    if (mbRes.data) setMembers(mbRes.data as FamilyMember[]);
     if (glRes.data) setGoals(glRes.data as SharedGoal[]);
     setLoading(false);
   }, [familiaId]);
@@ -86,6 +96,43 @@ export default function FamilyNetwork() {
       fetchData();
     }
     setCreating(false);
+  };
+
+  const handleSaveMemberName = async (memberId: string) => {
+    if (!editingMemberName.trim()) return;
+    setAdminSaving(true);
+    try {
+      const { error } = await supabase.rpc("admin_update_member_name" as any, {
+        p_member_id: memberId,
+        p_new_name: editingMemberName.trim(),
+      });
+      if (error) throw error;
+      toast({ title: "✅ Nome atualizado" });
+      setEditingMemberId(null);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível atualizar", variant: "destructive" });
+    } finally {
+      setAdminSaving(false);
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!removeMemberId) return;
+    setAdminSaving(true);
+    try {
+      const { error } = await supabase.rpc("admin_remove_family_member" as any, {
+        p_member_id: removeMemberId,
+      });
+      if (error) throw error;
+      toast({ title: "✅ Membro removido da família" });
+      setRemoveMemberId(null);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível remover", variant: "destructive" });
+    } finally {
+      setAdminSaving(false);
+    }
   };
 
   const sortedByPoints = [...members].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
@@ -166,23 +213,106 @@ export default function FamilyNetwork() {
             {members.map((m) => (
               <Card key={m.id} className="card-premium">
                 <CardContent className="p-3 flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary overflow-hidden">
+                  <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary overflow-hidden shrink-0">
                     {m.avatar_url ? (
                       <img src={m.avatar_url} alt="" className="h-full w-full object-cover rounded-full" />
                     ) : (
                       m.nome_completo?.[0]?.toUpperCase() || "?"
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{m.nome_completo}</p>
-                    <p className="text-[10px] text-muted-foreground">Nível {m.nivel_gamificacao} · {m.pontos_total} pts</p>
-                  </div>
-                  {m.id === user?.id && (
-                    <Badge variant="outline" className="text-[10px] text-accent border-accent/30">Você</Badge>
+
+                  {editingMemberId === m.id ? (
+                    <div className="flex-1 flex items-center gap-2 min-w-0">
+                      <Input
+                        value={editingMemberName}
+                        onChange={(e) => setEditingMemberName(e.target.value)}
+                        className="h-8 text-sm"
+                        maxLength={50}
+                        disabled={adminSaving}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveMemberName(m.id)}
+                        disabled={adminSaving}
+                        className="p-1.5 rounded-md hover:bg-primary/10 transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        <Check className="h-4 w-4 text-primary" />
+                      </button>
+                      <button
+                        onClick={() => setEditingMemberId(null)}
+                        disabled={adminSaving}
+                        className="p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{m.nome_completo}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {m.role === "pai" || m.role === "admin" ? "👑 Administrador" : "👤 Membro"}
+                          {" · "}Nível {m.nivel_gamificacao} · {m.pontos_total} pts
+                        </p>
+                      </div>
+
+                      {m.id === user?.id && (
+                        <Badge variant="outline" className="text-[10px] text-accent border-accent/30 shrink-0">Você</Badge>
+                      )}
+
+                      {isAdmin && (
+                        <div className="flex gap-1 shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingMemberId(m.id);
+                              setEditingMemberName(m.nome_completo);
+                            }}
+                            className="p-1.5 rounded-md hover:bg-primary/10 transition-colors"
+                            title="Editar nome"
+                          >
+                            <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          {m.id !== user?.id && (
+                            <button
+                              onClick={() => setRemoveMemberId(m.id)}
+                              className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors"
+                              title="Remover membro"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
             ))}
+
+            {/* AlertDialog de confirmação de remoção */}
+            <AlertDialog open={!!removeMemberId} onOpenChange={(o) => !o && setRemoveMemberId(null)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {(() => {
+                      const m = members.find(m => m.id === removeMemberId);
+                      return m ? `Tem certeza que deseja remover ${m.nome_completo} da família?` : "Tem certeza?";
+                    })()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={adminSaving}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleRemoveMember}
+                    disabled={adminSaving}
+                    className="bg-destructive text-destructive-foreground"
+                  >
+                    {adminSaving ? "Removendo..." : "Remover"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </TabsContent>
 
           {/* Shared Goals */}

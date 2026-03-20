@@ -332,6 +332,7 @@ export default function Documents() {
           if (prof?.familia_id) {
             const rows = resultTransactions.map((t: any) => ({
                 usuario_id: session.user.id,
+                user_id: session.user.id,
                 familia_id: prof.familia_id,
                 tipo: "despesa",
                 valor: Math.abs(Number(t.amount || t.valor || 0)),

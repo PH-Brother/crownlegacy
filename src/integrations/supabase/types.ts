@@ -1016,6 +1016,7 @@ export type Database = {
           recorrente: boolean | null
           tags: string[] | null
           tipo: string
+          user_id: string
           usuario_id: string | null
           valor: number
         }
@@ -1029,6 +1030,7 @@ export type Database = {
           recorrente?: boolean | null
           tags?: string[] | null
           tipo: string
+          user_id: string
           usuario_id?: string | null
           valor: number
         }
@@ -1042,6 +1044,7 @@ export type Database = {
           recorrente?: boolean | null
           tags?: string[] | null
           tipo?: string
+          user_id?: string
           usuario_id?: string | null
           valor?: number
         }
@@ -1291,6 +1294,14 @@ export type Database = {
         Args: { p_descricao: string; p_pontos: number; p_tipo_evento: string }
         Returns: undefined
       }
+      admin_remove_family_member: {
+        Args: { p_member_id: string }
+        Returns: undefined
+      }
+      admin_update_member_name: {
+        Args: { p_member_id: string; p_new_name: string }
+        Returns: undefined
+      }
       create_family_with_admin: {
         Args: { p_nome: string; p_user_id: string }
         Returns: Json
@@ -1302,6 +1313,7 @@ export type Database = {
         Args: { p_referral_code: string }
         Returns: undefined
       }
+      is_family_admin: { Args: { p_user_id: string }; Returns: boolean }
       join_family_with_code: {
         Args: { p_codigo_convite: string }
         Returns: {

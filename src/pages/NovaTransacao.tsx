@@ -73,6 +73,7 @@ export default function NovaTransacao() {
       const { error } = await supabase.from("transacoes").insert({
         familia_id: profile.familia_id,
         usuario_id: session.user.id,
+        user_id: session.user.id,
         tipo,
         valor: valorNum,
         categoria,

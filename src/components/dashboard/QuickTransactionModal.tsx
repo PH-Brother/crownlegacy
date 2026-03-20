@@ -70,6 +70,7 @@ export default function QuickTransactionModal({
       const { error } = await supabase.from("transacoes").insert({
         familia_id: familiaId,
         usuario_id: userId,
+        user_id: userId,
         tipo,
         valor: valorNum,
         categoria,
