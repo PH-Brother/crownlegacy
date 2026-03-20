@@ -53,6 +53,14 @@ export default function FamilyNetwork() {
   const [creating, setCreating] = useState(false);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
+  // Admin editing states
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberName, setEditingMemberName] = useState("");
+  const [removeMemberId, setRemoveMemberId] = useState<string | null>(null);
+  const [adminSaving, setAdminSaving] = useState(false);
+
+  const isAdmin = profile?.role === "pai" || profile?.role === "admin";
+
   const fetchData = useCallback(async () => {
     if (!familiaId) return;
     setLoading(true);
