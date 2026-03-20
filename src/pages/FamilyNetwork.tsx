@@ -213,23 +213,106 @@ export default function FamilyNetwork() {
             {members.map((m) => (
               <Card key={m.id} className="card-premium">
                 <CardContent className="p-3 flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary overflow-hidden">
+                  <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary overflow-hidden shrink-0">
                     {m.avatar_url ? (
                       <img src={m.avatar_url} alt="" className="h-full w-full object-cover rounded-full" />
                     ) : (
                       m.nome_completo?.[0]?.toUpperCase() || "?"
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{m.nome_completo}</p>
-                    <p className="text-[10px] text-muted-foreground">Nível {m.nivel_gamificacao} · {m.pontos_total} pts</p>
-                  </div>
-                  {m.id === user?.id && (
-                    <Badge variant="outline" className="text-[10px] text-accent border-accent/30">Você</Badge>
+
+                  {editingMemberId === m.id ? (
+                    <div className="flex-1 flex items-center gap-2 min-w-0">
+                      <Input
+                        value={editingMemberName}
+                        onChange={(e) => setEditingMemberName(e.target.value)}
+                        className="h-8 text-sm"
+                        maxLength={50}
+                        disabled={adminSaving}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveMemberName(m.id)}
+                        disabled={adminSaving}
+                        className="p-1.5 rounded-md hover:bg-primary/10 transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        <Check className="h-4 w-4 text-primary" />
+                      </button>
+                      <button
+                        onClick={() => setEditingMemberId(null)}
+                        disabled={adminSaving}
+                        className="p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{m.nome_completo}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {m.role === "pai" || m.role === "admin" ? "👑 Administrador" : "👤 Membro"}
+                          {" · "}Nível {m.nivel_gamificacao} · {m.pontos_total} pts
+                        </p>
+                      </div>
+
+                      {m.id === user?.id && (
+                        <Badge variant="outline" className="text-[10px] text-accent border-accent/30 shrink-0">Você</Badge>
+                      )}
+
+                      {isAdmin && (
+                        <div className="flex gap-1 shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingMemberId(m.id);
+                              setEditingMemberName(m.nome_completo);
+                            }}
+                            className="p-1.5 rounded-md hover:bg-primary/10 transition-colors"
+                            title="Editar nome"
+                          >
+                            <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          {m.id !== user?.id && (
+                            <button
+                              onClick={() => setRemoveMemberId(m.id)}
+                              className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors"
+                              title="Remover membro"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
             ))}
+
+            {/* AlertDialog de confirmação de remoção */}
+            <AlertDialog open={!!removeMemberId} onOpenChange={(o) => !o && setRemoveMemberId(null)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {(() => {
+                      const m = members.find(m => m.id === removeMemberId);
+                      return m ? `Tem certeza que deseja remover ${m.nome_completo} da família?` : "Tem certeza?";
+                    })()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={adminSaving}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleRemoveMember}
+                    disabled={adminSaving}
+                    className="bg-destructive text-destructive-foreground"
+                  >
+                    {adminSaving ? "Removendo..." : "Remover"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </TabsContent>
 
           {/* Shared Goals */}
